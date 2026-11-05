@@ -8,19 +8,12 @@ export const REASONS: { value: Reason; label: string; help: string }[] = [
   { value: 'soiled', label: 'Soiled', help: 'Needs washing early' },
   { value: 'damage', label: 'Damaged', help: 'Torn, stained or broken' },
 ]
-export type UserRole = 'admin' | 'synergy' | 'synergy_field' | 'hospital' | 'guest'
-export const ROLE_LABELS: Record<UserRole, string> = { admin: 'Administrator', synergy: 'Synergy', synergy_field: 'Synergy field', hospital: 'Hospital', guest: 'Guest' }
-export const ROLE_HELP: Record<UserRole, string> = {
-  admin: 'Full access, including QR labels and user management', synergy: 'All sites and all products, including reports',
-  synergy_field: 'All sites for install and take-down work, without reports', hospital: 'One hospital only: its own products and installations', guest: 'Install and take down only, under a typed name',
-}
 
 export interface Hospital { id: string; name: string; code: string }
 export interface Loc { id: string; hospitalId: string; floor: string; ward: string; bay: string }
 export interface Place { hospitalId: string; floor?: string; ward?: string; bay?: string }
 export interface Product { code: string; productCode: string; type: string; size?: string; colour?: string; batch?: string; status: Status; registeredAt: number; installedAt?: number; dueAt?: number; place?: Place; notes?: string }
 export interface Hist { id: number; ts: number; type: 'registered' | 'installed' | 'removed' | 'retired'; code: string; hospitalId?: string; where?: string; reason?: Reason; notes?: string; by: string; replaces?: string }
-export interface User { id: string; name: string; username: string; role: UserRole; hospitalId?: string }
 export interface CodeFormat { prefix: string; letters: number; digits: number }
 export interface Batch { id: number; ts: number; productCode: string; name: string; count: number; first: string; last: string; registered: boolean; start: number; fmt: CodeFormat; prefix: string }
 
@@ -56,14 +49,9 @@ function seed() {
   history.sort((a, b) => b.ts - a.ts); history.forEach((h, i) => (h.id = history.length - i))
   return { products, history }
 }
-const USERS: User[] = [
-  { id: 'u1', name: 'Administrator', username: 'admin', role: 'admin' }, { id: 'u2', name: 'Synergy Team', username: 'synergy', role: 'synergy' },
-  { id: 'u3', name: 'Queen Mary Hospital', username: 'queenmary', role: 'hospital', hospitalId: 'qmh' }, { id: 'u4', name: 'St Thomas General Hospital', username: 'stthomas', role: 'hospital', hospitalId: 'stg' },
-  { id: 'u5', name: 'Synergy Ops Team', username: 'synergy2', role: 'synergy_field' }, { id: 'u6', name: 'Guest login (shared)', username: 'guest', role: 'guest' },
-]
 export interface Result { ok: boolean; message: string }
 interface S {
-  hospitals: Hospital[]; locs: Loc[]; products: Record<string, Product>; history: Hist[]; users: User[]; dueDays: number; format: CodeFormat; counters: Record<string, number>; batches: Batch[]
+  hospitals: Hospital[]; locs: Loc[]; products: Record<string, Product>; history: Hist[]; dueDays: number; format: CodeFormat; counters: Record<string, number>; batches: Batch[]
   register: (codes: string[], meta: { batch?: string; size?: string; colour?: string; productCode?: string; type?: string }) => { added: string[]; skipped: string[] }
   install: (code: string, place: Place, opts?: { replaces?: string }) => Result
   takeDown: (code: string, reason: Reason, notes?: string) => Result & { place?: Place }
@@ -71,7 +59,6 @@ interface S {
   importLocations: (rows: { hospital: string; code?: string; floor?: string; ward: string; bay: string }[]) => { added: number; hospitals: number }
   setDueDays: (n: number) => void; setFormat: (f: CodeFormat) => void
   generate: (productCode: string, name: string, count: number, register: boolean) => Batch
-  addUser: (u: Omit<User, 'id'>) => void; removeUser: (id: string) => void
   reset: () => void
 }
 const hosp = (s: { hospitals: Hospital[] }, id?: string) => s.hospitals.find((h) => h.id === id)
@@ -80,7 +67,7 @@ const BY = 'Administrator'
 const nextId = (h: Hist[]) => (h[0]?.id ?? 0) + 1
 
 export const useQr = create<S>()(persist((set, get) => ({
-  hospitals: HOSPITALS, locs: LOCS, ...seed(), users: USERS, dueDays: 180, format: DEFAULT_FORMAT, counters: { [seriesKey(DEFAULT_FORMAT, 'MVN191')]: 49 }, batches: [],
+  hospitals: HOSPITALS, locs: LOCS, ...seed(), dueDays: 180, format: DEFAULT_FORMAT, counters: { [seriesKey(DEFAULT_FORMAT, 'MVN191')]: 49 }, batches: [],
   register: (codes, meta) => {
     const added: string[] = [], skipped: string[] = []; const st = get(); const products = { ...st.products }; const history = [...st.history]; const now = Date.now()
     codes.map(normalise).filter(Boolean).forEach((code) => {
@@ -135,9 +122,7 @@ export const useQr = create<S>()(persist((set, get) => ({
     if (register) get().register(Array.from({ length: count }, (_, i) => code(start + i)), { productCode, type: name, batch: `B-${new Date().getFullYear()}-${String(batch.id).padStart(2, '0')}` })
     return batch
   },
-  addUser: (u) => set((s) => ({ users: [...s.users, { ...u, id: `u${Date.now()}` }] })),
-  removeUser: (id) => set((s) => ({ users: s.users.filter((u) => u.id !== id || u.username === 'admin') })),
-  reset: () => set({ hospitals: HOSPITALS, locs: LOCS, ...seed(), users: USERS, dueDays: 180, format: DEFAULT_FORMAT, counters: { [seriesKey(DEFAULT_FORMAT, 'MVN191')]: 49 }, batches: [] }),
+  reset: () => set({ hospitals: HOSPITALS, locs: LOCS, ...seed(), dueDays: 180, format: DEFAULT_FORMAT, counters: { [seriesKey(DEFAULT_FORMAT, 'MVN191')]: 49 }, batches: [] }),
 }), { name: 'textrak-qr-v1', version: 1 }))
 
 export const daysLeft = (p: Product) => (p.dueAt ? Math.ceil((p.dueAt - Date.now()) / DAY) : null)

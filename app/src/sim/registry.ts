@@ -2,57 +2,14 @@ import type { LL } from '../lib/geo'
 import { HOSPITAL_PLAN, DECON_PLAN, SITES, type SiteKind } from './world'
 import type { Consignment } from './engine'
 
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { FEATURES, MODULES, type ModuleId } from './features'
+import { useAuth } from '../lib/auth'
+export { FEATURES, MODULES }
+export type { ModuleId }
+export type ClientId = string
 
-export type ClientId = 'synergy' | 'clientA'
-export type ModuleId = 'laundry' | 'curtains' | 'assets' | 'shipments' | 'recycling' | 'core'
-export interface Client { id: ClientId; name: string; tagline: string; color: string; plan: string; since: string; contact: string; users: { name: string; role: string }[] }
-
-export const MODULES: Record<ModuleId, { label: string; blurb: string }> = {
-  core: { label: 'Core', blurb: 'Home, map, alerts, intelligence, impact, scanning' },
-  laundry: { label: 'Laundry (RFID)', blurb: 'Reusable textiles, RFID doorways, arrival planning' },
-  curtains: { label: 'Curtains (QR)', blurb: 'Label, install, take down and report on products' },
-  assets: { label: 'Community assets', blurb: 'High-value equipment in the community' },
-  shipments: { label: 'Shipments', blurb: 'Any delivery or collection' },
-  recycling: { label: 'Recycling proof', blurb: 'Did it reach the recycler?' },
-}
-
-/** Every switchable feature. Page ids double as feature ids. */
-export interface Feature { id: string; label: string; module: ModuleId; adminOnly?: boolean }
-export const FEATURES: Feature[] = [
-  { id: 'command', label: 'Home', module: 'core' }, { id: 'map', label: 'Live map', module: 'core' }, { id: 'alerts', label: 'Alerts', module: 'core' },
-  { id: 'insights', label: 'Intelligence', module: 'core' }, { id: 'esg', label: 'Impact', module: 'core' }, { id: 'scan', label: 'Scan station', module: 'core' },
-  { id: 'planner', label: 'Laundry arrivals', module: 'laundry' }, { id: 'inventory', label: 'Inventory', module: 'laundry' }, { id: 'twin', label: 'Facilities and floors', module: 'laundry' }, { id: 'lifecycle', label: 'Daily flow', module: 'laundry' },
-  { id: 'assets', label: 'Community assets', module: 'assets' }, { id: 'shipments', label: 'Shipments', module: 'shipments' }, { id: 'provenance', label: 'Recycling proof', module: 'recycling' },
-  { id: 'qrdash', label: 'QR dashboard', module: 'curtains' }, { id: 'qrproducts', label: 'Products', module: 'curtains' }, { id: 'qrinstall', label: 'Install', module: 'curtains' }, { id: 'qrtakedown', label: 'Take down', module: 'curtains' },
-  { id: 'qrregister', label: 'Register labels', module: 'curtains' }, { id: 'qrlabels', label: 'QR labels (generate and print)', module: 'curtains' }, { id: 'qrlocations', label: 'Locations', module: 'curtains' },
-  { id: 'qrreports', label: 'Reports', module: 'curtains' }, { id: 'qrusers', label: 'Users and settings', module: 'curtains' },
-]
-const ALL = FEATURES.map((f) => f.id)
-const mods = (m: ModuleId[]) => FEATURES.filter((f) => m.includes(f.module)).map((f) => f.id)
-const DEFAULT_ACCESS: Record<ClientId, string[]> = {
-  synergy: mods(['core', 'curtains', 'shipments', 'recycling']),
-  clientA: mods(['core', 'assets', 'shipments', 'recycling']),
-}
-interface AccessState { features: Record<ClientId, string[]>; toggle: (c: ClientId, f: string) => void; setModule: (c: ClientId, m: ModuleId, on: boolean) => void; reset: () => void }
-export const useAccess = create<AccessState>()(persist((set) => ({
-  features: DEFAULT_ACCESS,
-  toggle: (c, f) => set((s) => ({ features: { ...s.features, [c]: s.features[c].includes(f) ? s.features[c].filter((x) => x !== f) : [...s.features[c], f] } })),
-  setModule: (c, m, on) => set((s) => { const ids = mods([m]); const rest = s.features[c].filter((x) => !ids.includes(x)); return { features: { ...s.features, [c]: on ? [...rest, ...ids] : rest } } }),
-  reset: () => set({ features: DEFAULT_ACCESS }),
-}), { name: 'textrak-access-v1' }))
-void ALL
-
-export const CLIENTS: Record<ClientId, Client> = {
-  synergy: { id: 'synergy', name: 'Synergy', tagline: 'Curtain and textile services for hospitals', color: '#5340e0', plan: 'Enterprise', since: 'Jan 2026', contact: 'ops@synergy.example',
-    users: [{ name: 'Laura Bennett', role: 'Operations manager' }, { name: 'Amir Syed', role: 'Field fitter' }, { name: 'Priya Nair', role: 'Field fitter' }, { name: 'Daniel Reyes', role: 'Plant supervisor' }] },
-  clientA: { id: 'clientA', name: 'Client A', tagline: 'NHS trust · community equipment and clinic recycling', color: '#0e8f7e', plan: 'Standard', since: 'Mar 2026', contact: 'logistics@clienta.example',
-    users: [{ name: 'Dr A. Rahman', role: 'Clinical lead' }, { name: 'Helen Ofori', role: 'Logistics manager' }, { name: 'Tom Walsh', role: 'Estates' }] },
-}
-
-export type Role = 'superadmin' | ClientId
-export const ROLES: { id: Role; label: string; sub: string }[] = [{ id: 'superadmin', label: 'Super Admin', sub: 'All clients and sites' }]
+/** 'superadmin' = the whole platform; any other value is a client (organisation) id, used for data scope and previews. */
+export type Role = string
 
 export type NetKind = SiteKind
 export interface NetSite { id: string; name: string; kind: NetKind; client: ClientId | 'shared'; pos: LL; region: string; floors: number; readers: number; state: 'live' | 'provisioned' | 'planned'; sim: boolean; radius: number; note?: string }
@@ -115,8 +72,13 @@ export const KIND_GLYPH: Record<string, string> = { facility: '▣', hospital: '
 export const isRestricted = (k: string) => k === 'port' || k === 'incinerator'
 
 export const clientNet = (role: Role) => (role === 'superadmin' ? NETWORK : NETWORK.filter((n) => n.client === role || n.client === 'shared'))
-export const hasFeature = (role: Role, f: string) => role === 'superadmin' || useAccess.getState().features[role].includes(f)
-export const hasModule = (role: Role, m: ModuleId) => role === 'superadmin' || FEATURES.some((f) => f.module === m && useAccess.getState().features[role].includes(f.id))
+export const hasFeature = (role: Role, f: string) => {
+  if (role === 'superadmin') return true
+  const a = useAuth.getState(); const org = a.orgs.find((o) => o.id === role)
+  if (!org || !org.active || !org.features.includes(f)) return false
+  return a.user?.role === 'staff' && a.user.org_id === role ? a.user.features.includes(f) : true
+}
+export const hasModule = (role: Role, m: ModuleId) => FEATURES.some((f) => f.module === m && hasFeature(role, f.id))
 export const consOwned = (role: Role, c: Consignment) => role === 'superadmin' || c.client === role
 
 export const totals = (list: NetSite[]) => ({

@@ -1,13 +1,14 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode } from 'lucide-react'
+import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound } from 'lucide-react'
 import { go, jump, SPEEDS, useStore } from '../store'
 import { fmtClock, T0, T1 } from '../sim/engine'
 import { useLiveTracker } from '../lib/useLive'
-import { CLIENTS, hasFeature, useAccess, type Role } from '../sim/registry'
+import { hasFeature, type Role } from '../sim/registry'
+import { ROLE_LABEL, useAuth } from '../lib/auth'
 import { alertsFor } from '../lib/scope'
 import { Logo } from './Logo'
 
-interface NavItem { id: string; label: string; icon: ReactNode; adminOnly?: boolean }
+interface NavItem { id: string; label: string; icon: ReactNode; adminOnly?: boolean; teamOnly?: boolean; always?: boolean }
 interface Group { title: string; items: NavItem[] }
 const I = 17
 const GROUPS: Group[] = [
@@ -19,15 +20,15 @@ const GROUPS: Group[] = [
   { title: 'Laundry · RFID', items: [{ id: 'planner', label: 'Laundry arrivals', icon: <Activity size={I} /> }, { id: 'inventory', label: 'Inventory', icon: <Boxes size={I} /> }, { id: 'twin', label: 'Facilities and floors', icon: <Building2 size={I} /> }, { id: 'lifecycle', label: 'Daily flow', icon: <Workflow size={I} /> }] },
   { title: 'Equipment and loads', items: [{ id: 'assets', label: 'Community assets', icon: <Radar size={I} /> }, { id: 'shipments', label: 'Shipments', icon: <Truck size={I} /> }, { id: 'provenance', label: 'Recycling proof', icon: <Recycle size={I} /> }] },
   { title: 'Reporting', items: [{ id: 'esg', label: 'Impact', icon: <Leaf size={I} /> }] },
-  { title: 'Administration', items: [{ id: 'admin', label: 'Super Admin', icon: <Shield size={I} />, adminOnly: true }, { id: 'devices', label: 'Trackers', icon: <Cpu size={I} />, adminOnly: true }, { id: 'account', label: 'My account', icon: <UserCircle size={I} />, adminOnly: true }] },
+  { title: 'Administration', items: [{ id: 'admin', label: 'Super Admin', icon: <Shield size={I} />, adminOnly: true }, { id: 'devices', label: 'Trackers', icon: <Cpu size={I} />, adminOnly: true }, { id: 'team', label: 'Team', icon: <UsersRound size={I} />, teamOnly: true }, { id: 'account', label: 'My account', icon: <UserCircle size={I} />, always: true }] },
 ]
 const JUMPS: [string, number][] = [['Morning delivery', 335], ['Recycling runs', 612], ['Day operations', 600], ['Evening collection', 1045], ['Decon processing', 1230], ['Next morning', 1760]]
-const visible = (i: NavItem, role: Role) => (i.adminOnly ? role === 'superadmin' : hasFeature(role, i.id))
+const visible = (i: NavItem, role: Role) => { const u = useAuth.getState().user; if (i.always) return !!u; if (i.adminOnly) return u?.role === 'superadmin'; if (i.teamOnly) return u?.role === 'org_admin'; return hasFeature(role, i.id) }
 export const allowedPages = (role: Role) => GROUPS.flatMap((g) => g.items).filter((i) => visible(i, role)).map((i) => i.id).concat(['item'])
 
 export function Layout({ children }: { children: ReactNode }) {
   const { t, playing, speed, page, role, set, setRole, tick } = useStore()
-  const { fix, db } = useLiveTracker(); useAccess((s) => s.features)
+  const { fix, db } = useLiveTracker(); const { user, orgs, signOut } = useAuth(); const isSuper = user?.role === 'superadmin'; const org = orgs.find((o) => o.id === role)
   const [menu, setMenu] = useState(false)
   const open = alertsFor(role).filter((a) => a.t <= t && a.sev !== 'info' && a.sev !== 'low').length
   useEffect(() => { let last = performance.now(); const id = setInterval(() => { const n = performance.now(); tick(n - last); last = n }, 100); return () => clearInterval(id) }, [tick])
@@ -52,7 +53,8 @@ export function Layout({ children }: { children: ReactNode }) {
               </button>))}</div>) })}
       </nav>
       <div className="border-t border-white/10 p-4">
-        <button onClick={() => nav('account')} className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/5"><span className="grid h-10 w-10 place-items-center rounded-full bg-cyan-500 text-[14px] font-extrabold text-white">S</span><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-bold text-white">Super Admin</span><span className="block truncate text-[12px] text-stone-400">All clients and sites</span></span><Settings2 size={16} className="text-stone-500" /></button>
+        <div className="flex items-center gap-1"><button onClick={() => nav('account')} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/5"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-500 text-[14px] font-extrabold text-white">{(user?.full_name ?? '?')[0]}</span><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-bold text-white">{user?.full_name}</span><span className="block truncate text-[12px] text-stone-400">{user ? (isSuper ? ROLE_LABEL.superadmin : `${ROLE_LABEL[user.role]} · ${orgs.find((o) => o.id === user.org_id)?.name ?? ''}`) : ''}</span></span></button>
+          <button onClick={() => void signOut()} title="Sign out" aria-label="Sign out" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-stone-400 hover:bg-white/5 hover:text-white"><LogOut size={17} /></button></div>
         <div className="mt-3 px-2 text-[11.5px] font-semibold text-stone-500">Developed by CIRCAI LTD</div>
       </div>
     </div>)
@@ -62,13 +64,13 @@ export function Layout({ children }: { children: ReactNode }) {
       <aside className="hidden w-[272px] shrink-0 xl:block">{Side}</aside>
       {menu && <div className="fixed inset-0 z-50 xl:hidden"><div className="absolute inset-0 bg-stone-900/50" onClick={() => setMenu(false)} /><div className="absolute inset-y-0 left-0 w-[290px] shadow-2xl">{Side}</div></div>}
       <div className="flex min-w-0 flex-1 flex-col">
-        {role !== 'superadmin' && <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-100 px-4 py-2 text-[14px] font-semibold text-amber-900"><Eye size={16} /> Previewing as {CLIENTS[role].name}. This is exactly what their users can see.<button onClick={() => setRole('superadmin')} className="rounded-full bg-amber-900 px-3.5 py-1 text-[13px] font-bold text-white">Exit preview</button></div>}
+        {isSuper && role !== 'superadmin' && <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-100 px-4 py-2 text-[14px] font-semibold text-amber-900"><Eye size={16} /> Previewing as {org?.name ?? role}. This is exactly what their users can see.<button onClick={() => setRole('superadmin')} className="rounded-full bg-amber-900 px-3.5 py-1 text-[13px] font-bold text-white">Exit preview</button></div>}
         <header className="flex items-center gap-3 border-b border-stone-200/70 bg-white px-4 py-3.5 xl:px-8">
           <button onClick={() => setMenu(true)} className="grid h-10 w-10 place-items-center rounded-full border border-stone-200 xl:hidden" aria-label="Menu"><Menu size={18} /></button>
-          <div className="flex min-w-0 items-center gap-2 text-[14px] font-semibold"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: role === 'superadmin' ? '#131a2e' : CLIENTS[role].color }} /><span className="truncate text-stone-800">{role === 'superadmin' ? 'All clients' : CLIENTS[role].name}</span>{role !== 'superadmin' && <span className="hidden truncate text-stone-500 sm:inline">· {CLIENTS[role].tagline}</span>}</div>
+          <div className="flex min-w-0 items-center gap-2 text-[14px] font-semibold"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: role === 'superadmin' ? '#131a2e' : org?.color ?? '#5a46e0' }} /><span className="truncate text-stone-800">{role === 'superadmin' ? 'All clients' : org?.name}</span>{role !== 'superadmin' && org?.tagline && <span className="hidden truncate text-stone-500 sm:inline">· {org.tagline}</span>}</div>
           <div className="ml-auto flex items-center gap-2">
             {hasFeature(role, 'scan') && <button onClick={() => nav('scan')} className="flex items-center gap-1.5 rounded-full bg-cyan-600 px-4 py-2 text-[13.5px] font-bold text-white hover:bg-cyan-700 xl:hidden"><ScanLine size={15} /> Scan</button>}
-            {role === 'superadmin' && <button onClick={() => nav('devices')} className="hidden items-center gap-2 whitespace-nowrap rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-[13px] sm:flex" title="Physical Teltonika TAT240">
+            {isSuper && <button onClick={() => nav('devices')} className="hidden items-center gap-2 whitespace-nowrap rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-[13px] sm:flex" title="Physical Teltonika TAT240">
               <i className={`h-2 w-2 rounded-full ${fix && liveAge! < 90 ? 'blink bg-emerald-500' : db === 'error' ? 'bg-rose-500' : 'bg-amber-400'}`} /><span className="font-semibold text-stone-800">TAT240</span><span className="text-stone-500">{fix ? (liveAge! < 90 ? 'live' : 'offline') : 'not connected'}</span></button>}
           </div>
         </header>

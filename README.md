@@ -70,11 +70,27 @@ Instructions for whoever holds the physical device: [`docs/TOM_SETUP.md`](docs/T
 
 ## Accounts, clients and access
 
-There is one sign-in profile for now: **Super Admin**, who sees every client, site and feature. The two demo clients are **Synergy** (curtain tracking by QR, plus shipments and recycling proof) and **Client A** (community assets, shipments and recycling proof).
+Three levels, enforced on the server (Supabase Auth, row level security and the `admin-users` edge function):
 
-In **Super Admin → Clients**, every feature can be switched on or off per client, either a whole module or an individual page. **Preview what Synergy sees** opens the app exactly as that client's users would see it.
+| Level | Who | Can do |
+|---|---|---|
+| **Super Admin** | You | Everything. Creates clients, chooses which features each client has, creates and manages any account, previews any client's view |
+| **Client admin** | e.g. Synergy's manager | Creates accounts for their own staff and chooses what each person can do, but never more than the client was given |
+| **Staff** | e.g. a fitter | Only the features they were given |
 
-Client, site and reader data lives in `app/src/sim/registry.ts`; the UK network of hospitals, decon plants, recyclers, ports and incinerators is defined there.
+If you reduce a client's features, their staff lose them too. Features are individual pages (Install, Take down, QR labels, Reports and so on) grouped into modules.
+
+**First-time setup**
+
+```bash
+supabase secrets set BOOTSTRAP_TOKEN=<a long random string> --project-ref qhxdqgkpebmpzzuzqcla
+```
+
+Open the app, choose **First time? Set up the Super Admin**, enter your name, a username, a password and that token. It works once, and only while no Super Admin exists. Then remove the secret if you like.
+
+**Then**: Super Admin → Clients → **New client** (name, features, their admin's username and password). Give those details to the client. Their admin signs in and opens **Team** to add fitters and others.
+
+Sign-in uses a username, not an email address. Client and site data for the demonstration lives in `app/src/sim/registry.ts`.
 
 ## Curtains (QR) for Synergy
 

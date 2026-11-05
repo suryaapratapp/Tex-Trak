@@ -5,7 +5,8 @@ import { FleetMapView } from '../components/FleetMapView'
 import { MapLegend } from '../components/MapLegend'
 import { Tour } from '../components/Tour'
 import { fmtT, getWorld, scannerAt, SCANNERS } from '../sim/engine'
-import { CLIENTS, hasModule } from '../sim/registry'
+import { hasModule } from '../sim/registry'
+import { useAuth } from '../lib/auth'
 import { useSnap } from '../sim/snap'
 import { insights } from '../lib/insights'
 import { alertsFor, consFor, vehiclesFor } from '../lib/scope'
@@ -45,7 +46,7 @@ export default function Command() {
   return (
     <div className="mx-auto w-full max-w-[1500px] space-y-7 p-5 sm:p-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><h1 className="text-[26px] font-extrabold tracking-tight text-stone-900">{hello}, {role === 'superadmin' ? 'admin' : CLIENTS[role].name}</h1><p className="text-sm text-stone-500">{role === 'superadmin' ? 'Everything across all clients.' : 'Here is what is happening across your sites.'}</p></div>
+        <div><h1 className="text-[26px] font-extrabold tracking-tight text-stone-900">{hello}, {useAuth.getState().user?.full_name.split(' ')[0] ?? ''}</h1><p className="text-sm text-stone-500">{role === 'superadmin' ? 'Everything across all clients.' : 'Here is what is happening across your sites.'}</p></div>
         <div className="flex gap-2"><button onClick={() => go('scan')} className="flex items-center gap-2 rounded-full bg-cyan-600 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-cyan-700"><ScanLine size={16} /> Scan</button>{mods('laundry') && <button onClick={() => setTour(!tour)} className="flex items-center gap-2 rounded-full border border-stone-200 bg-white px-5 py-2.5 text-sm font-extrabold text-stone-700 hover:bg-stone-50"><Compass size={16} /> {tour ? 'Hide tour' : 'Guided tour'}</button>}</div>
       </div>
       {tour && <Tour />}

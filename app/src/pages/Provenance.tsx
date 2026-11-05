@@ -6,7 +6,7 @@ import { FleetMapView } from '../components/FleetMapView'
 import { MapLegend } from '../components/MapLegend'
 import { fmtT, getWorld, vehicleAt, type Consignment, type CustodyEv } from '../sim/engine'
 import { SITES, VEH_BY_ID } from '../sim/world'
-import { CLIENTS } from '../sim/registry'
+import { orgInfo } from '../lib/auth'
 import { dist } from '../lib/geo'
 import { useSnap } from '../sim/snap'
 import { useStore } from '../store'
@@ -46,7 +46,7 @@ function RouteSvg({ c }: { c: Consignment }) {
 
 function Certificate({ c, verdict, onDone }: { c: Consignment; verdict: Verdict; onDone: () => void }) {
   const w = getWorld(); const t = useStore.getState().t; const chain = w.custody[c.ref].filter((e) => e.t <= t)
-  const now = whereNow(c, t); const v = VEH_BY_ID[c.veh]; const client = CLIENTS[c.client]
+  const now = whereNow(c, t); const v = VEH_BY_ID[c.veh]; const client = orgInfo(c.client)
   useEffect(() => { const id = setTimeout(() => { window.print(); onDone() }, 80); return () => clearTimeout(id) }, [onDone])
   const col = verdict.tone === 'ok' ? '#047857' : verdict.tone === 'bad' ? '#be123c' : '#0369a1'
   const cell: React.CSSProperties = { border: '1px solid #cbd5e1', padding: '5px 8px', fontSize: 11, textAlign: 'left', verticalAlign: 'top' }

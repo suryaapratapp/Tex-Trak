@@ -3,11 +3,12 @@ import { Building2, CheckCircle2, Eye, Globe2, Radio, Recycle, ShieldAlert, User
 import { Card, CardHead, Chip, Kpi, Page } from '../components/ui'
 import { FleetMapView } from '../components/FleetMapView'
 import { MapLegend } from '../components/MapLegend'
-import { CLIENTS, FEATURES, KIND_COLOR, KIND_GLYPH, KIND_LABEL, MODULES, NETWORK, UPPER_FLOOR_READERS, hasModule, isRestricted, totals, useAccess, type ClientId, type ModuleId } from '../sim/registry'
+import { KIND_COLOR, KIND_GLYPH, KIND_LABEL, NETWORK, UPPER_FLOOR_READERS, isRestricted, totals } from '../sim/registry'
+import { useAuth } from '../lib/auth'
+import { ClientsPanel } from './AdminClients'
 import { DECON_PLAN, HOSPITAL_PLAN } from '../sim/world'
 import { UPPER } from '../sim/floors'
 import { VEHICLES } from '../sim/world'
-import { useStore } from '../store'
 import { getWorld } from '../sim/engine'
 
 const TABS = [['clients', 'Clients'], ['sites', 'Sites'], ['readers', 'RFID readers'], ['map', 'UK map'], ['devices', 'Trackers']] as const
@@ -15,11 +16,11 @@ type Tab = (typeof TABS)[number][0]
 const stateTone = { live: 'green', provisioned: 'blue', planned: 'slate' } as const
 
 export default function Admin() {
-  const [tab, setTab] = useState<Tab>('clients'); const [client, setClient] = useState<'all' | ClientId | 'shared'>('all'); const [kind, setKind] = useState('all'); const [q, setQ] = useState('')
-  const setRole = useStore((s) => s.setRole); const acc = useAccess(); const [openC, setOpenC] = useState<ClientId | null>(null)
+  const [tab, setTab] = useState<Tab>('clients'); const [client, setClient] = useState<string>('all'); const [kind, setKind] = useState('all'); const [q, setQ] = useState('')
+  const orgs = useAuth((s) => s.orgs)
   const all = totals(NETWORK)
   const rows = useMemo(() => NETWORK.filter((n) => (client === 'all' || n.client === client) && (kind === 'all' || n.kind === kind) && (n.name + n.region).toLowerCase().includes(q.toLowerCase())), [client, kind, q])
-  const owner = (c: string) => (c === 'shared' ? 'Shared' : CLIENTS[c as ClientId].name)
+  const owner = (c: string) => (c === 'shared' ? 'Shared' : orgs.find((o) => o.id === c)?.name ?? c)
   const readers = [
     ...HOSPITAL_PLAN.readers.map((r) => ({ id: r.id, site: 'Royal Meridian Hospital', floor: 'Ground', where: r.label, client: 'Synergy' })),
     ...(['1', '2', '3'] as const).flatMap((f) => UPPER[f].readers.map((r) => ({ id: r.id, site: 'Royal Meridian Hospital', floor: `Floor ${f}`, where: r.label, client: 'Synergy' }))),
@@ -33,7 +34,7 @@ export default function Admin() {
   return (
     <Page title="Super Admin" sub="Every client, site, floor and RFID reader on the platform.">
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <Kpi label="Clients" value={Object.keys(CLIENTS).length} icon={<Users size={15} />} />
+        <Kpi label="Clients" value={orgs.length} icon={<Users size={15} />} />
         <Kpi label="Sites" value={all.sites} icon={<Globe2 size={15} />} />
         <Kpi label="Hospitals" value={all.hospitals} icon={<Building2 size={15} />} />
         <Kpi label="RFID readers" value={all.readers} icon={<Radio size={15} />} tone="good" />
@@ -42,22 +43,12 @@ export default function Admin() {
       </div>
       <div className="mb-5 inline-flex flex-wrap rounded-full bg-stone-200/70 p-1">{TABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} className={`rounded-full px-4 py-1.5 text-sm font-bold ${tab === k ? 'bg-white text-stone-900 shadow' : 'text-stone-500'}`}>{l}</button>)}</div>
 
-      {tab === 'clients' && <div className="grid gap-5 lg:grid-cols-2">{Object.values(CLIENTS).map((c) => { const t = totals(NETWORK.filter((n) => n.client === c.id)); return (
-        <Card key={c.id}><div className="flex items-start gap-4 p-5"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-lg font-extrabold text-white" style={{ background: c.color }}>{c.name[0]}</span>
-          <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-extrabold text-stone-900">{c.name}</h3><Chip tone="cyan">{c.plan}</Chip></div><p className="text-sm text-stone-500">{c.tagline}</p><p className="mt-1 text-xs text-stone-400">Customer since {c.since} · {c.contact}</p></div></div>
-          <div className="grid grid-cols-3 gap-2 px-5 pb-4">{[[t.sites, 'sites'], [t.hospitals, 'hospitals'], [t.readers, 'RFID readers']].map(([v, l]) => <div key={l as string} className="rounded-2xl bg-stone-50 p-3"><div className="text-2xl font-extrabold text-stone-900">{v}</div><div className="text-[11px] font-semibold text-stone-500">{l}</div></div>)}</div>
-          <div className="border-t border-stone-100 px-5 py-4"><div className="mb-3 flex items-center justify-between"><div className="text-[12px] font-bold uppercase tracking-wider text-stone-400">Access</div><button onClick={() => setOpenC(openC === c.id ? null : c.id)} className="text-[13.5px] font-bold text-cyan-700 hover:underline">{openC === c.id ? 'Hide features' : 'Choose individual features'}</button></div>
-            <div className="flex flex-wrap gap-2">{(Object.keys(MODULES) as ModuleId[]).map((m) => { const on = hasModule(c.id, m); return <button key={m} onClick={() => acc.setModule(c.id, m, !on)} title={MODULES[m].blurb} className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13.5px] font-bold transition ${on ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-stone-100 text-stone-400 hover:bg-stone-200'}`}>{on ? <CheckCircle2 size={14} /> : <i className="h-3.5 w-3.5 rounded-full border-2 border-stone-300" />}{MODULES[m].label}</button> })}</div>
-            {openC === c.id && <div className="mt-4 divide-y divide-stone-100 rounded-2xl border border-stone-100">{(Object.keys(MODULES) as ModuleId[]).map((m) => <div key={m} className="px-4 py-3"><div className="mb-2 text-[12.5px] font-extrabold uppercase tracking-wider text-stone-400">{MODULES[m].label}</div><div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">{FEATURES.filter((f) => f.module === m).map((f) => { const on = acc.features[c.id].includes(f.id); return <label key={f.id} className="flex cursor-pointer items-center justify-between gap-3 py-1.5 text-[14.5px]"><span className={on ? 'font-semibold text-stone-900' : 'text-stone-400'}>{f.label}</span><button role="switch" aria-checked={on} onClick={() => acc.toggle(c.id, f.id)} className={`relative h-6 w-11 shrink-0 rounded-full transition ${on ? 'bg-cyan-600' : 'bg-stone-300'}`}><i className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} /></button></label> })}</div></div>)}
-              <div className="px-4 py-3 text-right"><button onClick={() => acc.reset()} className="text-[13px] font-bold text-stone-500 hover:text-stone-800">Reset both clients to defaults</button></div></div>}
-            <button onClick={() => setRole(c.id)} className="mt-4 flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-[13.5px] font-bold text-stone-700 hover:bg-stone-50"><Eye size={15} /> Preview what {c.name} sees</button></div>
-          <div className="border-t border-stone-100 px-5 py-4"><div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-stone-400">Users</div>
-            <ul className="grid gap-1.5 sm:grid-cols-2">{c.users.map((u) => <li key={u.name} className="flex items-center gap-2 text-sm"><span className="grid h-7 w-7 place-items-center rounded-full bg-stone-100 text-[11px] font-extrabold text-stone-600">{u.name.split(' ').map((x) => x[0]).join('')}</span><span><span className="block font-semibold text-stone-800">{u.name}</span><span className="block text-[11px] text-stone-500">{u.role}</span></span></li>)}</ul></div></Card>) })}</div>}
+      {tab === 'clients' && <ClientsPanel />}
 
       {tab === 'sites' && <Card>
         <div className="flex flex-wrap items-center gap-2 border-b border-stone-100 p-3">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search sites or regions" className="min-w-[200px] flex-1 rounded-full border border-stone-200 px-4 py-2 text-sm outline-none focus:border-cyan-500" />
-          <select value={client} onChange={(e) => setClient(e.target.value as typeof client)} className="rounded-full border border-stone-200 bg-white px-3 py-2 text-sm font-semibold"><option value="all">All clients</option><option value="synergy">Synergy</option><option value="clientA">Client A</option><option value="shared">Shared</option></select>
+          <select value={client} onChange={(e) => setClient(e.target.value as typeof client)} className="rounded-full border border-stone-200 bg-white px-3 py-2 text-sm font-semibold"><option value="all">All clients</option>{orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}<option value="shared">Shared</option></select>
           <select value={kind} onChange={(e) => setKind(e.target.value)} className="rounded-full border border-stone-200 bg-white px-3 py-2 text-sm font-semibold"><option value="all">All types</option>{Object.entries(KIND_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
         <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-[13px]"><thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500"><tr><th className="px-4 py-2">Site</th><th>Type</th><th>Owner</th><th>Region</th><th className="text-right">Floors</th><th className="text-right">RFID readers</th><th className="pr-4 text-right">Status</th></tr></thead>
           <tbody className="divide-y divide-stone-100">{rows.map((n) => (<tr key={n.id} className="hover:bg-stone-50"><td className="px-4 py-2.5"><div className="flex items-center gap-2.5"><i className="grid h-6 w-6 place-items-center rounded-lg text-[11px] text-white" style={{ background: KIND_COLOR[n.kind] }}>{KIND_GLYPH[n.kind]}</i><div><div className="font-bold text-stone-900">{n.name}</div>{n.note && <div className="text-[11px] text-stone-500">{n.note}</div>}</div></div></td>
