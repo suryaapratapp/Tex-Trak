@@ -1,3 +1,4 @@
+import { ClickToActivate } from './FleetMapView'
 import { useEffect } from 'react'
 import { Circle, MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
@@ -26,6 +27,7 @@ export function LegMap({ legId, height = 340, itemOnboardFrom, itemOnboardTo }: 
   const from = SITES[leg.from], to = SITES[leg.to]
   return (
     <MapContainer center={from.pos} zoom={11} style={{ height, width: '100%' }} scrollWheelZoom={false}>
+      <ClickToActivate />
       <TileLayer attribution="&copy; OpenStreetMap contributors" url={import.meta.env.VITE_TILE_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} />
       <Fit pts={leg.pts as [number, number][]} />
       <Polyline positions={leg.pts} pathOptions={{ color: '#a8a29e', weight: 5, opacity: 0.8, dashArray: '2 9' }} />

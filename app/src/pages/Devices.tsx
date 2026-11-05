@@ -34,7 +34,7 @@ export default function Devices() {
             <ol className="space-y-2 text-[13px] text-slate-700">
               <li><b>1.</b> Run the gateway (parses Codec 8/8E over TCP, forwards to Supabase):<pre className="mono mt-1 overflow-x-auto rounded-lg bg-slate-900 p-2.5 text-[11.5px] text-cyan-100">cd gateway && INGEST_URL={SUPABASE_URL}/functions/v1/ingest-tracker INGEST_TOKEN=&lt;secret&gt; node src/server.mjs</pre></li>
               <li><b>2.</b> Expose port 5027 (public IP / cloud VM). In <i>Teltonika Configurator</i> → System/GPRS: Domain = your host, Port = 5027, Protocol = TCP, Codec = 8 Extended, APN for the SIM.</li>
-              <li><b>3.</b> Data acquisition: moving every 30 s, stationary every 60 min; enable <i>Send data on movement</i>. Power-cycle and watch this page.</li>
+              <li><b>3.</b> Data acquisition: periodic interval 360 s (6 min), the Teltonika minimum for this battery tracker; shorter intervals drain the battery. Enable <i>Send data on movement</i>. Power-cycle and watch this page.</li>
             </ol></div></Card>
         <div className="space-y-4">
           <Card><CardHead title="Platform health" sub="Supabase project qhxdqgkpebmpzzuzqcla" right={<Chip tone={db === 'ok' ? 'green' : 'red'}><Database size={11} /> {db}</Chip>} />

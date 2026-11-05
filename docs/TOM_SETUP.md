@@ -14,12 +14,12 @@ The project owner will send you two values: `SERVER_HOST` and `SERVER_PORT` (502
    - Protocol: **TCP**
    - Data protocol / codec: **Codec 8 Extended** (Codec 8 also works)
 3. **Data acquisition** (names vary slightly by firmware)
-   - Moving: record every **30 s**; Stationary: every **60 min**
+   - Periodic interval: **360 s (6 min)** for both moving and stationary. This is Teltonika's documented minimum periodic interval; shorter intervals (e.g. 30 s) cut battery life sharply, so do not use them as the default
    - Enable *send on movement* and keep sleep mode on (saves battery)
 4. Save to device, unplug, put the SIM in (if not already) and take it **outside with open sky**. First GPS fix can take a few minutes.
 5. Open the dashboard link → **Devices** page. The **Remote test checklist** ticks itself off:
    1. database reachable → 2. first message → 3. recent → 4. valid GPS fix → 5. movement → 6. battery.
-6. Walk or drive for ~5 minutes (so “movement” turns green). Then message the project owner a screenshot of the checklist.
+6. Walk or drive for ~20 minutes (reports arrive every 6 minutes, so “movement” needs a few of them). Then message the project owner a screenshot of the checklist.
 
 ## If something stays red
 | Symptom | Likely cause |

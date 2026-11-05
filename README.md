@@ -44,7 +44,7 @@ scanner leaving site, evening collection, decon processing…).
    INGEST_URL=https://qhxdqgkpebmpzzuzqcla.supabase.co/functions/v1/ingest-tracker INGEST_TOKEN=<same> npm start
    ```
 3. Teltonika Configurator → System/GPRS: server = gateway host, port 5027, TCP, **Codec 8 Extended**; APN for your SIM.
-   Moving period ≈ 30 s, stationary ≈ 60 min.
+   Periodic record interval: **360 s (6 min)** — the Teltonika minimum for periodic recording on this battery-powered tracker. Faster GNSS reporting drains the battery; do not default to 30 s.
 4. First fix appears live on the Fleet Map and the top-bar pill (Supabase Realtime).
 
 > TAT240 I/O element IDs (battery, signal) differ from FMB-series — verify against the Teltonika wiki and adjust the mapping in the edge function.

@@ -20,6 +20,19 @@ const siteIcon = (name: string, kind: string, dim = false) => {
   return L.divIcon({ className: '', iconSize: [0, 0], html: `<div style="transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;background:${c};color:#fff;font:700 ${big ? 11 : 10}px Manrope,sans-serif;padding:${big ? '3px 9px 3px 4px' : '2px 7px'};border-radius:99px;white-space:nowrap;box-shadow:0 2px 8px rgba(11,27,51,.35);border:2px solid #fff;opacity:${dim ? 0.8 : 1}">${big ? `<span style="display:grid;place-items:center;width:18px;height:18px;border-radius:99px;background:#fff;color:${c};font-size:12px">${KIND_GLYPH[kind]}</span>` : ''}${name}${isRestricted(kind) ? ' ⚠' : ''}</div>` })
 }
 
+/** Page scroll wins until the map is clicked once; it goes back to page-scroll when the pointer leaves. */
+export function ClickToActivate() {
+  const map = useMap()
+  useEffect(() => {
+    const el = map.getContainer(); const touch = L.Browser.mobile
+    const off = () => { map.scrollWheelZoom.disable(); if (touch) map.dragging.disable() }
+    const on = () => { map.scrollWheelZoom.enable(); if (touch) map.dragging.enable() }
+    off(); map.on('click', on); el.addEventListener('mouseleave', off); document.addEventListener('touchstart', (e) => { if (!el.contains(e.target as Node)) off() }, { passive: true })
+    return () => { map.off('click', on); el.removeEventListener('mouseleave', off) }
+  }, [map])
+  return null
+}
+
 function Follow({ pos, on }: { pos: LL | null; on: boolean }) {
   const map = useMap()
   useEffect(() => { if (on && pos) map.panTo(pos, { animate: true, duration: 0.25 }) }, [pos?.[0], pos?.[1], on])
@@ -55,7 +68,8 @@ export function FleetMapView({ vehIds, height = 480, selected, onSelect, follow 
   })
   const fol = follow && selected ? snap.veh[selected] : null
   return (
-    <MapContainer center={[51.53, -0.1]} zoom={11} style={{ height, width: '100%' }} zoomControl={true} scrollWheelZoom>
+    <MapContainer center={[51.53, -0.1]} zoom={11} style={{ height, width: '100%' }} zoomControl={true} scrollWheelZoom={false}>
+      <ClickToActivate />
       <TileLayer attribution='&copy; OpenStreetMap contributors' url={import.meta.env.VITE_TILE_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} />
       <Fit bounds={follow ? null : autoBounds} />
       <Follow pos={fol ? fol.pos : null} on={!!fol} />

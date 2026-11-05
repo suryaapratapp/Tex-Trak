@@ -24,7 +24,7 @@ export default function FleetMap() {
     : st.leg ? { txt: `En route to ${SITES[st.leg.to].name} · ETA ${fmtT(st.eta!)} (${st.delay >= 0 ? '+' : ''}${Math.round(st.delay)} min vs plan)`, tone: st.delay > 8 ? ('amber' as const) : ('green' as const) }
     : st.atSite ? { txt: `Parked at ${SITES[st.atSite].name}${lastLeg ? ` · arrived ${fmtT(lastLeg.arrive)}` : ''}${nextLeg ? ` · next departure ${fmtT(nextLeg.depart)} → ${SITES[nextLeg.to].short}` : ''}`, tone: 'blue' as const }
     : { txt: 'Parked', tone: 'slate' as const }
-  const pingS = st.moving ? 30 : 3600
+  const pingS = 360
   return (
     <Page title="Live map" sub="Trackers on every vehicle, in real time.">
       <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
@@ -50,7 +50,7 @@ export default function FleetMap() {
                 {[[<Gauge size={13} />, 'Speed', `${Math.round(st.speed)} km/h`], [<Compass size={13} />, 'Heading', `${Math.round(st.heading)}°`], [<Satellite size={13} />, 'Satellites / HDOP', st.dark ? '—' : `${st.sats} / ${st.hdop.toFixed(1)}`], [<Signal size={13} />, 'Cellular (LTE)', st.dark ? 'none' : `${st.signal}/5`], [<Battery size={13} />, 'Battery', `${Math.round(st.battery)}% · ${(st.mv / 1000).toFixed(2)} V`], [<Navigation size={13} />, 'Position', `${st.pos[0].toFixed(4)}, ${st.pos[1].toFixed(4)}`]].map(([ic, l, val], i) => (
                   <div key={i} className="rounded-lg bg-slate-50 px-2.5 py-2"><div className="flex items-center gap-1.5 text-slate-500">{ic}{l}</div><div className="mono mt-0.5 text-[12.5px] font-medium text-slate-900">{val as string}</div></div>))}
               </div>
-              <div className="text-[11px] text-slate-500">Reporting every {pingS < 100 ? `${pingS} s while moving` : '60 min while stationary (battery saver)'} · last fix {st.dark ? fmtT(st.lastFixT) : 'now'}</div>
+              <div className="text-[11px] text-slate-500">Reporting every {pingS / 60} min (battery saver) · last fix {st.dark ? fmtT(st.lastFixT) : 'now'}</div>
               <div className="rounded-lg border border-slate-200 p-3"><div className="text-xs font-semibold text-slate-700">Inherited visibility</div><div className="mt-1 text-xs text-slate-500">{onboard.length ? `${onboard.length} QR/RFID items ride in cages bound to this tracker — each inherits its GNSS position.` : 'No tagged cages onboard.'}</div>
                 {onboard.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{onboard.slice(0, 12).map((o) => { const it = w.items[snap.loc.indexOf(o)]; return <Chip key={it.id} tone="cyan">{it.qr.slice(3)}</Chip> })}{onboard.length > 12 && <Chip>+{onboard.length - 12}</Chip>}</div>}</div>
               {(st.atSite === 'HOSP' || st.atSite === 'DECON') && <button onClick={() => { set({ twin: st.atSite === 'HOSP' ? 'H' : 'D' }); go('twin') }} className="flex w-full items-center justify-center gap-2 rounded-lg bg-ink-900 px-3 py-2 text-sm font-medium text-white hover:bg-ink-800"><Building2 size={15} /> Follow the cages inside {SITES[st.atSite].short}</button>}
