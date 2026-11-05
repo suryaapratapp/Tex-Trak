@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { Boxes, CheckCircle2, Package, Radar, ScanLine, TriangleAlert, XCircle } from 'lucide-react'
 import { Card, CardHead, Page, StatusPill } from '../components/ui'
-import { Scanner } from '../install/Scanner'
+import { Scanner } from '../components/Scanner'
 import { getWorld, itemAt, SCANNERS, scannerAt, type Consignment, type Item } from '../sim/engine'
 import { SITES, ZONE_NAME } from '../sim/world'
 import { hasModule, type ModuleId } from '../sim/registry'
@@ -46,8 +46,8 @@ export default function Scan() {
           <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${task === x.id ? 'bg-cyan-600 text-white' : 'bg-stone-100 text-stone-600'}`}>{x.icon}</span>
           <span><span className="block text-[15px] font-extrabold text-stone-900">{x.label}</span><span className="block text-xs font-semibold text-stone-500">{x.sub}</span></span></button>))}</div>
 
-      {task === 'curtain' ? <Card className="p-8 text-center"><ScanLine className="mx-auto text-cyan-600" size={34} /><h3 className="mt-3 text-xl font-extrabold text-stone-900">Curtain scanning</h3><p className="mx-auto mt-1 max-w-md text-sm text-stone-500">Install, take down, dispatch and receive are in the curtain scanner.</p>
-        <button onClick={() => { useStore.getState().set({ instTab: 'scan' }); go('install') }} className="mt-5 rounded-full bg-stone-900 px-6 py-3 text-sm font-extrabold text-white">Open curtain scanner</button></Card> : (
+      {task === 'curtain' ? <Card className="p-8 text-center"><ScanLine className="mx-auto text-cyan-600" size={34} /><h3 className="mt-3 text-xl font-extrabold text-stone-900">Curtain scanning</h3><p className="mx-auto mt-1 max-w-md text-sm text-stone-500">Install and take down are in the curtain tools.</p>
+        <button onClick={() => { go('qrinstall') }} className="mt-5 rounded-full bg-stone-900 px-6 py-3 text-sm font-extrabold text-white">Open install</button></Card> : (
       <div className="grid gap-5 lg:grid-cols-2">
         <Card><CardHead title="Scan" />
           <div className="space-y-4 p-5"><Scanner onScan={lookup} />
@@ -69,7 +69,7 @@ export default function Scan() {
                 <div className="flex flex-wrap gap-2"><button onClick={() => done('load', `${c.ref} dispatched · ${c.items} items sealed`)} className={`${btn} bg-cyan-600 text-white`}>Dispatch and seal</button><button onClick={() => done('load', `${c.ref} received · ${c.items}/${c.items} items`)} className={`${btn} bg-emerald-600 text-white`}>Receive all</button><button onClick={() => done('load', `${c.ref} received with a shortage`, 'warn')} className={`${btn} bg-rose-50 text-rose-700 ring-1 ring-rose-200`}>Report shortage</button></div></div></Card>) })()}
           <div className={`card flex min-h-[110px] items-center gap-4 border-2 p-5 ${tone ? tone[0] as string : 'border-dashed border-stone-200'}`}>{msg ? <>{tone![1]}<div><div className="text-lg font-extrabold leading-tight">{msg.title}</div><div className="text-sm opacity-80">{msg.detail}</div></div></> : <div className="text-sm font-semibold text-stone-400">{found ? 'Choose what happened.' : 'Waiting for a scan.'}</div>}</div>
           <Card><CardHead title="Scan log" right={list.length > 0 && <button onClick={clear} className="text-xs font-bold text-stone-400 hover:text-stone-700">Clear</button>} />
-            <ul className="divide-y divide-stone-100">{list.length === 0 && <li className="p-5 text-sm text-stone-400">No scans yet.</li>}{list.slice(0, 8).map((e) => <li key={e.id} className="flex items-center gap-3 px-5 py-2.5 text-[13px]"><i className={`h-2 w-2 shrink-0 rounded-full ${e.level === 'ok' ? 'bg-emerald-500' : 'bg-amber-500'}`} /><span className="min-w-0 flex-1 truncate font-semibold text-stone-800">{e.text}</span><span className="mono text-[11px] text-stone-400">{new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></li>)}</ul></Card>
+            <ul className="divide-y divide-stone-100">{list.length === 0 && <li className="p-5 text-sm text-stone-400">No scans yet.</li>}{list.slice(0, 8).map((e) => <li key={e.id} className="flex items-center gap-3 px-5 py-2.5 text-[13px]"><i className={`h-2 w-2 shrink-0 rounded-full ${e.level === 'ok' ? 'bg-emerald-500' : 'bg-amber-500'}`} /><span className="min-w-0 flex-1 truncate font-semibold text-stone-800">{e.text}</span><span className="mono text-[11px] text-stone-400">{new Date(e.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span></li>)}</ul></Card>
         </div>
       </div>)}
     </Page>)

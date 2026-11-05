@@ -10,7 +10,7 @@ import { useSnap } from '../sim/snap'
 import { insights } from '../lib/insights'
 import { alertsFor, consFor, vehiclesFor } from '../lib/scope'
 import { laundry, recycling } from '../lib/analytics'
-import { useInst, isDue } from '../install/store'
+import { useQr, isOverdue, isDueSoon } from '../qr/store'
 import { go, useStore } from '../store'
 
 const TONE: Record<string, string> = { info: 'bg-stone-50', warn: 'bg-amber-50', bad: 'bg-rose-50', good: 'bg-emerald-50' }
@@ -28,7 +28,7 @@ function UseCase({ n, title, icon, page, color, stats, tone }: { n: string; titl
 
 export default function Command() {
   const snap = useSnap(); const t = snap.t; const w = getWorld(); const { set, role } = useStore(); const [tour, setTour] = useState(false)
-  const curtains = Object.values(useInst((s) => s.curtains)); const seedTs = useInst((s) => s.seedTs)
+  const prods = Object.values(useQr((s) => s.products))
   const mods = (m: Parameters<typeof hasModule>[1]) => hasModule(role, m)
   const alerts = alertsFor(role).filter((a) => a.t <= t && a.sev !== 'info').slice(-4).reverse()
   const ins = insights(t, snap).filter((i) => role === 'superadmin' || (role === 'synergy' ? !/SC-|scanner/i.test(i.title + i.body) : /RCY|recycl|SC-|scanner|asset/i.test(i.title + i.body)))
@@ -39,8 +39,8 @@ export default function Command() {
   const cons = consFor(role).filter((c) => c.legId); const live = cons.filter((c) => { const l = w.legs.find((x) => x.id === c.legId)!; return l.depart <= t && l.arrive > t }).length
   const exc = cons.filter((c) => c.verdict === 'diverted' && t >= 760).length
   const open = alertsFor(role).filter((a) => a.t <= t && (a.sev === 'high' || a.sev === 'critical')).length
-  const tracked = (mods('laundry') ? w.items.length : 0) + (mods('assets') ? SCANNERS.length : 0) + (mods('curtains') ? curtains.length : 0)
-  const kpis: [string, string, boolean?][] = [['Items tracked', tracked.toLocaleString()], ['Open alerts', String(open), open > 0], ['Loads on the road', String(live)], ['CO₂e avoided', mods('laundry') ? `${co2.toFixed(0)} kg` : rec.tiles[2].value]]
+  const tracked = (mods('laundry') ? w.items.length : 0) + (mods('assets') ? SCANNERS.length : 0) + (mods('curtains') ? prods.length : 0)
+  const kpis: [string, string, boolean?][] = [['Items tracked', tracked.toLocaleString('en-GB')], ['Open alerts', String(open), open > 0], ['Loads on the road', String(live)], ['CO₂e avoided', mods('laundry') ? `${co2.toFixed(0)} kg` : rec.tiles[2].value]]
   const hour = Math.floor((t % 1440) / 60); const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   return (
     <div className="mx-auto w-full max-w-[1500px] space-y-7 p-5 sm:p-8">
@@ -51,13 +51,13 @@ export default function Command() {
       {tour && <Tour />}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{kpis.map(([l, v, bad]) => <div key={l} className="card px-4 py-3.5"><div className="text-[11px] font-bold uppercase tracking-wider text-stone-400">{l}</div><div className={`mt-1 text-[28px] font-extrabold leading-none tracking-tight ${bad ? 'text-rose-600' : 'text-stone-900'}`}>{v}</div></div>)}</div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(270px,1fr))] gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
         {mods('laundry') && <UseCase n="1" title="Laundry & arrivals" icon={<Boxes size={21} />} page="planner" color="#7c3aed" tone={lau.tiles[1].value !== '0' ? `!${lau.tiles[1].value} items unaccounted for` : 'Nothing missing'} stats={[[snap.byStatus.in_use ?? 0, 'in use now'], [snap.byStatus.in_cage ?? 0, 'in dirty cages'], [lau.tiles[0].value, 'on-time runs']]} />}
         {mods('assets') && <UseCase n="2" title="Community assets" icon={<Radar size={21} />} page="assets" color="#2f6fed" tone={off ? `!${off} off-site` : 'All on site'} stats={[[SCANNERS.length, 'devices'], [off, 'off-site'], [rows.filter((r) => r.mode === 'in_transit').length, 'in transit']]} />}
         {mods('shipments') && <UseCase n="3" title="Shipments" icon={<Package size={21} />} page="shipments" color="#d97706" tone={exc ? `!${exc} exception` : 'All on track'} stats={[[cons.length, 'loads today'], [live, 'in transit'], [exc, 'exceptions']]} />}
         {mods('recycling') && <UseCase n="4" title="Recycling proof" icon={<Recycle size={21} />} page="provenance" color="#16a34a" tone={rec.tiles[1].value !== '0 kg' ? `!${rec.tiles[1].value} not proven` : undefined} stats={[[rec.tiles[0].value, 'proven'], [rec.tiles[1].value, 'not proven'], [rec.tiles[2].value, 'CO₂e credit']]} />}
       </div>
-      {mods('curtains') && <button onClick={() => go('install')} className="card group flex w-full flex-wrap items-center gap-x-8 gap-y-2 p-4 text-left transition hover:-translate-y-0.5"><span className="grid h-10 w-10 place-items-center rounded-2xl bg-cyan-100 text-cyan-700"><ScanLine size={19} /></span><span className="text-[15px] font-extrabold text-stone-900">Curtain installations</span>{[[curtains.filter((c) => c.status === 'installed').length, 'installed'], [curtains.filter(isDue).length, 'due to replace'], [curtains.filter((c) => c.installedAt && c.installedAt > seedTs).length, 'replaced today']].map(([v, l]) => <span key={l as string} className="text-sm text-stone-500"><b className="text-lg font-extrabold text-stone-900">{v}</b> {l}</span>)}<ArrowRight size={16} className="ml-auto text-stone-300 transition group-hover:translate-x-1 group-hover:text-stone-900" /></button>}
+      {mods('curtains') && <button onClick={() => go('qrdash')} className="card group flex w-full flex-wrap items-center gap-x-8 gap-y-2 p-5 text-left transition hover:-translate-y-0.5"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-100 text-cyan-700"><ScanLine size={20} /></span><span className="text-[16px] font-extrabold text-stone-900">Curtains (QR)</span>{[[prods.filter((p) => p.status === 'in_use').length, 'installed'], [prods.filter(isOverdue).length, 'overdue'], [prods.filter(isDueSoon).length, 'due in 30 days'], [prods.filter((p) => p.status === 'registered').length, 'in stock']].map(([v, l]) => <span key={l as string} className="text-[14px] text-stone-500"><b className="text-xl font-extrabold text-stone-900">{v}</b> {l}</span>)}<ArrowRight size={16} className="ml-auto text-stone-300 transition group-hover:translate-x-1 group-hover:text-stone-900" /></button>}
 
       <div className="grid items-start gap-6 xl:grid-cols-3">
         <Card className="overflow-hidden xl:col-span-2"><CardHead title="Live fleet" right={<button onClick={() => go('map')} className="text-sm font-bold text-cyan-700 hover:underline">Full map</button>} />

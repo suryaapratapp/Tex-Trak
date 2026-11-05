@@ -45,7 +45,7 @@ export default function Inventory() {
         </Card></> : (
         <Card><table className="w-full text-left text-sm"><thead className="text-[11px] font-bold uppercase tracking-wider text-stone-400"><tr><th className="px-5 py-3">Asset</th><th>Holder</th><th>Home</th><th>Value</th><th>State</th><th /></tr></thead>
           <tbody className="divide-y divide-stone-100">{SCANNERS.map((s) => { const st = scannerAt(w.legs, s, t); return (
-            <tr key={s.id} onClick={() => go('assets')} className="cursor-pointer hover:bg-stone-50"><td className="px-5 py-3"><div className="font-bold text-stone-900">{s.id}</div><div className="text-xs text-stone-500">{s.name}</div></td><td>{s.holder}</td><td>{s.home}</td><td>£{scannerValue(s).toLocaleString()}</td>
+            <tr key={s.id} onClick={() => go('assets')} className="cursor-pointer hover:bg-stone-50"><td className="px-5 py-3"><div className="font-bold text-stone-900">{s.id}</div><div className="text-xs text-stone-500">{s.name}</div></td><td>{s.holder}</td><td>{s.home}</td><td>£{scannerValue(s).toLocaleString('en-GB')}</td>
               <td><Chip tone={st.outside ? 'red' : st.mode === 'in_transit' ? 'blue' : 'green'}>{st.outside ? 'Off-site' : st.mode === 'in_transit' ? 'In transit' : st.mode === 'at_hub' ? 'At hub' : 'On-site'}</Chip></td><td className="pr-4 text-stone-300"><ChevronRight size={18} /></td></tr>) })}</tbody></table></Card>)}
     </Page>
   )

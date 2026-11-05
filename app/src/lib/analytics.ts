@@ -39,14 +39,14 @@ export function assets(t: number): Section {
   const off = rows.filter((r) => r.st.outside); const low = rows.filter((r) => r.st.battery < 20); const stale = rows.filter((r) => (t - r.st.lastSeen) / 60 > 24)
   const val = rows.reduce((a, r) => a + scannerValue(r.s), 0); const risk = [...off, ...stale].reduce((a, r) => a + scannerValue(r.s), 0)
   const f: Finding[] = []
-  off.forEach((r) => f.push({ tone: 'bad', title: `${r.s.id} is ${(r.st.distFromHome / 1000).toFixed(1)} km from its site`, body: `${r.s.name} · £${scannerValue(r.s).toLocaleString()} · holder ${r.s.holder}. Call the holder, lock the app licence, escalate to police after 2 hours.`, page: 'assets' }))
+  off.forEach((r) => f.push({ tone: 'bad', title: `${r.s.id} is ${(r.st.distFromHome / 1000).toFixed(1)} km from its site`, body: `${r.s.name} · £${scannerValue(r.s).toLocaleString('en-GB')} · holder ${r.s.holder}. Call the holder, lock the app licence, escalate to police after 2 hours.`, page: 'assets' }))
   stale.forEach((r) => f.push({ tone: 'warn', title: `${r.s.id} has not checked in for ${Math.round((t - r.st.lastSeen) / 60)} h`, body: 'Probably in a shielded cabinet or moved without a scan. Ask the holder to scan it back in.', page: 'assets' }))
   low.forEach((r) => f.push({ tone: 'info', title: `${r.s.id} tracker battery ${Math.round(r.st.battery)}%`, body: 'Swap the battery within two days to avoid a tracking gap.', page: 'assets' }))
   if (!f.length) f.push({ tone: 'good', title: 'All assets accounted for', body: 'Every device is inside its permitted site and reporting.' })
   const inTransit = rows.filter((r) => r.st.mode === 'in_transit').length
   return { id: 'assets', title: 'Community assets', page: 'assets',
-    tiles: [{ label: 'Value tracked', value: `£${val.toLocaleString()}`, sub: `${rows.length} devices` }, { label: 'Value at risk', value: `£${risk.toLocaleString()}`, tone: risk ? 'bad' : 'good', sub: `${off.length} off-site · ${stale.length} silent` }, { label: 'In transit now', value: String(inTransit), sub: 'riding on a courier tracker' }],
-    findings: f, barsTitle: 'Battery level by device', bars: rows.map((r) => ({ label: r.s.id, v: Math.round(r.st.battery), color: r.st.battery < 20 ? '#e11d48' : '#14a597' })) }
+    tiles: [{ label: 'Value tracked', value: `£${val.toLocaleString('en-GB')}`, sub: `${rows.length} devices` }, { label: 'Value at risk', value: `£${risk.toLocaleString('en-GB')}`, tone: risk ? 'bad' : 'good', sub: `${off.length} off-site · ${stale.length} silent` }, { label: 'In transit now', value: String(inTransit), sub: 'riding on a courier tracker' }],
+    findings: f, barsTitle: 'Battery level by device', bars: rows.map((r) => ({ label: r.s.id, v: Math.round(r.st.battery), color: r.st.battery < 20 ? '#e11d48' : '#6e5cef' })) }
 }
 
 const slip = (c: Consignment) => { const l = getWorld().legs.find((x) => x.id === c.legId); return l ? l.arrive - l.planArrive : 0 }
@@ -63,7 +63,7 @@ export function shipments(t: number, role: Role): Section {
   if (!f.length) f.push({ tone: 'good', title: 'No shipments in flight', body: 'Everything dispatched has been delivered.' })
   return { id: 'shipments', title: 'Shipments', page: 'shipments',
     tiles: [{ label: 'On-time rate', value: fin.length ? `${pct(fin.length - late.length, fin.length)}%` : '–', tone: late.length ? 'warn' : 'good', sub: `${fin.length} delivered` }, { label: 'In transit', value: String(live.length), sub: 'live tracking' }, { label: 'Exceptions', value: String(exc.length), tone: exc.length ? 'bad' : 'good', sub: 'need action' }],
-    findings: f, barsTitle: 'Loads by carrier', bars: Object.entries(by).map(([label, c]) => ({ label, v: c.n, color: c.bad ? '#f59e0b' : '#14a597' })) }
+    findings: f, barsTitle: 'Loads by carrier', bars: Object.entries(by).map(([label, c]) => ({ label, v: c.n, color: c.bad ? '#f59e0b' : '#6e5cef' })) }
 }
 
 export function recycling(t: number, role: Role): Section {
@@ -77,5 +77,5 @@ export function recycling(t: number, role: Role): Section {
   const by: Record<string, { ok: number; all: number }> = {}; st.forEach((x) => { by[x.c.carrier] ??= { ok: 0, all: 0 }; by[x.c.carrier].all++; if (x.done) by[x.c.carrier].ok++ })
   return { id: 'recycling', title: 'Recycling proof', page: 'provenance',
     tiles: [{ label: 'Proven recycled', value: `${kgOk} kg`, tone: 'good', sub: `${ok.length} load${ok.length === 1 ? '' : 's'}` }, { label: 'Not proven', value: `${kgBad} kg`, tone: kgBad ? 'bad' : 'good', sub: `${bad.length} broken chain${bad.length === 1 ? '' : 's'}` }, { label: 'CO₂e credit secured', value: `${Math.round(kgOk * 1.5)} kg`, sub: 'fibre-to-fibre, ISO 14040' }],
-    findings: f, barsTitle: 'Proof rate by carrier', bars: Object.entries(by).map(([label, c]) => ({ label, v: Math.round((c.ok / c.all) * 100), color: c.ok === c.all ? '#14a597' : '#e11d48' })) }
+    findings: f, barsTitle: 'Proof rate by carrier', bars: Object.entries(by).map(([label, c]) => ({ label, v: Math.round((c.ok / c.all) * 100), color: c.ok === c.all ? '#6e5cef' : '#e11d48' })) }
 }

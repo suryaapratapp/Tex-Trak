@@ -17,7 +17,7 @@ export default function Assets() {
     <Page title="Community assets" sub="Equipment in the community and where it is.">
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Assets tracked" value={rows.length} icon={<Radar size={15} />} sub="GNSS tier · LTE-M / BLE assist" />
-        <Kpi label="Value under watch" value={`£${value.toLocaleString()}`} icon={<Wallet size={15} />} sub="replacement cost" />
+        <Kpi label="Value under watch" value={`£${value.toLocaleString('en-GB')}`} icon={<Wallet size={15} />} sub="replacement cost" />
         <Kpi label="Off-site now" value={off} tone={off ? 'bad' : 'good'} icon={<ShieldAlert size={15} />} sub="outside its permitted area" />
         <Kpi label="In transit" value={rows.filter((r) => r.st.mode === 'in_transit').length} icon={<Truck size={15} />} sub="inherit courier GNSS" />
       </div>

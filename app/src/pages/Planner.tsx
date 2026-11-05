@@ -101,7 +101,7 @@ function HospitalView() {
               <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-stone-100"><div className="h-full rounded-full" style={{ width: `${Math.min(100, (d.n / d.par) * 100)}%`, background: ok ? '#10b981' : d.n === 0 ? '#e11d48' : '#f59e0b' }} /></div></li>) })}</ul></Card>
       </div>
       <Card className="mt-4"><CardHead title="Clean items on the shelves through the day" sub="Falls as items go into use, refills with each delivery" />
-        <div className="h-[220px] p-3"><ResponsiveContainer><AreaChart data={series}><CartesianGrid strokeDasharray="3 3" stroke="#e5ebf2" /><XAxis dataKey="h" tick={{ fontSize: 10 }} interval={3} /><YAxis tick={{ fontSize: 10 }} /><Tooltip /><Area dataKey="stock" name="Clean items" stroke="#0b877d" fill="#14a59733" strokeWidth={2} /></AreaChart></ResponsiveContainer></div></Card>
+        <div className="h-[220px] p-3"><ResponsiveContainer><AreaChart data={series}><CartesianGrid strokeDasharray="3 3" stroke="#e5ebf2" /><XAxis dataKey="h" tick={{ fontSize: 10 }} interval={3} /><YAxis tick={{ fontSize: 10 }} /><Tooltip /><Area dataKey="stock" name="Clean items" stroke="#5a46e0" fill="#6e5cef33" strokeWidth={2} /></AreaChart></ResponsiveContainer></div></Card>
     </>)
 }
 

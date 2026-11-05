@@ -68,17 +68,21 @@ Instructions for whoever holds the physical device: [`docs/TOM_SETUP.md`](docs/T
 - Next: persist simulated events to Postgres, mobile QR-scan PWA, RFID reader webhooks, multi-tenant orgs, ML ETA/loss models, EU digital product passport export.
 
 
-## Accounts and roles
+## Accounts, clients and access
 
-The demo has three accounts, switched from the bottom of the sidebar:
+There is one sign-in profile for now: **Super Admin**, who sees every client, site and feature. The two demo clients are **Synergy** (curtain tracking by QR, plus shipments and recycling proof) and **Client A** (community assets, shipments and recycling proof).
 
-| Account | Sees |
-|---|---|
-| **Synergy** | Laundry arrivals, inventory, curtain installations, shipments, recycling proof, facilities |
-| **Client A** | Community assets, shipments, recycling proof |
-| **Super Admin** | Everything, plus the admin console: clients, every site, every RFID reader, UK map, trackers |
+In **Super Admin → Clients**, every feature can be switched on or off per client, either a whole module or an individual page. **Preview what Synergy sees** opens the app exactly as that client's users would see it.
 
-Site, client and reader data lives in `app/src/sim/registry.ts`; the UK network (hospitals, decon plants, recyclers, ports, incinerators) is defined there.
+Client, site and reader data lives in `app/src/sim/registry.ts`; the UK network of hospitals, decon plants, recyclers, ports and incinerators is defined there.
+
+## Curtains (QR) for Synergy
+
+Based on the Synergy Tracking Service. Hospital → floor → ward → bay locations, and these tools:
+
+- **Install**, **Take down** (swap the old curtain for a new one in one flow), **Products**, **Register labels**, **QR labels** (generate, export and print label sheets with never-reused serial numbers), **Locations** (CSV import and export), **Reports**, **Users and settings** (change-due window and accounts), **Dashboard**.
+
+This section currently keeps its data in the browser. Connecting it to the Synergy Supabase project is the next step for shared, multi-user use.
 
 ## The four use cases
 
@@ -88,3 +92,6 @@ Site, client and reader data lives in `app/src/sim/registry.ts`; the UK network 
 4. **Recycling proof** – declared destination versus the geofence the truck is really in; printable evidence certificate.
 
 Field staff use **Scan station**; everyone else works from the dashboards.
+
+---
+Developed by CIRCAI LTD.

@@ -13,7 +13,7 @@ function Roi() {
   const loss = lossBefore - lossAfter, labour = hours * 52 * 18, cost = beds * fee * 12, net = loss + labour - cost
   const payback = net > 0 ? Math.max(0.5, (cost * 0.5) / ((loss + labour) / 12)) : 0
   const co2 = (beds * 150 * 3.4) / 1000
-  const money = (n: number) => `£${Math.round(n).toLocaleString()}`
+  const money = (n: number) => `£${Math.round(n).toLocaleString('en-GB')}`
   const Slider = ({ l, v, set, min, max, step = 1, fmt = (x: number) => String(x) }: { l: string; v: number; set: (n: number) => void; min: number; max: number; step?: number; fmt?: (x: number) => string }) => (
     <label className="block"><div className="flex justify-between text-[13px] font-bold text-stone-700"><span>{l}</span><span className="text-stone-900">{fmt(v)}</span></div><input type="range" min={min} max={max} step={step} value={v} onChange={(e) => set(+e.target.value)} className="mt-1 w-full accent-cyan-600" /></label>)
   return (
@@ -60,7 +60,7 @@ export default function Esg() {
         <Kpi label="CO₂e avoided today (pilot)" value={`${co2.toFixed(0)} kg`} tone="good" icon={<Leaf size={15} />} sub={`≈ ${annual.toFixed(0)} t / yr projected for a 300-bed hospital`} />
         <Kpi label="Water avoided" value={`${water.toFixed(0)} L`} icon={<Droplets size={15} />} sub="net of laundering" />
         <Kpi label="Verified recycled" value={`${verifiedKg} kg`} tone="good" icon={<Recycle size={15} />} sub={unverifiedKg ? `${unverifiedKg} kg withheld — chain broken` : 'chain-of-custody certified'} />
-        <Kpi label="Shrinkage" value={`${((missing / snap.loc.length) * 100).toFixed(1)}%`} tone={missing ? 'warn' : 'good'} icon={<PackageCheck size={15} />} sub={`£${invValue.toLocaleString()} sample inventory · baseline 10–20%/yr`} />
+        <Kpi label="Shrinkage" value={`${((missing / snap.loc.length) * 100).toFixed(1)}%`} tone={missing ? 'warn' : 'good'} icon={<PackageCheck size={15} />} sub={`£${invValue.toLocaleString('en-GB')} sample inventory · baseline 10–20%/yr`} />
       </div>
       <Roi />
       <div className="grid gap-4 xl:grid-cols-3">

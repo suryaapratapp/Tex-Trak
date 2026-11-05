@@ -55,7 +55,7 @@ export default function FleetMap() {
                 {onboard.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{onboard.slice(0, 12).map((o) => { const it = w.items[snap.loc.indexOf(o)]; return <Chip key={it.id} tone="cyan">{it.qr.slice(3)}</Chip> })}{onboard.length > 12 && <Chip>+{onboard.length - 12}</Chip>}</div>}</div>
               {(st.atSite === 'HOSP' || st.atSite === 'DECON') && <button onClick={() => { set({ twin: st.atSite === 'HOSP' ? 'H' : 'D' }); go('twin') }} className="flex w-full items-center justify-center gap-2 rounded-lg bg-ink-900 px-3 py-2 text-sm font-medium text-white hover:bg-ink-800"><Building2 size={15} /> Follow the cages inside {SITES[st.atSite].short}</button>}
             </div></Card>
-          {live && <Card><CardHead title="Physical TAT240 · live" sub="IMEI 862129084785066" /><div className="p-4 text-xs text-slate-600">Fix {new Date(live.ts).toLocaleTimeString()} · {live.lat.toFixed(5)}, {live.lng.toFixed(5)} · {Math.round(live.speed_kmh)} km/h</div></Card>}
+          {live && <Card><CardHead title="Physical TAT240 · live" sub="IMEI 862129084785066" /><div className="p-4 text-xs text-slate-600">Fix {new Date(live.ts).toLocaleTimeString('en-GB')} · {live.lat.toFixed(5)}, {live.lng.toFixed(5)} · {Math.round(live.speed_kmh)} km/h</div></Card>}
         </div>
       </div>
       <Card className="mt-4"><CardHead title="GNSS events" sub="Geofence entries / exits from all trackers" /><EventFeed limit={8} filter={(e) => e.src === 'GNSS'} /></Card>

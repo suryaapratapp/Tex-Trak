@@ -21,7 +21,7 @@ function Block({ s, n }: { s: Section; n: string }) {
       <div className="space-y-2 p-4">{[...s.findings].sort((a, b) => RANK[a.tone] - RANK[b.tone]).slice(0, 4).map((f, i) => (
         <button key={i} onClick={() => f.page && go(f.page)} className={`flex w-full gap-3 rounded-2xl p-3 text-left ${TONE[f.tone].bg}`}><span className="mt-0.5 shrink-0">{TONE[f.tone].icon}</span><span><span className="block text-[13.5px] font-extrabold text-stone-900">{f.title}</span><span className="block text-xs leading-snug text-stone-600">{f.body}</span></span></button>))}</div>
       {s.bars && <div className="border-t border-stone-100 p-4"><div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-stone-400">{s.barsTitle}</div>
-        <div className="space-y-1.5">{s.bars.map((b) => <div key={b.label} className="flex items-center gap-3 text-xs"><span className="w-28 shrink-0 truncate font-semibold text-stone-600">{b.label}</span><div className="h-2.5 flex-1 overflow-hidden rounded-full bg-stone-100"><div className="h-full rounded-full" style={{ width: `${(b.v / max) * 100}%`, background: b.color ?? '#14a597' }} /></div><span className="mono w-10 text-right text-stone-700">{b.v}</span></div>)}</div></div>}
+        <div className="space-y-1.5">{s.bars.map((b) => <div key={b.label} className="flex items-center gap-3 text-xs"><span className="w-28 shrink-0 truncate font-semibold text-stone-600">{b.label}</span><div className="h-2.5 flex-1 overflow-hidden rounded-full bg-stone-100"><div className="h-full rounded-full" style={{ width: `${(b.v / max) * 100}%`, background: b.color ?? '#6e5cef' }} /></div><span className="mono w-10 text-right text-stone-700">{b.v}</span></div>)}</div></div>}
     </Card>)
 }
 

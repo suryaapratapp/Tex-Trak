@@ -4,20 +4,20 @@
 @theme {
   --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  /* deep navy neutrals */
-  --color-stone-50: #f7f9fc; --color-stone-100: #eef2f8; --color-stone-200: #dde5f0; --color-stone-300: #c3cfe0; --color-stone-400: #8fa1bb;
-  --color-stone-500: #62758f; --color-stone-600: #475a75; --color-stone-700: #2f425c; --color-stone-800: #1a2c47; --color-stone-900: #0b1b33;
-  --color-slate-50: #f7f9fc; --color-slate-100: #eef2f8; --color-slate-200: #dde5f0; --color-slate-300: #c3cfe0; --color-slate-400: #8fa1bb;
-  --color-slate-500: #62758f; --color-slate-600: #475a75; --color-slate-700: #2f425c; --color-slate-800: #1a2c47; --color-slate-900: #0b1b33;
-  /* teal brand */
-  --color-cyan-50: #effcf9; --color-cyan-100: #d3f6ef; --color-cyan-200: #a8ebe0; --color-cyan-300: #6fd9cb; --color-cyan-400: #34c1b1;
-  --color-cyan-500: #14a597; --color-cyan-600: #0b877d; --color-cyan-700: #0a6c65; --color-cyan-800: #0b5752; --color-cyan-900: #0a4743;
   --text-xs: 0.8125rem; --text-xs--line-height: 1.2rem; --text-sm: 0.9375rem; --text-sm--line-height: 1.45rem;
-  --color-ink-950: #06122a; --color-ink-900: #0b1b33; --color-ink-800: #1a2c47; --color-ink-700: #2f425c;
+  /* cool ink neutrals */
+  --color-stone-50: #f8f9fc; --color-stone-100: #f1f3f9; --color-stone-200: #e4e8f1; --color-stone-300: #cdd3e2; --color-stone-400: #99a2b8;
+  --color-stone-500: #6b7590; --color-stone-600: #4d566f; --color-stone-700: #363e55; --color-stone-800: #232a3f; --color-stone-900: #131a2e;
+  --color-slate-50: #f8f9fc; --color-slate-100: #f1f3f9; --color-slate-200: #e4e8f1; --color-slate-300: #cdd3e2; --color-slate-400: #99a2b8;
+  --color-slate-500: #6b7590; --color-slate-600: #4d566f; --color-slate-700: #363e55; --color-slate-800: #232a3f; --color-slate-900: #131a2e;
+  /* iris brand (replaces the old teal) */
+  --color-cyan-50: #f3f2ff; --color-cyan-100: #e8e6ff; --color-cyan-200: #d3cffe; --color-cyan-300: #b3abfc; --color-cyan-400: #8f82f7;
+  --color-cyan-500: #6e5cef; --color-cyan-600: #5a46e0; --color-cyan-700: #4838c0; --color-cyan-800: #3a2f98; --color-cyan-900: #2e2777;
+  --color-ink-950: #0b1020; --color-ink-900: #131a2e; --color-ink-800: #232a3f; --color-ink-700: #363e55;
 }
 html, body, #root { height: 100%; }
-body { font-family: var(--font-sans); background: #f4f7fa; color: #0b1b33; -webkit-font-smoothing: antialiased; line-height: 1.5; }
-.leaflet-container { font-family: var(--font-sans); background: #e6edf6; }
+body { font-family: var(--font-sans); background: #f5f6fb; color: #131a2e; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+.leaflet-container { font-family: var(--font-sans); background: #e8ebf4; }
 .veh-icon { transition: transform .1s linear; }
 .pulse-ring { animation: pr 1.6s ease-out infinite; transform-origin: center; transform-box: fill-box; }
 @keyframes pr { 0% { transform: scale(.6); opacity: .9 } 100% { transform: scale(2.6); opacity: 0 } }
@@ -31,7 +31,7 @@ body { font-family: var(--font-sans); background: #f4f7fa; color: #0b1b33; -webk
 @media print {
   #root { display: none !important; }
   .print-only { display: block !important; }
-  body { background: #fff !important; }
+  body { font-family: var(--font-sans); background: #f5f6fb; color: #131a2e; -webkit-font-smoothing: antialiased; line-height: 1.5; }
   @page { margin: 14mm; }
 }
 
@@ -53,3 +53,4 @@ body { font-family: var(--font-sans); background: #f4f7fa; color: #0b1b33; -webk
 .card ol > li { padding-bottom: 1.1rem; }
 main { scroll-behavior: smooth; }
 button { cursor: pointer; }
+.scroll-dark::-webkit-scrollbar { width: 6px } .scroll-dark::-webkit-scrollbar-thumb { background: #363e55; border-radius: 8px }

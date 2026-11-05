@@ -37,7 +37,7 @@ function RouteSvg({ c }: { c: Consignment }) {
   const X = (lng: number) => pad + (lng - lng0) * k * sc, Y = (lat: number) => H - pad - (lat - lat0) * sc
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: 8, background: '#f8fafc' }}>
-      <polyline points={pts.map((p) => `${X(p[1])},${Y(p[0])}`).join(' ')} fill="none" stroke="#0b877d" strokeWidth="3" strokeLinejoin="round" />
+      <polyline points={pts.map((p) => `${X(p[1])},${Y(p[0])}`).join(' ')} fill="none" stroke="#5a46e0" strokeWidth="3" strokeLinejoin="round" />
       {near.map((s) => { const bad = s.restricted; return (
         <g key={s.id}><circle cx={X(s.pos[1])} cy={Y(s.pos[0])} r={bad ? 9 : 7} fill={bad ? '#fecdd3' : s.id === c.to ? '#bbf7d0' : '#e2e8f0'} stroke={bad ? '#be123c' : '#0b1b33'} strokeWidth="2" />
           <text x={X(s.pos[1])} y={Y(s.pos[0]) - 13} fontSize="11" fontWeight="700" textAnchor="middle" fill={bad ? '#9f1239' : '#0b1b33'}>{s.short}</text></g>) })}
@@ -52,9 +52,9 @@ function Certificate({ c, verdict, onDone }: { c: Consignment; verdict: Verdict;
   const cell: React.CSSProperties = { border: '1px solid #cbd5e1', padding: '5px 8px', fontSize: 11, textAlign: 'left', verticalAlign: 'top' }
   return createPortal(
     <div className="print-only" style={{ fontFamily: 'Manrope, Arial, sans-serif', color: '#0b1b33', maxWidth: 760, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '3px solid #0b877d', paddingBottom: 10 }}>
-        <div><div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 800, color: '#0b877d' }}>TEX-TRAK · THROUGH-LIFE PROVENANCE</div><div style={{ fontSize: 24, fontWeight: 800, marginTop: 2 }}>Recycling evidence certificate</div></div>
-        <div style={{ textAlign: 'right', fontSize: 11 }}><div style={{ fontWeight: 800, fontSize: 15 }}>{c.ref}</div><div>Issued {new Date().toLocaleString()}</div></div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '3px solid #5a46e0', paddingBottom: 10 }}>
+        <div><div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 800, color: '#5a46e0' }}>TEX-TRAK · THROUGH-LIFE PROVENANCE</div><div style={{ fontSize: 24, fontWeight: 800, marginTop: 2 }}>Recycling evidence certificate</div></div>
+        <div style={{ textAlign: 'right', fontSize: 11 }}><div style={{ fontWeight: 800, fontSize: 15 }}>{c.ref}</div><div>Issued {new Date().toLocaleString('en-GB')}</div></div>
       </div>
       <div style={{ margin: '14px 0', padding: '10px 14px', border: `2px solid ${col}`, borderRadius: 8, color: col, fontWeight: 800, fontSize: 16, letterSpacing: 1 }}>{verdict.label}
         <span style={{ fontWeight: 600, fontSize: 12, marginLeft: 12, color: '#0b1b33' }}>{verdict.tone === 'ok' ? 'Load reached the declared recycler and was received.' : verdict.tone === 'bad' ? 'Load did not reach the declared recycler. Certificate withheld.' : 'Journey still in progress.'}</span></div>
