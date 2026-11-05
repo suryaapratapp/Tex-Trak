@@ -6,6 +6,7 @@ import { fmtT, fusion, getWorld, SCANNERS, scannerAt } from '../sim/engine'
 import { useSnap } from '../sim/snap'
 import { insights } from '../lib/insights'
 import { go, useStore } from '../store'
+import { Tour } from '../components/Tour'
 
 const TONE: Record<string, string> = { info: 'border-sky-200 bg-sky-50/60', warn: 'border-amber-200 bg-amber-50/70', bad: 'border-rose-200 bg-rose-50/80', good: 'border-emerald-200 bg-emerald-50/60' }
 export default function Command() {
@@ -20,7 +21,8 @@ export default function Command() {
   const ins = insights(t, snap)
   const sc = SCANNERS.map((s) => scannerAt(w.legs, s, t))
   return (
-    <Page title="Command Centre" sub="One verified data thread from point of use to end of life — QR, RFID and GNSS fused.">
+    <Page title="Overview" sub="Reusable hospital textiles and equipment, tracked from the plant to the ward and back — using QR codes, door-way RFID readers and GPS on the trucks.">
+      <Tour />
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-6">
         <Kpi label="Tagged items" value={snap.loc.length + SCANNERS.length} sub={`${snap.loc.length} textiles · ${SCANNERS.length} high-value`} icon={<Boxes size={15} />} />
         <Kpi label="Vehicles moving" value={`${moving}/4`} sub="Teltonika TAT240 fleet" icon={<Truck size={15} />} />

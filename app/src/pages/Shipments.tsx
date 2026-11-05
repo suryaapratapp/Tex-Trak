@@ -39,13 +39,13 @@ export default function Shipments() {
           <ul className="divide-y divide-slate-100">{list.map((x) => { const vv = view(x, t, snap); return (
             <li key={x.ref}><button onClick={() => set({ selShip: x.ref })} className={`w-full px-4 py-3 text-left ${c.ref === x.ref ? 'bg-cyan-50/60' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center justify-between"><span className="text-[13px] font-semibold text-slate-900">{x.ref}</span><Chip tone={tone(vv.status)}>{vv.status}</Chip></div>
-              <div className="mt-0.5 text-xs text-slate-500">{SITES[x.from].short} → {SITES[x.to].short} · {x.items} items</div><div className="mt-2"><Bar v={vv.progress} color={vv.exception ? '#e11d48' : '#06b6d4'} /></div></button></li>) })}</ul></Card>
+              <div className="mt-0.5 text-xs text-slate-500">{SITES[x.from].short} → {SITES[x.to].short} · {x.items} items</div><div className="mt-2"><Bar v={vv.progress} color={vv.exception ? '#e11d48' : '#1c1917'} /></div></button></li>) })}</ul></Card>
         <div className="space-y-4">
           <Card><div className="flex flex-wrap items-start justify-between gap-4 p-5">
             <div><div className="flex items-center gap-2"><Package size={18} className="text-cyan-600" /><h2 className="text-lg font-semibold text-slate-900">{c.ref}</h2><Chip tone={tone(v.status)}>{v.status}</Chip></div><p className="mt-1 text-sm text-slate-600">{c.desc}</p><p className="mt-0.5 text-xs text-slate-500">Carrier: {c.carrier}{c.veh ? ` · ${VEH_BY_ID[c.veh].reg} · ${VEH_BY_ID[c.veh].driver}` : ''}</p></div>
             <div className="text-right"><div className="text-[11px] uppercase tracking-wider text-slate-500">{v.status === 'delivered' ? 'Delivered' : 'Estimated arrival'}</div><div className="mono text-3xl font-semibold tracking-tight text-slate-900">{v.exception ? '—' : fmtT(v.eta).slice(0, 5)}</div>
               <div className={`text-xs font-medium ${v.exception ? 'text-rose-600' : v.delay > 8 ? 'text-amber-600' : 'text-emerald-600'}`}>{v.exception ? 'will not arrive' : `${v.delay >= 0 ? '+' : ''}${Math.round(v.delay)} min vs plan${t < v.eta ? ` · in ${fmtDur(v.eta - t)}` : ''}`}</div></div></div>
-            <div className="px-5 pb-5"><div className="mb-1 flex items-center justify-between text-xs text-slate-500"><span className="flex items-center gap-1"><MapPin size={12} />{SITES[c.from].name}</span><span>{SITES[c.to].name}</span></div><Bar v={v.progress} color={v.exception ? '#e11d48' : '#06b6d4'} h={10} /></div></Card>
+            <div className="px-5 pb-5"><div className="mb-1 flex items-center justify-between text-xs text-slate-500"><span className="flex items-center gap-1"><MapPin size={12} />{SITES[c.from].name}</span><span>{SITES[c.to].name}</span></div><Bar v={v.progress} color={v.exception ? '#e11d48' : '#1c1917'} h={10} /></div></Card>
           <div className="grid gap-4 lg:grid-cols-2">
             <Card><CardHead title="Tracking history" />
               <ol className="p-4">{v.steps.map((s, i) => { const d = s.t <= t; return (<li key={i} className="relative flex gap-3 pb-4 last:pb-0">

@@ -45,6 +45,18 @@ scanner leaving site, evening collection, decon processing…).
 
 > TAT240 I/O element IDs (battery, signal) differ from FMB-series — verify against the Teltonika wiki and adjust the mapping in the edge function.
 
+## Deploy the dashboard on Vercel
+`vercel.json` (repo root) publishes the `app/` service. Import the repo in Vercel (or `vercel` / `vercel dev`) — no env vars required
+(the Supabase URL + publishable key default in code; override with `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
+The TAT240 **gateway is not on Vercel**: it needs a raw TCP socket, which Vercel Functions can't accept. Host it with `gateway/Dockerfile` / `gateway/fly.toml`.
+
+## Testing the tracker pipeline without the device
+```bash
+cd gateway && npm test                                  # simulated TAT240 -> gateway -> mock ingest
+npm run simulate -- <gateway-host> 5027 862129084785066 20   # drive the real pipeline; Devices page checklist turns green
+```
+Instructions for whoever holds the physical device: [`docs/TOM_SETUP.md`](docs/TOM_SETUP.md).
+
 ## Notes / roadmap
 - The demo world is simulated deterministically on the client so every scenario is repeatable; live hardware overlays on top of it.
 - RLS currently allows anonymous **read** for demo dashboards; all writes go through the service-role edge function. Add Supabase Auth + per-organisation policies before production.

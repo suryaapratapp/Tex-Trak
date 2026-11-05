@@ -13,6 +13,15 @@ export default function Devices() {
   const readers = [...PLANS.H.readers.map((r) => ({ ...r, site: 'Royal Meridian Hospital' })), ...PLANS.D.readers.map((r) => ({ ...r, site: 'Decon Plant' }))]
   return (
     <Page title="Devices & Integrations" sub="Physical hardware under test, ingestion path and platform health.">
+      <Card className="mb-4"><CardHead title="Remote test checklist" sub="Share this page’s public link with whoever has the tracker — each check turns green by itself when real data arrives." />
+        <div className="grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-3">{[
+          ['Database reachable', db === 'ok'],
+          ['First message received from the tracker', count > 0],
+          ['Message is recent (last 30 min)', !!fix && Date.now() - new Date(fix.ts).getTime() < 30 * 60e3],
+          ['Valid GPS fix (satellites locked)', !!fix && fix.fix_valid !== false && !(fix.lat === 0 && fix.lng === 0)],
+          ['Movement detected (speed > 0)', !!fix && fix.speed_kmh > 0],
+          ['Battery level reported', !!fix && !!fix.battery_mv],
+        ].map(([l, ok]) => <div key={l as string} className={`flex items-center gap-3 rounded-xl border p-3 text-sm font-semibold ${ok ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-stone-200 bg-stone-50 text-stone-500'}`}><CheckCircle2 size={18} className={ok ? 'text-emerald-600' : 'text-stone-300'} />{l as string}</div>)}</div></Card>
       <div className="grid gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-2"><CardHead title="Teltonika TAT240 — LTE/GNSS terminal" sub="Model TAT240-QJIB0 · Bluetooth · internal Li-SOCl₂ 7.2 V 2200 mAh" right={<Chip tone={fix ? 'green' : 'amber'}>{fix ? 'reporting' : 'awaiting first fix'}</Chip>} />
           <div className="grid gap-4 p-4 md:grid-cols-[220px_1fr]">

@@ -1,1 +1,2 @@
-{ "name": "textrak-gateway", "version": "0.1.0", "type": "module", "private": true, "scripts": { "start": "node src/server.mjs", "test": "node src/selftest.mjs" } }
+{ "name": "textrak-gateway", "version": "0.2.0", "type": "module", "private": true,
+  "scripts": { "start": "node src/server.mjs", "test": "node src/selftest.mjs && node src/e2e.mjs", "simulate": "node src/simulate.mjs" } }

@@ -91,7 +91,7 @@ export default function Lifecycle() {
                 <div className="mt-2 text-[11px] leading-snug text-slate-500"><b className="text-slate-700">{fu.tier}.</b> {fu.method}{fu.pos ? ` · ${fu.pos[0].toFixed(4)}, ${fu.pos[1].toFixed(4)}` : ''}</div></div>
               <div className="rounded-xl border border-slate-200 p-3 text-xs"><div className="font-semibold text-slate-700">Asset record</div>
                 {[['EPC (Gen2)', it.epc], ['Cycles', `${loc.cycles} / ${it.type.maxCycles}`], ['Unit value', `£${it.type.unitValue}`], ['Cage (clean)', it.cageIn], ['Cage (dirty)', it.cageOut]].map(([a, b]) => <div key={a} className="mt-1.5 flex justify-between"><span className="text-slate-500">{a}</span><span className="mono text-slate-900">{b}</span></div>)}
-                <div className="mt-2"><Bar v={loc.cycles / it.type.maxCycles} color={loc.cycles / it.type.maxCycles > 0.9 ? '#e11d48' : '#06b6d4'} /></div></div>
+                <div className="mt-2"><Bar v={loc.cycles / it.type.maxCycles} color={loc.cycles / it.type.maxCycles > 0.9 ? '#e11d48' : '#1c1917'} /></div></div>
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900"><div className="flex items-center gap-1.5 font-semibold"><Leaf size={13} /> Lifetime saving vs single-use</div><div className="mt-1 text-lg font-semibold">{co2.toFixed(0)} kg CO₂e</div><div className="text-emerald-800/80">{loc.cycles} cycles · ISO 14040 functional unit: 1 clinical use</div></div>
               {it.missing && t >= it.missing.t && <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900"><b>Unaccounted for.</b> {it.missing.reason}. Last known: {ZONE_NAME[it.missing.lastZone]}.</div>}
             </div>
