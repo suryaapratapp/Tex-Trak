@@ -11,9 +11,9 @@ export const STATUS: Record<CStatus, { label: string; color: string; short: stri
   reprocessing: { label: 'Reprocessing', short: 'Reprocessing', color: '#ec4899' },
 }
 export const WARDS = [
-  { f: 3, code: 'ICU', name: 'ICU', n: 6 }, { f: 3, code: 'MAT', name: 'Maternity', n: 6 },
-  { f: 2, code: '3A', name: 'Ward 3A', n: 8 }, { f: 2, code: '3B', name: 'Ward 3B', n: 8 },
-  { f: 1, code: 'AE', name: 'A&E', n: 6 }, { f: 1, code: 'OPD', name: 'Outpatients', n: 4 },
+  { f: 3, code: '3A', name: 'Ward 3A', n: 6 }, { f: 3, code: '3B', name: 'Ward 3B', n: 6 },
+  { f: 2, code: '2A', name: 'Ward 2A', n: 8 }, { f: 2, code: '2B', name: 'Ward 2B', n: 8 },
+  { f: 1, code: '1A', name: 'Surgical Ward 1A', n: 8 }, { f: 1, code: '1B', name: 'Cardiology 1B', n: 6 },
 ]
 export interface Bay { id: string; floor: number; wardCode: string; ward: string; n: number; label: string }
 export const BAYS: Bay[] = WARDS.flatMap((w) => Array.from({ length: w.n }, (_, i) => ({ id: `F${w.f}-${w.code}-B${String(i + 1).padStart(2, '0')}`, floor: w.f, wardCode: w.code, ward: w.name, n: i + 1, label: `${w.name} · Bay ${i + 1}` })))
@@ -36,7 +36,7 @@ export const MODES: Record<Mode, { label: string; dir: string; blurb: string }> 
 
 function seed(): { curtains: Record<string, Curtain>; seedTs: number } {
   const now = Date.now(); const curtains: Record<string, Curtain> = {}
-  BAYS.forEach((b, i) => { const id = `CUR-${1001 + i}`; const age = b.floor === JOB_FLOOR ? 29 + (i % 5) : 3 + ((i * 7) % 22); curtains[id] = { id, type: b.wardCode === 'ICU' ? 'Privacy screen' : 'Bed curtain', cycles: 3 + ((i * 5) % 15), status: 'installed', bay: b.id, installedAt: now - age * DAY } })
+  BAYS.forEach((b, i) => { const id = `CUR-${1001 + i}`; const age = b.floor === JOB_FLOOR ? 29 + (i % 5) : 3 + ((i * 7) % 22); curtains[id] = { id, type: b.wardCode === '3A' ? 'Privacy screen' : 'Bed curtain', cycles: 3 + ((i * 5) % 15), status: 'installed', bay: b.id, installedAt: now - age * DAY } })
   for (let i = 0; i < 40; i++) { const id = `CUR-${2001 + i}`; curtains[id] = { id, type: i % 9 === 8 ? 'Window curtain' : 'Bed curtain', cycles: 2 + (i % 9), status: i < 16 ? 'on_site' : 'stock' } }
   for (let i = 0; i < 12; i++) { const id = `CUR-${3001 + i}`; curtains[id] = { id, type: 'Bed curtain', cycles: 5 + i, status: 'reprocessing' } }
   return { curtains, seedTs: now }
@@ -110,7 +110,7 @@ export const useInst = create<S>()(persist((set, get) => ({
     cs[cid] = { ...c, status: 'reprocessing' }
     return out({ level: 'ok', title: 'Received at facility', detail: `${c.id} has gone into reprocessing.`, curtain: c.id, next: 'Scan the next curtain' }, { curtains: cs })
   },
-}), { name: 'textrak-install-v1', version: 1 }))
+}), { name: 'textrak-install-v2', version: 1 }))
 
 export const ageDays = (c: Curtain) => (c.installedAt ? (Date.now() - c.installedAt) / DAY : 0)
 export const isDue = (c: Curtain) => c.status === 'installed' && ageDays(c) >= DUE_DAYS

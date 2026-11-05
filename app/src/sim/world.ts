@@ -11,6 +11,8 @@ export const SITES: Record<string, Site> = {
   RECY: { id: 'RECY', name: 'GreenLoop Textile Recycling', short: 'Recycler', kind: 'recycler', pos: [51.533, 0.145], radius: 450, address: 'Dagenham, London RM9' },
   PORT: { id: 'PORT', name: 'Port of Tilbury (export terminal)', short: 'Tilbury Port', kind: 'port', pos: [51.454, 0.357], radius: 1100, restricted: true, address: 'Tilbury, Essex RM18' },
   INCIN: { id: 'INCIN', name: 'Edmonton EcoPark (incineration)', short: 'Incinerator', kind: 'incinerator', pos: [51.6155, -0.0495], radius: 300, restricted: true, address: 'Edmonton, London N18' },
+  PORT2: { id: 'PORT2', name: 'London Gateway Port (export terminal)', short: 'London Gateway', kind: 'port', pos: [51.5047, 0.4909], radius: 900, restricted: true, address: 'Stanford-le-Hope, Essex SS17' },
+  INCIN2: { id: 'INCIN2', name: 'Riverside Resource Recovery (incineration)', short: 'Riverside EfW', kind: 'incinerator', pos: [51.4985, 0.1535], radius: 350, restricted: true, address: 'Belvedere, London SE2' },
   HUB: { id: 'HUB', name: 'NHS Regional Logistics Hub', short: 'Logistics Hub', kind: 'hub', pos: [51.541, -0.003], radius: 250, address: 'Stratford, London E15' },
   COMM: { id: 'COMM', name: 'Camden Community Clinic', short: 'Camden Clinic', kind: 'community', pos: [51.5415, -0.143], radius: 150, address: 'Camden, London NW1' },
 }
@@ -40,7 +42,7 @@ const z = (id: string, name: string, x: number, y: number, w: number, h: number,
 const hz: PZone[] = [
   z('THEATRES', 'Operating Theatres', 100, 50, 230, 240, 'clinical', [215, 290]),
   z('ICU', 'Intensive Care', 340, 50, 200, 240, 'clinical', [440, 290]),
-  z('WARD', 'Ward 3A', 550, 50, 220, 240, 'clinical', [660, 290]),
+  z('WARD', 'General Ward', 550, 50, 220, 240, 'clinical', [660, 290]),
   z('MAT', 'Maternity', 780, 50, 240, 240, 'clinical', [900, 290]),
   z('DOCK', 'Goods-In Dock', 100, 350, 180, 240, 'dock', [190, 350]),
   z('LINEN', 'Clean Linen Store', 290, 350, 150, 240, 'store', [365, 350]),
@@ -69,7 +71,7 @@ export const HOSPITAL_PLAN: Plan = {
     { id: 'R-CAGE', at: [540, 520], label: 'Cage bay (in-cage)', zone: 'DIRTY' },
     { id: 'R-THEA', at: [215, 290], label: 'Theatres entrance', zone: 'THEATRES' },
     { id: 'R-ICU', at: [440, 290], label: 'ICU entrance', zone: 'ICU' },
-    { id: 'R-WARD', at: [660, 290], label: 'Ward 3A entrance', zone: 'WARD' },
+    { id: 'R-WARD', at: [660, 290], label: 'General ward entrance', zone: 'WARD' },
     { id: 'R-MAT', at: [900, 290], label: 'Maternity entrance', zone: 'MAT' },
     { id: 'R-AE', at: [735, 350], label: 'A&E entrance', zone: 'AE' },
     { id: 'R-OPD', at: [930, 350], label: 'Outpatients entrance', zone: 'OPD' },
@@ -135,7 +137,7 @@ export const VEHICLES: Vehicle[] = [
   { id: 'V1', reg: 'DP71 TRK', driver: 'Marcus Hale', imei: '862129084785066', simulated: false, role: 'Laundry shuttle (Decon ⇄ Hospital)', color: '#0ea5e9', model: 'Teltonika TAT240' },
   { id: 'V2', reg: 'LN22 GRL', driver: 'Priya Nair', imei: '862129084785074', simulated: true, role: 'Recycling run · RCY-A', color: '#16a34a', model: 'Teltonika TAT240' },
   { id: 'V3', reg: 'BX19 HLT', driver: 'Dmitri Volkov', imei: '862129084785082', simulated: true, role: 'Recycling run · RCY-B', color: '#e11d48', model: 'Teltonika TAT240' },
-  { id: 'V4', reg: 'YC70 CRR', driver: 'Sam Okoro', imei: '862129084785090', simulated: true, role: 'Courier · asset loan delivery', color: '#9333ea', model: 'Teltonika TAT240' },
+  { id: 'V4', reg: 'YC70 CRR', driver: 'Sam Okoro', imei: '862129084785090', simulated: true, role: 'Courier · loans & clinic recycling', color: '#9333ea', model: 'Teltonika TAT240' },
   { id: 'V5', reg: 'SY24 CRT', driver: 'Amir Syed', imei: '862129084785108', simulated: true, role: 'Synergy curtain run', color: '#0d9488', model: 'Teltonika TAT240' },
 ]
 export const VEH_BY_ID = Object.fromEntries(VEHICLES.map((v) => [v.id, v]))

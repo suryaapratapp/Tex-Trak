@@ -14,8 +14,11 @@ import Devices from './pages/Devices'
 import Inventory from './pages/Inventory'
 import Installations from './pages/Installations'
 import ItemJourney from './pages/ItemJourney'
+import Admin from './pages/Admin'
+import Scan from './pages/Scan'
+import Insights from './pages/Insights'
 
-const PAGES: Record<string, () => React.ReactElement> = { command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, devices: Devices, inventory: Inventory, install: Installations, item: ItemJourney }
+const PAGES: Record<string, () => React.ReactElement> = { admin: Admin, scan: Scan, insights: Insights, command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, devices: Devices, inventory: Inventory, install: Installations, item: ItemJourney }
 export default function App() {
   const page = useStore((s) => s.page)
   const P = PAGES[page] ?? Command

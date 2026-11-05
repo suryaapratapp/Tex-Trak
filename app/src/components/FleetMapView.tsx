@@ -6,14 +6,19 @@ import { ROUTES, SITES, VEH_BY_ID } from '../sim/world'
 import { useSnap } from '../sim/snap'
 import { useStore } from '../store'
 import type { LL } from '../lib/geo'
+import { isRestricted, KIND_COLOR, KIND_GLYPH, type NetSite } from '../sim/registry'
 
 const vehIcon = (color: string, heading: number, reg: string, selected: boolean, dark: boolean) => L.divIcon({
   className: 'veh-icon', iconSize: [0, 0],
   html: `<div style="position:relative;transform:translate(-50%,-50%)"><div style="width:${selected ? 38 : 32}px;height:${selected ? 38 : 32}px;border-radius:50%;background:${dark ? '#94a3b8' : color};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:grid;place-items:center;${selected ? `outline:3px solid ${color}55;` : ''}"><svg width="16" height="16" viewBox="0 0 24 24" style="transform:rotate(${heading}deg)"><path d="M12 2 20 21l-8-4-8 4z" fill="#fff"/></svg></div><div style="position:absolute;left:50%;top:40px;transform:translateX(-50%);background:#0b1f33;color:#fff;font:600 10px Inter,sans-serif;padding:1px 6px;border-radius:5px;white-space:nowrap">${reg}${dark ? ' · NO SIGNAL' : ''}</div></div>`,
 })
 const scIcon = (color: string, label: string) => L.divIcon({ className: '', iconSize: [0, 0], html: `<div style="transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center"><div style="width:14px;height:14px;border-radius:4px;background:${color};border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.4);transform:rotate(45deg)"></div><span style="margin-top:3px;background:#fff;border:1px solid #d6dee8;border-radius:4px;padding:0 4px;font:600 9px Inter,sans-serif;color:#0b1f33">${label}</span></div>` })
-const siteIcon = (name: string, color: string) => L.divIcon({ className: '', iconSize: [0, 0], html: `<div style="transform:translate(-50%,-50%);background:${color};color:#fff;font:600 10px Inter,sans-serif;padding:2px 7px;border-radius:6px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">${name}</div>` })
-const SITE_COLOR: Record<string, string> = { hospital: '#0e7490', decon: '#1d4ed8', recycler: '#15803d', port: '#be123c', incinerator: '#be123c', hub: '#6d28d9', community: '#b45309', facility: '#0f766e' }
+const siteIcon = (name: string, kind: string, dim = false) => {
+  const c = KIND_COLOR[kind] ?? '#475a75'
+  if (!name) return L.divIcon({ className: '', iconSize: [0, 0], html: `<div style="transform:translate(-50%,-50%);display:grid;place-items:center;width:${isRestricted(kind) || kind === 'recycler' ? 28 : 22}px;height:${isRestricted(kind) || kind === 'recycler' ? 28 : 22}px;border-radius:99px;background:${c};color:#fff;font:700 ${isRestricted(kind) || kind === 'recycler' ? 14 : 11}px Manrope,sans-serif;border:2px solid #fff;box-shadow:0 2px 8px rgba(11,27,51,.4);opacity:${dim ? 0.75 : 1}">${KIND_GLYPH[kind]}</div>` })
+  const big = kind === 'port' || kind === 'incinerator' || kind === 'recycler'
+  return L.divIcon({ className: '', iconSize: [0, 0], html: `<div style="transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;background:${c};color:#fff;font:700 ${big ? 11 : 10}px Manrope,sans-serif;padding:${big ? '3px 9px 3px 4px' : '2px 7px'};border-radius:99px;white-space:nowrap;box-shadow:0 2px 8px rgba(11,27,51,.35);border:2px solid #fff;opacity:${dim ? 0.8 : 1}">${big ? `<span style="display:grid;place-items:center;width:18px;height:18px;border-radius:99px;background:#fff;color:${c};font-size:12px">${KIND_GLYPH[kind]}</span>` : ''}${name}${isRestricted(kind) ? ' ⚠' : ''}</div>` })
+}
 
 function Follow({ pos, on }: { pos: LL | null; on: boolean }) {
   const map = useMap()
@@ -27,14 +32,15 @@ function Fit({ bounds }: { bounds: L.LatLngBoundsExpression | null }) {
   return null
 }
 
-export function FleetMapView({ vehIds, height = 480, selected, onSelect, follow = false, scanners = false, sites, bounds }: { vehIds: string[]; height?: number | string; selected?: string; onSelect?: (id: string) => void; follow?: boolean; scanners?: boolean; sites?: string[]; bounds?: L.LatLngBoundsExpression }) {
+export function FleetMapView({ vehIds, height = 480, selected, onSelect, follow = false, scanners = false, sites, bounds, network }: { vehIds: string[]; height?: number | string; selected?: string; onSelect?: (id: string) => void; follow?: boolean; scanners?: boolean; sites?: string[]; bounds?: L.LatLngBoundsExpression; network?: NetSite[] }) {
   const snap = useSnap(); const t = snap.t; const w = getWorld(); const live = useStore((s) => s.live)
   const siteList = sites ?? Object.keys(SITES)
   const autoBounds = useMemo(() => {
     if (bounds) return bounds
+    if (network) return L.latLngBounds(network.map((n) => n.pos) as L.LatLngTuple[])
     const pts: LL[] = siteList.map((s) => SITES[s].pos)
     return L.latLngBounds(pts as L.LatLngTuple[])
-  }, [bounds, siteList.join()])
+  }, [bounds, siteList.join(), network?.length])
 
   const els = vehIds.map((id) => {
     const v = VEH_BY_ID[id], st = snap.veh[id]
@@ -53,10 +59,17 @@ export function FleetMapView({ vehIds, height = 480, selected, onSelect, follow 
       <TileLayer attribution='&copy; OpenStreetMap contributors' url={import.meta.env.VITE_TILE_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} />
       <Fit bounds={follow ? null : autoBounds} />
       <Follow pos={fol ? fol.pos : null} on={!!fol} />
-      {siteList.map((id) => { const s = SITES[id]; return (
+      {!network && siteList.map((id) => { const s = SITES[id]; const bad = !!s.restricted; const rec = s.kind === 'recycler'; return (
         <span key={id}>
-          <Circle center={s.pos} radius={s.radius} pathOptions={{ color: s.restricted ? '#e11d48' : SITE_COLOR[s.kind], weight: 1.5, fillOpacity: s.restricted ? 0.1 : 0.12, dashArray: s.restricted ? '5 4' : undefined }} />
-          <Marker position={s.pos} icon={siteIcon(s.short + (s.restricted ? ' ⚠' : ''), SITE_COLOR[s.kind])} interactive={false} />
+          <Circle center={s.pos} radius={s.radius} pathOptions={{ color: bad ? '#e11d48' : rec ? '#16a34a' : KIND_COLOR[s.kind], weight: bad || rec ? 2.5 : 1.5, fillOpacity: bad ? 0.16 : rec ? 0.2 : 0.12, dashArray: bad ? '6 5' : undefined }} />
+          <Marker position={s.pos} icon={siteIcon(s.short, s.kind)} interactive={false} zIndexOffset={bad || rec ? 500 : 0} />
+        </span>) })}
+      {network && network.map((n) => { const bad = isRestricted(n.kind), rec = n.kind === 'recycler'; return (
+        <span key={n.id}>
+          {(bad || rec) && <Circle center={n.pos} radius={n.radius * 2.2} pathOptions={{ color: bad ? '#e11d48' : '#16a34a', weight: 2, fillOpacity: bad ? 0.16 : 0.2, dashArray: bad ? '6 5' : undefined }} />}
+          <Marker position={n.pos} icon={siteIcon('', n.kind, n.state !== 'live' && n.sim === false && !bad && !rec)} zIndexOffset={bad || rec ? 500 : 0}>
+            <Tooltip direction="top" offset={[0, -10]}>{n.name}<br />{n.region}{n.readers ? ` · ${n.readers} RFID readers` : ''}</Tooltip>
+          </Marker>
         </span>) })}
       {els.map(({ v, planned, done, actualDiffers, showLeg }) => (
         <span key={v.id}>

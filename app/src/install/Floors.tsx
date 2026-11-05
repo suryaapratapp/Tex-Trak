@@ -4,7 +4,7 @@ import { QrImg } from './QrImg'
 import { BAY, BAYS, STATUS, WARDS, bayCode, isDue, ageDays, useInst, type Bay } from './store'
 
 export function Floors() {
-  const { curtains, seedTs, events } = useInst(); const [sel, setSel] = useState<string>('F2-3A-B01')
+  const { curtains, seedTs, events } = useInst(); const [sel, setSel] = useState<string>('F2-2A-B01')
   const at = (b: Bay) => Object.values(curtains).find((c) => c.bay === b.id && c.status === 'installed')
   const tone = (b: Bay) => { const c = at(b); if (!c) return { bg: '#e2e8f0', fg: '#64748b', k: 'Empty' }; if (c.installedAt && c.installedAt > seedTs) return { bg: '#0b877d', fg: '#fff', k: 'Replaced today' }; if (isDue(c)) return { bg: '#f59e0b', fg: '#fff', k: 'Due for replacement' }; return { bg: '#34c1b1', fg: '#fff', k: 'Up to date' } }
   const b = BAY[sel]; const c = at(b); const hist = events.filter((e) => e.bay === sel).slice(0, 5)

@@ -1,4 +1,10 @@
-import { Cuboid, Radio, ScanLine } from 'lucide-react'
+import { Cuboid, Layers, Radio, ScanLine } from 'lucide-react'
+import { useState } from 'react'
+import { UpperFloor } from '../components/UpperFloor'
+import { UPPER, FLOOR_LABEL } from '../sim/floors'
+import { BAY, BAYS, isDue, useInst } from '../install/store'
+import { hasModule } from '../sim/registry'
+import { go } from '../store'
 import { FloorPlan } from '../components/FloorPlan'
 import { EventFeed } from '../components/Feed'
 import { Card, CardHead, Chip, Kpi, Page, STATUS_COLOR, STATUS_LABEL, StatusPill } from '../components/ui'
@@ -8,7 +14,8 @@ import { useSnap } from '../sim/snap'
 import { useStore } from '../store'
 
 export default function Twin() {
-  const snap = useSnap(); const t = snap.t; const { twin, set, selItem } = useStore(); const w = getWorld()
+  const snap = useSnap(); const t = snap.t; const { twin, set, selItem, floor, role } = useStore(); const w = getWorld()
+  const [bay, setBay] = useState('F2-2A-B01'); const { curtains } = useInst()
   const plan = PLANS[twin]
   const site = twin === 'H' ? 'HOSP' : 'DECON'
   const onSite = snap.loc.filter((l) => l.kind !== 'vehicle' && l.plan === twin).length
@@ -17,8 +24,34 @@ export default function Twin() {
   const fu = it ? fusion(it, t) : null
   const loc = it ? snap.loc[it.id] : null
   return (
-    <Page title="Facilities" sub="RFID readers at every doorway."
-      right={<div className="flex rounded-lg bg-white p-1 ring-1 ring-slate-200">{([['H', 'Royal Meridian Hospital'], ['D', 'Decon Plant']] as const).map(([k, l]) => (<button key={k} onClick={() => set({ twin: k })} className={`rounded-md px-3 py-1.5 text-xs font-medium ${twin === k ? 'bg-ink-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>{l}</button>))}</div>}>
+    <Page title="Facilities & floors" sub={twin === 'H' ? 'Royal Meridian Hospital · choose a floor' : 'Decon Plant'}
+      right={<div className="flex flex-wrap gap-2">
+        <div className="flex rounded-full bg-white p-1 ring-1 ring-stone-200">{([['H', 'Hospital'], ['D', 'Decon Plant']] as const).map(([k, l]) => (<button key={k} onClick={() => set({ twin: k })} className={`rounded-full px-3.5 py-1.5 text-xs font-bold ${twin === k ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-50'}`}>{l}</button>))}</div>
+        {twin === 'H' && <div className="flex rounded-full bg-white p-1 ring-1 ring-stone-200"><span className="grid place-items-center px-2 text-stone-400"><Layers size={14} /></span>{(['G', '1', '2', '3'] as const).filter((f) => f === 'G' ? hasModule(role, 'laundry') : hasModule(role, 'curtains') || hasModule(role, 'laundry')).map((f) => (<button key={f} onClick={() => set({ floor: f })} className={`rounded-full px-3.5 py-1.5 text-xs font-bold ${floor === f ? 'bg-cyan-600 text-white' : 'text-stone-600 hover:bg-stone-50'}`}>{f === 'G' ? 'Ground' : `Floor ${f}`}</button>))}</div>}
+      </div>}>
+      {twin === 'H' && floor !== 'G' && (() => {
+        const uf = UPPER[floor]; const bays = BAYS.filter((b) => b.floor === +floor); const cs = Object.values(curtains).filter((c) => c.bay && BAY[c.bay]?.floor === +floor && c.status === 'installed')
+        const due = cs.filter(isDue).length; const sb = BAY[bay]?.floor === +floor ? BAY[bay] : bays[0]; const sc = cs.find((c) => c.bay === sb.id)
+        return (<>
+          <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Kpi label="Wards" value={uf.zones.filter((z) => z.ward).length} icon={<Layers size={15} />} sub={FLOOR_LABEL[floor]} />
+            <Kpi label="Ceiling RFID readers" value={uf.readers.length} tone="good" icon={<Radio size={15} />} sub="all online" />
+            <Kpi label="Curtains up to date" value={`${cs.length - due} / ${bays.length}`} tone="good" icon={<ScanLine size={15} />} />
+            <Kpi label="Due for replacement" value={due} tone={due ? 'warn' : 'good'} sub="older than 28 days" />
+          </div>
+          <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
+            <Card className="p-3"><UpperFloor floor={floor} sel={sb.id} onSel={setBay} />
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 text-xs text-stone-600">{[['#34c1b1', 'Up to date'], ['#f59e0b', 'Due'], ['#0b877d', 'Replaced today'], ['#e2e8f0', 'Empty']].map(([c, l]) => <span key={l} className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded" style={{ background: c }} />{l}</span>)}<span className="ml-auto flex items-center gap-1.5"><span className="grid h-4 w-4 place-items-center rounded-full border-2 border-stone-900" /> ceiling RFID reader</span></div></Card>
+            <div className="space-y-4">
+              <Card><CardHead title={sb.label} sub={FLOOR_LABEL[floor]} />
+                <div className="space-y-2 p-4 text-sm text-stone-600">{sc ? <><div className="flex justify-between"><span>Curtain</span><b className="text-stone-900">{sc.id}</b></div><div className="flex justify-between"><span>Wash cycle</span><b className="text-stone-900">{sc.cycles}</b></div><div className="flex justify-between"><span>Status</span><Chip tone={isDue(sc) ? 'amber' : 'green'}>{isDue(sc) ? 'Due' : 'Up to date'}</Chip></div></> : <div>No curtain installed.</div>}
+                  {hasModule(role, 'curtains') && <button onClick={() => go('install')} className="mt-2 w-full rounded-full bg-stone-900 py-2 text-sm font-bold text-white">Open installations</button>}</div></Card>
+              <Card><CardHead title="Readers on this floor" />
+                <ul className="divide-y divide-stone-100">{uf.readers.map((r) => <li key={r.id} className="flex items-center justify-between px-4 py-2.5"><div><div className="mono text-xs font-semibold text-stone-900">{r.id}</div><div className="text-[11px] text-stone-500">{r.label}</div></div><span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600"><i className="h-2 w-2 rounded-full bg-emerald-500" />online</span></li>)}</ul></Card>
+            </div>
+          </div></>)
+      })()}
+      {(twin === 'D' || floor === 'G') && <>
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Tagged items on site" value={onSite} icon={<Cuboid size={15} />} sub={twin === 'H' ? 'incl. dock, yard & street' : 'incl. inbound/outbound yards'} />
         <Kpi label="RFID reads · last 15 min" value={reads15} icon={<Radio size={15} />} sub={`${plan.readers.length} ceiling readers online`} tone="good" />
@@ -47,6 +80,7 @@ export default function Twin() {
       </div>
       <Card className="mt-4"><CardHead title="Readers" sub="Last read per reader" />
         <div className="grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-4">{plan.readers.map((r) => { const l = (w.readerEvents[r.id] ?? []).filter((x) => x <= t).slice(-1)[0]; return (<div key={r.id} className="rounded-lg border border-slate-200 px-3 py-2"><div className="flex items-center justify-between"><span className="mono text-xs font-semibold text-slate-900">{r.id}</span><i className="h-2 w-2 rounded-full bg-emerald-500" /></div><div className="text-xs text-slate-500">{r.label}</div><div className="mt-1 text-[11px] text-slate-400">last read {l ? fmtT(l) : '—'}</div></div>) })}</div></Card>
+      </>}
     </Page>
   )
 }

@@ -25,4 +25,11 @@ body { font-family: var(--font-sans); background: radial-gradient(1200px 500px a
 .scroll-thin::-webkit-scrollbar { width: 8px; height: 8px } .scroll-thin::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 8px }
 .card { background: #fff; border: 1px solid #e6edf6; border-radius: 22px; box-shadow: 0 1px 2px rgba(11,27,51,.04), 0 14px 34px -22px rgba(11,27,51,.22); }
 .mono { font-family: var(--font-mono); }
-@media print { aside, header, .no-print { display: none !important } body { background: #fff } }
+
+.print-only { display: none; }
+@media print {
+  #root { display: none !important; }
+  .print-only { display: block !important; }
+  body { background: #fff !important; }
+  @page { margin: 14mm; }
+}

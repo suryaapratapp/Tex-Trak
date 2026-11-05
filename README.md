@@ -66,3 +66,25 @@ Instructions for whoever holds the physical device: [`docs/TOM_SETUP.md`](docs/T
 - RLS currently allows anonymous **read** for demo dashboards; all writes go through the service-role edge function. Add Supabase Auth + per-organisation policies before production.
 - Map tiles default to OpenStreetMap; set `VITE_TILE_URL` for a commercial provider.
 - Next: persist simulated events to Postgres, mobile QR-scan PWA, RFID reader webhooks, multi-tenant orgs, ML ETA/loss models, EU digital product passport export.
+
+
+## Accounts and roles
+
+The demo has three accounts, switched from the bottom of the sidebar:
+
+| Account | Sees |
+|---|---|
+| **Synergy** | Laundry arrivals, inventory, curtain installations, shipments, recycling proof, facilities |
+| **Client A** | Community assets, shipments, recycling proof |
+| **Super Admin** | Everything, plus the admin console: clients, every site, every RFID reader, UK map, trackers |
+
+Site, client and reader data lives in `app/src/sim/registry.ts`; the UK network (hospitals, decon plants, recyclers, ports, incinerators) is defined there.
+
+## The four use cases
+
+1. **Laundry arrivals** – what is reaching the hospital and the plant, when it can be used, and which departments are short.
+2. **Community assets** – portable scanners on loan, geofences, battery and silence alerts.
+3. **Shipments** – live ETA and tracking history for any consignment.
+4. **Recycling proof** – declared destination versus the geofence the truck is really in; printable evidence certificate.
+
+Field staff use **Scan station**; everyone else works from the dashboards.

@@ -10,7 +10,7 @@ export function Curtains() {
   const { curtains, events } = useInst(); const [q, setQ] = useState(''); const [st, setSt] = useState('all'); const [sel, setSel] = useState('CUR-1017')
   const list = useMemo(() => Object.values(curtains).filter((c) => (st === 'all' || c.status === st) && (c.id + c.type + (c.bay ? BAY[c.bay].label : '')).toLowerCase().includes(q.toLowerCase())), [curtains, q, st])
   const c = curtains[sel]
-  const past = useMemo(() => { const r = rng(+sel.slice(4) * 31); const wards = ['Ward 3A', 'Ward 3B', 'ICU', 'Maternity', 'A&E', 'Outpatients']; return [1, 2, 3, 4, 5].map((k) => ({ n: (c?.cycles ?? 5) - k + 1, ward: wards[Math.floor(r() * wards.length)], days: Math.round(26 + r() * 6), when: `${k * 4 + Math.round(r() * 2)} weeks ago` })) }, [sel, c?.cycles])
+  const past = useMemo(() => { const r = rng(+sel.slice(4) * 31); const wards = ['Ward 2A', 'Ward 2B', 'Ward 3A', 'Ward 3B', 'Surgical Ward 1A', 'Cardiology 1B']; return [1, 2, 3, 4, 5].map((k) => ({ n: (c?.cycles ?? 5) - k + 1, ward: wards[Math.floor(r() * wards.length)], days: Math.round(26 + r() * 6), when: `${k * 4 + Math.round(r() * 2)} weeks ago` })) }, [sel, c?.cycles])
   return (
     <div className="grid gap-5 xl:grid-cols-[1fr_400px]">
       <Card><div className="flex flex-wrap items-center gap-3 border-b border-stone-100 p-4"><div className="relative min-w-[200px] flex-1"><Search size={15} className="absolute left-3 top-3 text-stone-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search curtain, ward…" className="w-full rounded-full border border-stone-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-stone-900" /></div>

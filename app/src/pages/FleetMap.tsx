@@ -7,9 +7,13 @@ import { fmtT, getWorld } from '../sim/engine'
 import { SITES, VEHICLES, VEH_BY_ID } from '../sim/world'
 import { fmtDur, useSnap } from '../sim/snap'
 import { go, useStore } from '../store'
+import { MapLegend } from '../components/MapLegend'
+import { clientNet } from '../sim/registry'
+import { vehiclesFor } from '../lib/scope'
 
 export default function FleetMap() {
-  const snap = useSnap(); const t = snap.t; const { selVeh, set } = useStore(); const [follow, setFollow] = useState(false)
+  const snap = useSnap(); const t = snap.t; const { set, role, netMap } = useStore(); const [follow, setFollow] = useState(false)
+  const ids = vehiclesFor(role); const selVeh = ids.includes(useStore.getState().selVeh) ? useStore.getState().selVeh : ids[0]
   const w = getWorld(); const v = VEH_BY_ID[selVeh]; const st = snap.veh[selVeh]
   const live = useStore((s) => s.live)
   const mine = w.legs.filter((l) => l.veh === selVeh)
@@ -26,14 +30,14 @@ export default function FleetMap() {
       <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
         <Card className="overflow-hidden">
           <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-2.5">
-            <span className="text-sm font-semibold text-slate-900">Greater London operations</span>
+            <div className="flex rounded-full bg-stone-100 p-1">{([[false, 'London operations'], [true, 'UK network']] as const).map(([k, l]) => <button key={l} onClick={() => set({ netMap: k })} className={`rounded-full px-3.5 py-1.5 text-xs font-bold ${netMap === k ? 'bg-white text-stone-900 shadow' : 'text-stone-500'}`}>{l}</button>)}</div>
             <span className="ml-auto flex items-center gap-3 text-xs text-slate-500"><i className="inline-block h-0.5 w-5 border-t-2 border-dotted border-slate-500" /> planned route <i className="inline-block h-1 w-5 rounded bg-cyan-500" /> travelled <label className="ml-2 flex cursor-pointer items-center gap-1.5 font-medium text-slate-700"><input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} /> Follow selected</label></span>
           </div>
-          <FleetMapView vehIds={['V1', 'V2', 'V3', 'V4', 'V5']} height={640} selected={selVeh} onSelect={(id) => set({ selVeh: id })} follow={follow} scanners />
+          <div className="relative"><FleetMapView vehIds={netMap ? [] : ids} height={640} selected={selVeh} onSelect={(id) => set({ selVeh: id })} follow={follow && !netMap} scanners={!netMap && role !== 'synergy'} network={netMap ? clientNet(role) : undefined} /><MapLegend /></div>
         </Card>
         <div className="space-y-4">
           <Card><CardHead title="Vehicles" />
-            <ul className="divide-y divide-slate-100">{VEHICLES.map((x) => { const s = snap.veh[x.id]; return (
+            <ul className="divide-y divide-slate-100">{VEHICLES.filter((x) => ids.includes(x.id)).map((x) => { const s = snap.veh[x.id]; return (
               <li key={x.id}><button onClick={() => set({ selVeh: x.id })} className={`flex w-full items-center gap-3 px-4 py-2.5 text-left ${selVeh === x.id ? 'bg-cyan-50/60' : 'hover:bg-slate-50'}`}>
                 <i className="h-3 w-3 rounded-full" style={{ background: x.color }} />
                 <div className="min-w-0 flex-1"><div className="text-[13px] font-semibold text-slate-900">{x.reg} <span className="font-normal text-slate-500">· {x.driver}</span></div><div className="truncate text-xs text-slate-500">{x.role}</div></div>

@@ -7,6 +7,7 @@ import { fmtT, getWorld, type Consignment } from '../sim/engine'
 import { SITES, VEH_BY_ID } from '../sim/world'
 import { fmtDur, useSnap } from '../sim/snap'
 import { useStore } from '../store'
+import { consFor } from '../lib/scope'
 
 interface Step { label: string; t: number; sub?: string; bad?: boolean }
 function view(c: Consignment, t: number, snap: ReturnType<typeof useSnap>) {
@@ -28,10 +29,11 @@ function view(c: Consignment, t: number, snap: ReturnType<typeof useSnap>) {
 const tone = (s: string) => (s === 'delivered' ? 'green' : s === 'exception' ? 'red' : s === 'in transit' || s === 'out for delivery' ? 'blue' : s === 'booked' ? 'slate' : 'amber') as 'green' | 'red' | 'blue' | 'slate' | 'amber'
 
 export default function Shipments() {
-  const snap = useSnap(); const t = snap.t; const w = getWorld(); const { selShip, set } = useStore()
-  const c = w.consignments.find((x) => x.ref === selShip) ?? w.consignments[0]; const v = view(c, t, snap)
+  const snap = useSnap(); const t = snap.t; const w = getWorld(); const { selShip, set, role } = useStore()
+  const mine = consFor(role)
+  const c = mine.find((x) => x.ref === selShip) ?? mine[0]; const v = view(c, t, snap)
   const [q, setQ] = useState('')
-  const list = w.consignments.filter((x) => (x.ref + x.desc).toLowerCase().includes(q.toLowerCase()))
+  const list = mine.filter((x) => (x.ref + x.desc).toLowerCase().includes(q.toLowerCase()))
   return (
     <Page title="Shipments" sub="Every delivery and collection.">
       <div className="grid gap-4 xl:grid-cols-[400px_1fr]">

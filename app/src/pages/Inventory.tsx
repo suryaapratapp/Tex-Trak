@@ -5,10 +5,11 @@ import { fmtT, fusion, getWorld, SCANNERS, scannerAt, scannerValue } from '../si
 import { PRODUCTS, VEH_BY_ID, ZONE_NAME } from '../sim/world'
 import { useSnap } from '../sim/snap'
 import { go, useStore } from '../store'
+import { hasModule } from '../sim/registry'
 
 export default function Inventory() {
   const snap = useSnap(); const t = snap.t; const w = getWorld(); const set = useStore((s) => s.set)
-  const [tab, setTab] = useState<'textile' | 'asset'>('textile'); const [q, setQ] = useState(''); const [type, setType] = useState('all'); const [status, setStatus] = useState('all')
+  const role = useStore((st) => st.role); const [tab0, setTab] = useState<'textile' | 'asset'>('textile'); const tab = hasModule(role, 'laundry') ? (hasModule(role, 'assets') ? tab0 : 'textile') : 'asset'; const [q, setQ] = useState(''); const [type, setType] = useState('all'); const [status, setStatus] = useState('all')
   const rows = useMemo(() => w.items.map((it) => {
     const l = snap.loc[it.id]
     const where = l.status === 'missing' ? `Last seen: ${ZONE_NAME[it.missing!.lastZone]}` : l.kind === 'vehicle' ? `On truck ${VEH_BY_ID[l.veh!].reg}` : l.kind === 'moving' ? `Moving to ${ZONE_NAME[l.zone!]}` : ZONE_NAME[l.zone!]
@@ -18,7 +19,7 @@ export default function Inventory() {
   const open = (id: number) => { set({ selItem: id }); go('item') }
   return (
     <Page title="Inventory" sub="Pick a product to see its journey.">
-      <div className="mb-5 inline-flex rounded-full bg-stone-200/70 p-1">{([['textile', `Textiles (${w.items.length})`], ['asset', `High-value assets (${SCANNERS.length})`]] as const).map(([k, l]) => <button key={k} onClick={() => setTab(k)} className={`rounded-full px-4 py-1.5 text-sm font-semibold ${tab === k ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600'}`}>{l}</button>)}</div>
+      <div className="mb-5 inline-flex rounded-full bg-stone-200/70 p-1">{([['textile', `Textiles (${w.items.length})`], ['asset', `High-value assets (${SCANNERS.length})`]] as const).filter(([k]) => hasModule(role, k === 'textile' ? 'laundry' : 'assets')).map(([k, l]) => <button key={k} onClick={() => setTab(k)} className={`rounded-full px-4 py-1.5 text-sm font-semibold ${tab === k ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600'}`}>{l}</button>)}</div>
       {tab === 'textile' ? <>
         <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
           {PRODUCTS.map((p) => { const mine = rows.filter((r) => r.it.type.sku === p.sku); const avg = mine.reduce((a, r) => a + r.l.cycles, 0) / (mine.length || 1)

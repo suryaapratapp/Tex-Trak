@@ -6,12 +6,13 @@ import { fmtT, getWorld, RULES } from '../sim/engine'
 import { SEV_ORDER, type Sev } from '../sim/world'
 import { useStore } from '../store'
 import { useSnap } from '../sim/snap'
+import { alertsFor } from '../lib/scope'
 
 export default function Alerts() {
-  const snap = useSnap(); const t = snap.t; const w = getWorld(); const { states, setAlert, selIncident, set } = useStore()
+  const snap = useSnap(); const t = snap.t; const w = getWorld(); const { states, setAlert, selIncident, set, role } = useStore()
   const [sev, setSev] = useState<'all' | Sev>('all'); const [tab, setTab] = useState<'alerts' | 'rules'>('alerts'); const [selA, setSelA] = useState<string | null>(null)
-  const list = w.alerts.filter((a) => a.t <= t && (sev === 'all' || a.sev === sev)).reverse()
-  const inc = w.incidents.filter((i) => i.t <= t); const si = inc.find((i) => i.id === selIncident) ?? inc[0]
+  const list = alertsFor(role).filter((a) => a.t <= t && (sev === 'all' || a.sev === sev)).reverse()
+  const okIds = new Set(alertsFor(role).map((a) => a.id)); const inc = w.incidents.filter((i) => i.t <= t && i.alerts.some((x) => okIds.has(x))); const si = inc.find((i) => i.id === selIncident) ?? inc[0]
   const a = list.find((x) => x.id === selA) ?? null
   return (
     <Page title="Alerts" sub="Problems that need attention."

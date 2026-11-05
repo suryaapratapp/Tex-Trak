@@ -11,7 +11,7 @@ export interface Item { id: number; qr: string; epc: string; type: ProductType; 
 export interface Leg { id: string; veh: string; from: string; to: string; routeKey: string; planKey: string; depart: number; arrive: number; planArrive: number; pts: LL[]; cum: number[]; meters: number; cons: string; kind: string }
 export interface Alert { id: string; t: number; rule: string; sev: Sev; title: string; detail: string; subject: string; site?: string; pos?: LL; evidence: Record<string, string | number>; risk: number; cons?: string; incident?: string }
 export interface Incident { id: string; t: number; title: string; summary: string; sev: Sev; risk: number; alerts: string[]; actions: string[]; cons?: string }
-export interface Consignment { ref: string; kind: string; veh: string; legId?: string; from: string; to: string; items: number; kg: number; cages: string[]; desc: string; carrier: string; verdict: 'compliant' | 'diverted' | 'routine' }
+export interface Consignment { ref: string; kind: string; veh: string; legId?: string; from: string; to: string; items: number; kg: number; cages: string[]; desc: string; carrier: string; verdict: 'compliant' | 'diverted' | 'routine'; client: 'synergy' | 'clientA' }
 export interface CustodyEv { t: number; type: string; title: string; site?: string; pos?: LL; source: string; ok: boolean; hash: string; prev: string }
 export interface Scanner { id: string; name: string; home: string; pos: LL; geofence: number; holder: string; battery0: number; drain: number }
 
@@ -78,7 +78,8 @@ function buildWorld(): World {
   const L9 = mkLeg('L9', 'V5', 'SYN', 'HOSP', 'syn_hosp', 'syn_hosp', 400, 1.45, 1.4, 'SYN-0612-DEL', 'curtain_delivery')
   const L10 = mkLeg('L10', 'V5', 'HOSP', 'SYN', 'hosp_syn', 'hosp_syn', 960, 1.5, 1.4, 'SYN-0612-COL', 'curtain_collection')
   const L11 = mkLeg('L11', 'V5', 'SYN', 'HOSP', 'syn_hosp', 'syn_hosp', 1790, 1.4, 1.4, 'SYN-0613-DEL', 'curtain_delivery')
-  const legs = [L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11]
+  const L12 = mkLeg('L12', 'V4', 'COMM', 'RECY', 'comm_recy', 'comm_recy', 840, 1.35, 1.3, 'RCY-0612-C', 'recycling')
+  const legs = [L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12]
 
   // ---- items
   const N = 72
@@ -222,6 +223,7 @@ function buildWorld(): World {
   }
   const aV2 = evalConsignment(L6, 'RECY', false)
   evalConsignment(L7, 'RECY', true)
+  const aV4 = evalConsignment(L12, 'RECY', false)
 
   // ---- laundry ETA-slip (L3 / L4) from live-eta model
   for (const leg of [L3, L4, L1]) {
@@ -268,6 +270,11 @@ function buildWorld(): World {
     sys(aV2 + 11, 'Weighbridge RFID receipt', '38/38 tags read · 141.6 kg vs 142.0 declared (−0.3%) · seal intact', 'RECY', { cons: L6.cons })
     sys(aV2 + 40, 'Certificate of recycling issued', 'RCY-A · fibre-to-fibre processing · hashed to custody ledger · LCA credit 214 kg CO₂e', 'RECY', { cons: L6.cons })
   }
+  sys(L12.depart - 8, 'Recycling cage sealed', 'RCY-C3 · 26 end-of-life clinic textiles · 88 kg declared · seal #A-88412 · destination GreenLoop Dagenham', 'COMM', { veh: 'V4', cons: L12.cons })
+  if (aV4) {
+    sys(aV4 + 10, 'Weighbridge RFID receipt', '26/26 tags read · 87.6 kg vs 88.0 declared (−0.5%) · seal intact', 'RECY', { cons: L12.cons })
+    sys(aV4 + 36, 'Certificate of recycling issued', 'RCY-C · fibre-to-fibre processing · hashed to custody ledger · LCA credit 131 kg CO₂e', 'RECY', { cons: L12.cons })
+  }
   sys(L9.depart - 8, 'Curtains loaded', '16 fresh curtains scanned onto the van · Floor 2 replacement', 'SYN', { veh: 'V5', cons: L9.cons })
   sys(L10.depart - 4, 'Taken-down curtains collected', '16 curtains scanned out of Floor 2 · handed to driver', 'HOSP', { veh: 'V5', cons: L10.cons })
   sys(L8.depart - 6, 'Courier loaded', 'SC-004 (Vscan Air) + 3 parcels · TAT240 …085090 bound', 'HUB', { veh: 'V4', cons: L8.cons })
@@ -292,15 +299,16 @@ function buildWorld(): World {
   // ---- consignments
   const nm = N - missingItems.length
   consignments.push(
-    { ref: L1.cons, kind: 'laundry_inbound', veh: 'V1', legId: 'L1', from: 'DECON', to: 'HOSP', items: N, kg: 38.5 * 9.6, cages: cleanCages, desc: 'Clean textiles · morning delivery (3 cages)', carrier: 'Decon Plant', verdict: 'routine' },
-    { ref: L4.cons, kind: 'laundry_outbound', veh: 'V1', legId: 'L4', from: 'HOSP', to: 'DECON', items: nm, kg: nm * 5.4, cages: ['RC-201', 'RC-202'], desc: 'Soiled textiles · evening collection (2 RFID cages)', carrier: 'Decon Plant', verdict: 'routine' },
-    { ref: L5.cons, kind: 'laundry_inbound', veh: 'V1', legId: 'L5', from: 'DECON', to: 'HOSP', items: nm, kg: nm * 5.2, cages: ['RC-301', 'RC-302'], desc: 'Clean textiles · next-morning delivery', carrier: 'Decon Plant', verdict: 'routine' },
-    { ref: L6.cons, kind: 'recycling', veh: 'V2', legId: 'L6', from: 'HOSP', to: 'RECY', items: 38, kg: 142, cages: ['RCY-C1'], desc: 'End-of-life textiles → fibre-to-fibre recycling', carrier: 'GreenLoop Haulage', verdict: 'compliant' },
-    { ref: L7.cons, kind: 'recycling', veh: 'V3', legId: 'L7', from: 'DECON', to: 'RECY', items: 44, kg: 168, cages: ['RCY-C2'], desc: 'End-of-life textiles → fibre-to-fibre recycling', carrier: 'BX Logistics (sub-contract)', verdict: 'diverted' },
-    { ref: L8.cons, kind: 'asset_loan', veh: 'V4', legId: 'L8', from: 'HUB', to: 'COMM', items: 4, kg: 11.2, cages: ['PKG-8841'], desc: 'Portable ultrasound SC-004 + 3 consumable parcels', carrier: 'NHS Courier Service', verdict: 'routine' },
-    { ref: L9.cons, kind: 'curtain_delivery', veh: 'V5', legId: 'L9', from: 'SYN', to: 'HOSP', items: 16, kg: 38.4, cages: ['TRL-01'], desc: 'Fresh curtains · Floor 2 replacement', carrier: 'Synergy', verdict: 'routine' },
-    { ref: L10.cons, kind: 'curtain_collection', veh: 'V5', legId: 'L10', from: 'HOSP', to: 'SYN', items: 16, kg: 41.6, cages: ['TRL-01'], desc: 'Taken-down curtains · back to reprocessing', carrier: 'Synergy', verdict: 'routine' },
-    { ref: 'PCL-88103', kind: 'parcel', veh: '', from: 'HUB', to: 'HOSP', items: 12, kg: 24, cages: [], desc: 'Supplier order · 12 reusable gowns (carrier API, no GNSS)', carrier: 'Parcelforce Express', verdict: 'routine' },
+    { ref: L1.cons, kind: 'laundry_inbound', veh: 'V1', legId: 'L1', from: 'DECON', to: 'HOSP', items: N, kg: 38.5 * 9.6, cages: cleanCages, desc: 'Clean textiles · morning delivery (3 cages)', carrier: 'Decon Plant', verdict: 'routine', client: 'synergy' },
+    { ref: L4.cons, kind: 'laundry_outbound', veh: 'V1', legId: 'L4', from: 'HOSP', to: 'DECON', items: nm, kg: nm * 5.4, cages: ['RC-201', 'RC-202'], desc: 'Soiled textiles · evening collection (2 RFID cages)', carrier: 'Decon Plant', verdict: 'routine', client: 'synergy' },
+    { ref: L5.cons, kind: 'laundry_inbound', veh: 'V1', legId: 'L5', from: 'DECON', to: 'HOSP', items: nm, kg: nm * 5.2, cages: ['RC-301', 'RC-302'], desc: 'Clean textiles · next-morning delivery', carrier: 'Decon Plant', verdict: 'routine', client: 'synergy' },
+    { ref: L6.cons, kind: 'recycling', veh: 'V2', legId: 'L6', from: 'HOSP', to: 'RECY', items: 38, kg: 142, cages: ['RCY-C1'], desc: 'End-of-life textiles → fibre-to-fibre recycling', carrier: 'GreenLoop Haulage', verdict: 'compliant', client: 'synergy' },
+    { ref: L7.cons, kind: 'recycling', veh: 'V3', legId: 'L7', from: 'DECON', to: 'RECY', items: 44, kg: 168, cages: ['RCY-C2'], desc: 'End-of-life textiles → fibre-to-fibre recycling', carrier: 'BX Logistics (sub-contract)', verdict: 'diverted', client: 'synergy' },
+    { ref: L8.cons, kind: 'asset_loan', veh: 'V4', legId: 'L8', from: 'HUB', to: 'COMM', items: 4, kg: 11.2, cages: ['PKG-8841'], desc: 'Portable ultrasound SC-004 + 3 consumable parcels', carrier: 'NHS Courier Service', verdict: 'routine', client: 'clientA' },
+    { ref: L9.cons, kind: 'curtain_delivery', veh: 'V5', legId: 'L9', from: 'SYN', to: 'HOSP', items: 16, kg: 38.4, cages: ['TRL-01'], desc: 'Fresh curtains · Floor 2 replacement', carrier: 'Synergy', verdict: 'routine', client: 'synergy' },
+    { ref: L10.cons, kind: 'curtain_collection', veh: 'V5', legId: 'L10', from: 'HOSP', to: 'SYN', items: 16, kg: 41.6, cages: ['TRL-01'], desc: 'Taken-down curtains · back to reprocessing', carrier: 'Synergy', verdict: 'routine', client: 'synergy' },
+    { ref: L12.cons, kind: 'recycling', veh: 'V4', legId: 'L12', from: 'COMM', to: 'RECY', items: 26, kg: 88, cages: ['RCY-C3'], desc: 'Clinic end-of-life textiles → fibre-to-fibre recycling', carrier: 'NHS Courier Service', verdict: 'compliant', client: 'clientA' },
+    { ref: 'PCL-88103', kind: 'parcel', veh: '', from: 'HUB', to: 'HOSP', items: 12, kg: 24, cages: [], desc: 'Supplier order · 12 reusable gowns (carrier API, no GNSS)', carrier: 'Parcelforce Express', verdict: 'routine', client: 'clientA' },
   )
 
   // ---- custody ledger (hash chain) per consignment
@@ -318,6 +326,15 @@ function buildWorld(): World {
     { t: L6.arrive, type: 'ARRIVED', title: 'Entered GreenLoop geofence', site: 'RECY', pos: gps(L6, 1), source: 'GNSS', ok: true },
     { t: L6.arrive + 11, type: 'RECEIVED', title: 'Weighbridge RFID 38/38 · 141.6 kg', site: 'RECY', source: 'RFID', ok: true },
     { t: L6.arrive + 40, type: 'CERTIFIED', title: 'Certificate of recycling issued', site: 'RECY', source: 'SYSTEM', ok: true },
+  ])
+  chain(L12.cons, [
+    { t: L12.depart - 25, type: 'BOUND', title: '26 clinic textiles condemned & RFID-bound to cage RCY-C3', site: 'COMM', source: 'RFID+QR', ok: true },
+    { t: L12.depart - 8, type: 'SEALED', title: 'Cage sealed #A-88412 · declared 88 kg', site: 'COMM', source: 'QR', ok: true },
+    { t: L12.depart, type: 'DEPARTED', title: 'Departed Camden Clinic · cage ↔ TAT240 …085090', site: 'COMM', pos: gps(L12, 0), source: 'GNSS', ok: true },
+    { t: L12.depart + (L12.arrive - L12.depart) / 2, type: 'CHECKPOINT', title: 'GNSS checkpoint · on planned route', pos: gps(L12, 0.5), source: 'GNSS', ok: true },
+    { t: L12.arrive, type: 'ARRIVED', title: 'Entered GreenLoop geofence', site: 'RECY', pos: gps(L12, 1), source: 'GNSS', ok: true },
+    { t: L12.arrive + 10, type: 'RECEIVED', title: 'Weighbridge RFID 26/26 · 87.6 kg', site: 'RECY', source: 'RFID', ok: true },
+    { t: L12.arrive + 36, type: 'CERTIFIED', title: 'Certificate of recycling issued', site: 'RECY', source: 'SYSTEM', ok: true },
   ])
   chain(L7.cons, [
     { t: L7.depart - 25, type: 'BOUND', title: '44 items condemned & RFID-bound to cage RCY-C2', site: 'DECON', source: 'RFID+QR', ok: true },
