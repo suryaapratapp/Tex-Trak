@@ -24,7 +24,7 @@ export const RULES = [
   { code: 'ETA_SLIP', name: 'ETA slip', sev: 'low' as Sev, desc: 'Predicted arrival slips >8 min vs plan — triggers plant re-planning.' },
   { code: 'ITEM_EXIT_UNAUTH', name: 'Unauthorised exit', sev: 'medium' as Sev, desc: 'RFID tag read at an exit with no QR return/soil event.' },
   { code: 'RECON_SHORTFALL', name: 'Reconciliation shortfall', sev: 'high' as Sev, desc: 'Items issued but not returned to the dirty cage by end of day.' },
-  { code: 'ASSET_OUT_OF_GEOFENCE', name: 'Asset out of geofence', sev: 'high' as Sev, desc: 'Loaned high-value asset moved beyond its permitted radius.' },
+  { code: 'ASSET_OUT_OF_GEOFENCE', name: 'Asset out of geofence', sev: 'high' as Sev, desc: 'High-value asset moved beyond its permitted radius.' },
   { code: 'ASSET_STALE', name: 'Asset not checking in', sev: 'medium' as Sev, desc: 'No location report for >24 h.' },
   { code: 'LOW_BATTERY', name: 'Tracker battery low', sev: 'low' as Sev, desc: 'Tracker battery below 20%.' },
   { code: 'CYCLE_LIFE', name: 'End-of-life prediction', sev: 'info' as Sev, desc: 'Item within 5% of its maximum wash cycles — route to recycling.' },
@@ -249,7 +249,7 @@ function buildWorld(): World {
   for (const sc of SCANNERS) {
     for (let t = T0; t <= T1; t += 1) {
       const st = scannerAt(legs, sc, t)
-      if (sc.id === 'SC-005' && st.outside) { addAlert({ t, rule: 'ASSET_OUT_OF_GEOFENCE', sev: 'high', title: `${sc.id} left ${sc.home}`, detail: `${sc.name} is ${(st.distFromHome / 1000).toFixed(1)} km from its permitted site and moving toward SE London. Loan holder: ${sc.holder}. £6,900 asset.`, subject: sc.id, pos: st.pos, evidence: { 'Distance from home': `${(st.distFromHome / 1000).toFixed(1)} km`, 'Loan holder': sc.holder, 'Asset value': '£6,900' }, risk: 81 }); break }
+      if (sc.id === 'SC-005' && st.outside) { addAlert({ t, rule: 'ASSET_OUT_OF_GEOFENCE', sev: 'high', title: `${sc.id} left ${sc.home}`, detail: `${sc.name} is ${(st.distFromHome / 1000).toFixed(1)} km from its permitted site and moving toward SE London. Held by: ${sc.holder}. £6,900 asset.`, subject: sc.id, pos: st.pos, evidence: { 'Distance from home': `${(st.distFromHome / 1000).toFixed(1)} km`, 'Held by': sc.holder, 'Asset value': '£6,900' }, risk: 81 }); break }
     }
     if (sc.id === 'SC-003') addAlert({ t: T0 + 5, rule: 'ASSET_STALE', sev: 'medium', title: `${sc.id} has not checked in for 26 h`, detail: `${sc.name} last reported from ${sc.home} yesterday 03:10. Battery 61% — tracker likely in a shielded cabinet or the unit was moved without scanning.`, subject: sc.id, pos: sc.pos, evidence: { 'Last report': 'yesterday 03:10', Battery: '61%' }, risk: 44 })
     if (sc.id === 'SC-002') addAlert({ t: 10 * 60, rule: 'LOW_BATTERY', sev: 'low', title: `${sc.id} tracker battery at 15%`, detail: 'Replace tracker battery within 2 days to avoid a tracking gap.', subject: sc.id, pos: sc.pos, evidence: { Battery: '15%' }, risk: 12 })
@@ -278,7 +278,7 @@ function buildWorld(): World {
   sys(L9.depart - 8, 'Curtains loaded', '16 fresh curtains scanned onto the van · Floor 2 replacement', 'SYN', { veh: 'V5', cons: L9.cons })
   sys(L10.depart - 4, 'Taken-down curtains collected', '16 curtains scanned out of Floor 2 · handed to driver', 'HOSP', { veh: 'V5', cons: L10.cons })
   sys(L8.depart - 6, 'Courier loaded', 'SC-004 (Vscan Air) + 3 parcels · TAT240 …085090 bound', 'HUB', { veh: 'V4', cons: L8.cons })
-  sys(L8.arrive + 4, 'Asset loan activated', 'SC-004 handed to Dr A. Rahman (QR) · geofence 150 m @ Camden', 'COMM', { cons: L8.cons })
+  sys(L8.arrive + 4, 'Equipment assigned', 'SC-004 handed to Dr A. Rahman (QR) · geofence 150 m @ Camden', 'COMM', { cons: L8.cons })
 
   events.sort((a, b) => a.t - b.t)
   alerts.sort((a, b) => a.t - b.t)
@@ -294,7 +294,7 @@ function buildWorld(): World {
     incidents.push(inc); bAl.forEach((a) => (a.incident = inc.id))
   }
   const s5 = alerts.find((a) => a.rule === 'ASSET_OUT_OF_GEOFENCE')
-  if (s5) { const inc: Incident = { id: 'INC-2042', t: s5.t + 10, title: 'Portable scanner SC-005 off-site — possible loss/theft', summary: 'Tracker shows the unit travelling 10 km SE of its care-home site and stopping at a residential address.', sev: 'high', risk: 81, alerts: [s5.id], actions: ['Call loan holder to confirm custody', 'Lock the scanner app licence remotely', 'Escalate to police if unreachable in 2 h'] }; incidents.push(inc); s5.incident = inc.id }
+  if (s5) { const inc: Incident = { id: 'INC-2042', t: s5.t + 10, title: 'Portable scanner SC-005 off-site — possible loss/theft', summary: 'Tracker shows the unit travelling 10 km SE of its care-home site and stopping at a residential address.', sev: 'high', risk: 81, alerts: [s5.id], actions: ['Call holder to confirm custody', 'Lock the scanner app licence remotely', 'Escalate to police if unreachable in 2 h'] }; incidents.push(inc); s5.incident = inc.id }
 
   // ---- consignments
   const nm = N - missingItems.length

@@ -9,7 +9,7 @@ export interface Client { id: ClientId; name: string; tagline: string; color: st
 export const MODULES: Record<ModuleId, { label: string; blurb: string }> = {
   laundry: { label: 'Laundry & arrivals', blurb: 'Reusable textiles, RFID doorways, ETA planning' },
   curtains: { label: 'Curtain installations', blurb: 'QR install / take-down on wards' },
-  assets: { label: 'Community assets', blurb: 'High-value equipment on loan' },
+  assets: { label: 'Community assets', blurb: 'High-value equipment in the community' },
   shipments: { label: 'Shipments', blurb: 'Any delivery or collection' },
   recycling: { label: 'Recycling proof', blurb: 'Did it reach the recycler?' },
 }

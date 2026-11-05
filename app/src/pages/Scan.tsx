@@ -19,7 +19,7 @@ type Task = 'textile' | 'asset' | 'load' | 'curtain'
 const TASKS: { id: Task; label: string; sub: string; module: ModuleId; icon: React.ReactNode }[] = [
   { id: 'textile', label: 'Textile item', sub: 'Issue, soil, cage', module: 'laundry', icon: <Boxes size={22} /> },
   { id: 'curtain', label: 'Curtain', sub: 'Install · take down', module: 'curtains', icon: <ScanLine size={22} /> },
-  { id: 'asset', label: 'Equipment', sub: 'Loan out · return', module: 'assets', icon: <Radar size={22} /> },
+  { id: 'asset', label: 'Equipment', sub: 'Check out · check in', module: 'assets', icon: <Radar size={22} /> },
   { id: 'load', label: 'Delivery or load', sub: 'Dispatch · receive', module: 'shipments', icon: <Package size={22} /> },
 ]
 type Found = { type: 'item'; it: Item } | { type: 'asset'; id: string } | { type: 'load'; c: Consignment } | null
@@ -61,7 +61,7 @@ export default function Scan() {
           {found?.type === 'asset' && (() => { const sc = SCANNERS.find((s) => s.id === found.id)!; const st = scannerAt(w.legs, sc, t); return (
             <Card><CardHead title={sc.name} sub={<span className="mono">{sc.id}</span>} />
               <div className="space-y-3 p-5"><div className="grid grid-cols-2 gap-2 text-sm"><div className="rounded-2xl bg-stone-50 p-3"><div className="text-[11px] font-bold uppercase text-stone-400">Holder</div><div className="font-bold text-stone-900">{sc.holder}</div></div><div className="rounded-2xl bg-stone-50 p-3"><div className="text-[11px] font-bold uppercase text-stone-400">Battery</div><div className="font-bold text-stone-900">{Math.round(st.battery)}%</div></div></div>
-                <div className="flex flex-wrap gap-2"><button onClick={() => done('asset', `${sc.id} loaned out`)} className={`${btn} bg-cyan-600 text-white`}>Loan out</button><button onClick={() => done('asset', `${sc.id} returned to ${sc.home}`)} className={`${btn} bg-emerald-600 text-white`}>Return</button></div></div></Card>) })()}
+                <div className="flex flex-wrap gap-2"><button onClick={() => done('asset', `${sc.id} checked out to a person or site`)} className={`${btn} bg-cyan-600 text-white`}>Check out</button><button onClick={() => done('asset', `${sc.id} returned to ${sc.home}`)} className={`${btn} bg-emerald-600 text-white`}>Return</button></div></div></Card>) })()}
           {found?.type === 'load' && (() => { const c = found.c; const leg = w.legs.find((l) => l.id === c.legId); return (
             <Card><CardHead title={c.ref} sub={c.desc} />
               <div className="space-y-3 p-5"><div className="grid grid-cols-3 gap-2 text-sm">{[[`${c.items}`, 'items'], [`${c.kg} kg`, 'declared'], [SITES[c.to].short, 'to']].map(([v, l]) => <div key={l} className="rounded-2xl bg-stone-50 p-3"><div className="text-[11px] font-bold uppercase text-stone-400">{l}</div><div className="truncate font-bold text-stone-900">{v}</div></div>)}</div>

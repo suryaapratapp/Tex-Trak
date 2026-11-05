@@ -137,7 +137,7 @@ export const VEHICLES: Vehicle[] = [
   { id: 'V1', reg: 'DP71 TRK', driver: 'Marcus Hale', imei: '862129084785066', simulated: false, role: 'Laundry shuttle (Decon ⇄ Hospital)', color: '#0ea5e9', model: 'Teltonika TAT240' },
   { id: 'V2', reg: 'LN22 GRL', driver: 'Priya Nair', imei: '862129084785074', simulated: true, role: 'Recycling run · RCY-A', color: '#16a34a', model: 'Teltonika TAT240' },
   { id: 'V3', reg: 'BX19 HLT', driver: 'Dmitri Volkov', imei: '862129084785082', simulated: true, role: 'Recycling run · RCY-B', color: '#e11d48', model: 'Teltonika TAT240' },
-  { id: 'V4', reg: 'YC70 CRR', driver: 'Sam Okoro', imei: '862129084785090', simulated: true, role: 'Courier · loans & clinic recycling', color: '#9333ea', model: 'Teltonika TAT240' },
+  { id: 'V4', reg: 'YC70 CRR', driver: 'Sam Okoro', imei: '862129084785090', simulated: true, role: 'Courier · equipment & clinic recycling', color: '#9333ea', model: 'Teltonika TAT240' },
   { id: 'V5', reg: 'SY24 CRT', driver: 'Amir Syed', imei: '862129084785108', simulated: true, role: 'Synergy curtain run', color: '#0d9488', model: 'Teltonika TAT240' },
 ]
 export const VEH_BY_ID = Object.fromEntries(VEHICLES.map((v) => [v.id, v]))

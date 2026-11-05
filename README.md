@@ -31,7 +31,7 @@ scanner leaving site, evening collection, decon processing…).
 - **Lifecycle Flow** — clean delivery → departments → dirty cages → collection → decon → back; per-item passport, fusion confidence, hash-linked custody
 - **Laundry Planner** — arrival board, capacity vs arrivals, crew recommendation
 - **Shipments** — Amazon-style tracking for laundry, recycling, courier and parcels
-- **High-value Assets** — community scanners, geofences, battery, loan state
+- **High-value Assets** — community scanners, geofences, battery, who holds it
 - **Provenance & Custody** — did the recycling truck really reach the recycler? Verified vs broken chain
 - **Alerts & Incidents** — 12-rule engine, risk scores, evidence, incident case files
 - **Sustainability · CSRD** — LCA metrics, verified-recycled vs withheld, CSV/JSON export
@@ -83,7 +83,7 @@ Site, client and reader data lives in `app/src/sim/registry.ts`; the UK network 
 ## The four use cases
 
 1. **Laundry arrivals** – what is reaching the hospital and the plant, when it can be used, and which departments are short.
-2. **Community assets** – portable scanners on loan, geofences, battery and silence alerts.
+2. **Community assets** – portable scanners, geofences, battery and silence alerts.
 3. **Shipments** – live ETA and tracking history for any consignment.
 4. **Recycling proof** – declared destination versus the geofence the truck is really in; printable evidence certificate.
 
