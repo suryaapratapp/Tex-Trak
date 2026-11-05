@@ -4,6 +4,10 @@ QR → RFID → GNSS data-fusion platform (STELLAR-HEALTH demonstrator, TRL 5 �
 and high-value assets from point of use, through decontamination, to recycling — with auditable provenance and
 CSRD-ready ISO 14040 LCA metrics.
 
+## Two use cases
+1. **Reusable textiles (RFID + GPS)** — doorway RFID readers, QR scans on use, TAT240 GPS on trucks; hospital ⇄ Decon Plant, recycling proof.
+2. **Curtain installations (QR) — Synergy** — curtains delivered, installed and taken down by QR scan (*Installations* tab): scan modes **Install** (incoming to ward), **Take down** (outgoing), **Dispatch** and **Receive** at the Synergy facility; floor/ward/bay map, per-curtain history, printable QR labels, van runs on the live map. Camera scanning uses the browser camera (HTTPS or localhost); demo scan buttons work everywhere. State is stored in the browser for the demo.
+
 ## What's in the box
 | Area | Where |
 |---|---|

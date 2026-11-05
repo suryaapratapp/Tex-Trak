@@ -34,7 +34,7 @@ function Chain({ ref_, vehId }: { ref_: string; vehId: string }) {
 export default function Provenance() {
   const snap = useSnap(); const t = snap.t
   return (
-    <Page title="Provenance & Custody" sub="Did the truck carrying material for recycling actually reach the recycler — or was it shipped offshore or sent for incineration?">
+    <Page title="Recycling proof" sub="Proof that recycling reached the recycler.">
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Consignments audited" value={2} icon={<FileBadge size={15} />} sub="recycling runs today" />
         <Kpi label="Verified recycled" value={t >= getWorld().custody['RCY-0612-A'].slice(-1)[0].t ? 1 : 0} tone="good" sub="weighbridge RFID + GNSS + certificate" />
@@ -42,7 +42,6 @@ export default function Provenance() {
         <Kpi label="Evidence integrity" value="SHA-256" sub="hash-linked custody ledger" />
       </div>
       <div className="grid gap-4 xl:grid-cols-2"><Chain ref_="RCY-0612-A" vehId="V2" /><Chain ref_="RCY-0612-B" vehId="V3" /></div>
-      <Card className="mt-4 p-4 text-sm text-slate-600"><b className="text-slate-900">How the verdict is reached.</b> Each cage is RFID-bound to a TAT240 tracker at the point of loading (item ↔ container ↔ truck). Position evidence is therefore GNSS-grade for every tagged item. A consignment is only certified when (1) GNSS shows entry to the declared destination geofence, (2) RFID readers at the destination weighbridge read the expected tags and (3) the mass delta is within tolerance. Any rule breach — route deviation, restricted geofence (port / incinerator), signal loss, missing receipt — breaks the chain and opens an incident.</Card>
     </Page>
   )
 }

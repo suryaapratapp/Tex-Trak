@@ -14,7 +14,7 @@ export default function Assets() {
   const staleH = (r: (typeof rows)[0]) => (t - r.st.lastSeen) / 60
   const tag = (r: (typeof rows)[0]) => (r.st.outside ? ['red', 'OFF-SITE'] : r.st.mode === 'in_transit' ? ['blue', 'IN TRANSIT'] : staleH(r) > 24 ? ['amber', 'STALE'] : r.st.mode === 'at_hub' ? ['slate', 'AT HUB'] : ['green', 'ON-SITE']) as ['red' | 'blue' | 'amber' | 'slate' | 'green', string]
   return (
-    <Page title="High-value Assets" sub="Portable scanners and diagnostic kit out in the community — geofenced, battery-monitored and loan-tracked.">
+    <Page title="Community assets" sub="Loaned equipment and where it is.">
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Assets tracked" value={rows.length} icon={<Radar size={15} />} sub="GNSS tier · LTE-M / BLE assist" />
         <Kpi label="Value under watch" value={`£${value.toLocaleString()}`} icon={<Wallet size={15} />} sub="replacement cost" />

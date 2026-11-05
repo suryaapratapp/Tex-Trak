@@ -13,7 +13,7 @@ const vehIcon = (color: string, heading: number, reg: string, selected: boolean,
 })
 const scIcon = (color: string, label: string) => L.divIcon({ className: '', iconSize: [0, 0], html: `<div style="transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center"><div style="width:14px;height:14px;border-radius:4px;background:${color};border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.4);transform:rotate(45deg)"></div><span style="margin-top:3px;background:#fff;border:1px solid #d6dee8;border-radius:4px;padding:0 4px;font:600 9px Inter,sans-serif;color:#0b1f33">${label}</span></div>` })
 const siteIcon = (name: string, color: string) => L.divIcon({ className: '', iconSize: [0, 0], html: `<div style="transform:translate(-50%,-50%);background:${color};color:#fff;font:600 10px Inter,sans-serif;padding:2px 7px;border-radius:6px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">${name}</div>` })
-const SITE_COLOR: Record<string, string> = { hospital: '#0e7490', decon: '#1d4ed8', recycler: '#15803d', port: '#be123c', incinerator: '#be123c', hub: '#6d28d9', community: '#b45309' }
+const SITE_COLOR: Record<string, string> = { hospital: '#0e7490', decon: '#1d4ed8', recycler: '#15803d', port: '#be123c', incinerator: '#be123c', hub: '#6d28d9', community: '#b45309', facility: '#0f766e' }
 
 function Follow({ pos, on }: { pos: LL | null; on: boolean }) {
   const map = useMap()

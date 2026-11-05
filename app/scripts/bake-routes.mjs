@@ -2,10 +2,10 @@
 import fs from 'node:fs'
 const P = {
   DECON: [-0.2850, 51.5295], HOSP: [-0.1340, 51.5246], RECY: [0.1450, 51.5330],
-  PORT: [0.3570, 51.4540], HUB: [-0.0030, 51.5410], COMM: [-0.1430, 51.5415],
+  SYN: [-0.2760, 51.5088], PORT: [0.3570, 51.4540], HUB: [-0.0030, 51.5410], COMM: [-0.1430, 51.5415],
 }
 const pairs = { decon_hosp:['DECON','HOSP'], hosp_decon:['HOSP','DECON'], hosp_recy:['HOSP','RECY'],
-  decon_recy:['DECON','RECY'], decon_port:['DECON','PORT'], hub_comm:['HUB','COMM'] }
+  decon_recy:['DECON','RECY'], decon_port:['DECON','PORT'], hub_comm:['HUB','COMM'], syn_hosp:['SYN','HOSP'], hosp_syn:['HOSP','SYN'] }
 const out = {}
 for (const [k,[a,b]] of Object.entries(pairs)) {
   const url = `https://router.project-osrm.org/route/v1/driving/${P[a]};${P[b]}?overview=full&geometries=geojson`

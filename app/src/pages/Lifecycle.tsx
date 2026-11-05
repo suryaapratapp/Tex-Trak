@@ -44,7 +44,7 @@ export default function Lifecycle() {
   const doneN = timeline.filter((r) => r.t <= t).length
   const co2 = loc.cycles * (it.type.co2New - it.type.co2Cycle)
   return (
-    <Page title="Lifecycle Flow" sub="End-to-end: clean delivery → wards → dirty cage → collection → decontamination → back to the hospital.">
+    <Page title="Daily flow" sub="Where every item is right now.">
       <Card className="mb-4 overflow-x-auto p-4">
         <div className="flex min-w-[1100px] items-stretch gap-1.5">
           {STAGES.map((s, i) => (
@@ -59,7 +59,6 @@ export default function Lifecycle() {
           ))}
           <div className="ml-1 w-[110px] shrink-0 rounded-xl border border-rose-200 bg-rose-50 p-3"><div className="text-[12.5px] font-semibold text-rose-800">Unaccounted</div><div className="mono text-lg font-semibold text-rose-700">{counts.M ?? 0}</div><div className="text-[11px] text-rose-700/70">reconciliation gap</div></div>
         </div>
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">↺ Wash cycle completes the loop — tags carry their cycle count; items near end-of-life branch to recycling with a verified chain of custody.</div>
       </Card>
 
       <div className="grid gap-4 xl:grid-cols-[320px_1fr_340px]">

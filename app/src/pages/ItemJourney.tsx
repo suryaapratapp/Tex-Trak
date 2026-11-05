@@ -39,10 +39,10 @@ export default function ItemJourney() {
   const leg = cur.legId ? w.legs.find((l) => l.id === cur.legId) : undefined
   const where = loc.status === 'missing' ? `Unaccounted for — last seen in ${ZONE_NAME[it.missing!.lastZone]}` : loc.kind === 'vehicle' ? `Riding on truck ${VEH_BY_ID[loc.veh!].reg}` : loc.kind === 'moving' ? `Moving to ${ZONE_NAME[loc.zone!]}` : ZONE_NAME[loc.zone!]
   const cyclesDone = loc.cycles
-  const past = useMemo(() => { const r = rng(it.id * 977 + 13); const trucks = ['SY71 KBR', 'SY71 KBR', 'KB04 TRK']; return [1, 2, 3, 4, 5, 6].map((k) => ({ n: it.baseCycles - k + 1, daysAgo: Math.round(k * (2.6 + r() * 1.2)), dept: ZONE_NAME[it.type.depts[Math.floor(r() * it.type.depts.length)]], truck: trucks[Math.floor(r() * 3)], hrs: Math.round(6 + r() * 9) })) }, [it])
+  const past = useMemo(() => { const r = rng(it.id * 977 + 13); const trucks = ['DP71 TRK', 'DP71 TRK', 'DP04 TRK']; return [1, 2, 3, 4, 5, 6].map((k) => ({ n: it.baseCycles - k + 1, daysAgo: Math.round(k * (2.6 + r() * 1.2)), dept: ZONE_NAME[it.type.depts[Math.floor(r() * it.type.depts.length)]], truck: trucks[Math.floor(r() * 3)], hrs: Math.round(6 + r() * 9) })) }, [it])
   const cycleGroups = [...new Set(chs.map((c) => c.cycle))]
   return (
-    <Page title={it.type.name} sub={`Journey of ${it.qr} — follow the trips on the maps and the rooms it passes through inside each building.`}
+    <Page title={it.type.name} sub={it.qr}
       right={<button onClick={() => go('inventory')} className="flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-100"><ArrowLeft size={15} /> All inventory</button>}>
       <Card className="mb-5 p-5"><div className="grid gap-5 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
         <div><div className="text-[11px] font-bold uppercase tracking-wider text-stone-400">Right now</div><div className="mt-1 text-xl font-extrabold leading-tight text-stone-900">{where}</div><div className="mt-2"><StatusPill s={loc.status} /></div></div>

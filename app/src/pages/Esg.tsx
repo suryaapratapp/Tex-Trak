@@ -1,10 +1,30 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Download, Droplets, Leaf, PackageCheck, Recycle } from 'lucide-react'
 import { Card, CardHead, Chip, Kpi, Page } from '../components/ui'
 import { fmtT, getWorld } from '../sim/engine'
 import { PRODUCTS } from '../sim/world'
 import { useSnap } from '../sim/snap'
+
+
+function Roi() {
+  const [beds, setBeds] = useState(300); const [spend, setSpend] = useState(4000); const [before, setBefore] = useState(15); const [after, setAfter] = useState(5); const [hours, setHours] = useState(20); const [fee, setFee] = useState(15)
+  const spendTotal = beds * spend, lossBefore = (spendTotal * before) / 100, lossAfter = (spendTotal * after) / 100
+  const loss = lossBefore - lossAfter, labour = hours * 52 * 18, cost = beds * fee * 12, net = loss + labour - cost
+  const payback = net > 0 ? Math.max(0.5, (cost * 0.5) / ((loss + labour) / 12)) : 0
+  const co2 = (beds * 150 * 3.4) / 1000
+  const money = (n: number) => `£${Math.round(n).toLocaleString()}`
+  const Slider = ({ l, v, set, min, max, step = 1, fmt = (x: number) => String(x) }: { l: string; v: number; set: (n: number) => void; min: number; max: number; step?: number; fmt?: (x: number) => string }) => (
+    <label className="block"><div className="flex justify-between text-[13px] font-bold text-stone-700"><span>{l}</span><span className="text-stone-900">{fmt(v)}</span></div><input type="range" min={min} max={max} step={step} value={v} onChange={(e) => set(+e.target.value)} className="mt-1 w-full accent-cyan-600" /></label>)
+  return (
+    <Card className="mb-5 overflow-hidden"><CardHead title="Return on investment" sub="Adjust the assumptions" />
+      <div className="grid gap-6 p-5 lg:grid-cols-[1fr_1.1fr]">
+        <div className="space-y-4"><Slider l="Hospital beds" v={beds} set={setBeds} min={50} max={1200} step={10} /><Slider l="Annual textile & equipment spend per bed" v={spend} set={setSpend} min={1000} max={8000} step={100} fmt={money} /><Slider l="Loss rate today" v={before} set={setBefore} min={5} max={25} fmt={(x) => `${x}%`} /><Slider l="Loss rate with Tex-Trak" v={after} set={setAfter} min={1} max={15} fmt={(x) => `${x}%`} /><Slider l="Stock-count hours saved per week" v={hours} set={setHours} min={0} max={80} /><Slider l="Platform fee per bed per month" v={fee} set={setFee} min={5} max={40} fmt={money} /></div>
+        <div className="grid content-start gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl bg-gradient-to-br from-stone-900 to-cyan-900 p-5 text-white sm:col-span-2"><div className="text-xs font-bold uppercase tracking-wider text-cyan-200">Net benefit per year</div><div className="mt-1 text-4xl font-extrabold">{money(net)}</div><div className="mt-1 text-sm text-white/70">{net > 0 ? `Pays back in about ${payback.toFixed(1)} months` : 'Increase savings or lower the fee'}</div></div>
+          {[['Loss avoided', money(loss)], ['Labour saved', money(labour)], ['Platform cost', money(cost)], ['CO₂e avoided', `${co2.toFixed(0)} t / yr`]].map(([l, v]) => <div key={l} className="rounded-2xl bg-stone-50 p-4"><div className="text-xs font-bold text-stone-500">{l}</div><div className="mt-1 text-2xl font-extrabold text-stone-900">{v}</div></div>)}</div>
+      </div></Card>)
+}
 
 const SCALE = 2400 / 72 // pilot sample → 300-bed hospital daily item flow
 export default function Esg() {
@@ -34,7 +54,7 @@ export default function Esg() {
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], { type: kind === 'json' ? 'application/json' : 'text/csv' })); a.download = `textrak-csrd-${kind === 'json' ? 'datapoints.json' : 'datapoints.csv'}`; a.click()
   }
   return (
-    <Page title="Sustainability · CSRD" sub="Auditable ISO 14040 LCA metrics, fused with verified (GNSS + RFID) end-of-life evidence."
+    <Page title="Impact" sub="Environmental and financial impact."
       right={<div className="flex gap-2"><button onClick={() => download('csv')} className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-slate-700 ring-1 ring-slate-200"><Download size={13} /> CSV</button><button onClick={() => download('json')} className="flex items-center gap-1.5 rounded-lg bg-ink-900 px-3 py-1.5 text-xs font-medium text-white"><Download size={13} /> CSRD datapoints (JSON)</button></div>}>
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="CO₂e avoided today (pilot)" value={`${co2.toFixed(0)} kg`} tone="good" icon={<Leaf size={15} />} sub={`≈ ${annual.toFixed(0)} t / yr projected for a 300-bed hospital`} />
@@ -42,6 +62,7 @@ export default function Esg() {
         <Kpi label="Verified recycled" value={`${verifiedKg} kg`} tone="good" icon={<Recycle size={15} />} sub={unverifiedKg ? `${unverifiedKg} kg withheld — chain broken` : 'chain-of-custody certified'} />
         <Kpi label="Shrinkage" value={`${((missing / snap.loc.length) * 100).toFixed(1)}%`} tone={missing ? 'warn' : 'good'} icon={<PackageCheck size={15} />} sub={`£${invValue.toLocaleString()} sample inventory · baseline 10–20%/yr`} />
       </div>
+      <Roi />
       <div className="grid gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-2"><CardHead title="Cumulative CO₂e avoided" sub="Per clinical use: single-use equivalent footprint − laundering footprint" />
           <div className="h-[280px] p-3"><ResponsiveContainer><LineChart data={series}><CartesianGrid strokeDasharray="3 3" stroke="#e5ebf2" /><XAxis dataKey="h" tick={{ fontSize: 10 }} /><YAxis tick={{ fontSize: 10 }} /><Tooltip /><Line dataKey="co2" name="kg CO₂e" stroke="#059669" strokeWidth={2.5} dot={false} /></LineChart></ResponsiveContainer></div></Card>
@@ -53,8 +74,6 @@ export default function Esg() {
         <Card><CardHead title="CSRD / ESRS datapoints" sub="Audit-ready, each with source and data-quality class" />
           <table className="w-full text-left text-[12.5px]"><tbody className="divide-y divide-slate-100">{rows.map(([m, v, s, q]) => <tr key={m}><td className="px-4 py-2.5 text-slate-800">{m}</td><td className="mono font-medium text-slate-900">{v}</td><td className="text-slate-500">{s}</td><td><Chip tone={q.startsWith('Measured') ? 'green' : q === 'Flagged' ? 'red' : 'amber'}>{q}</Chip></td></tr>)}</tbody></table></Card>
       </div>
-      <Card className="mt-4 p-5"><h3 className="text-sm font-semibold text-slate-900">ISO 14040 / 14044 methodology</h3>
-        <div className="mt-3 grid gap-3 text-xs text-slate-600 md:grid-cols-4">{[['Goal & scope', 'Compare reusable laundered textiles with single-use equivalents for one clinical use. Boundary: cradle-to-grave incl. transport and end-of-life.'], ['Inventory (LCI)', 'Per-SKU factors for production, laundering (water, energy, chemicals) and transport; trip distance measured from GNSS, not estimated.'], ['Impact (LCIA)', 'GWP100 (kg CO₂e) and water consumption; factors stored in product_types and versioned.'], ['Interpretation', 'Verified recycling credit only allocated when custody chain is complete — protects against over-claiming.']].map(([a, b]) => <div key={a} className="rounded-lg bg-slate-50 p-3"><div className="mb-1 font-semibold text-slate-800">{a}</div>{b}</div>)}</div></Card>
     </Page>
   )
 }

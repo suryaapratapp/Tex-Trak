@@ -22,14 +22,14 @@ export default function FleetMap() {
     : { txt: 'Parked', tone: 'slate' as const }
   const pingS = st.moving ? 30 : 3600
   return (
-    <Page title="Live Fleet Map" sub="Real-time position from Teltonika TAT240 GNSS trackers bound to cages and vehicles.">
+    <Page title="Live map" sub="Trackers on every vehicle, in real time.">
       <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
         <Card className="overflow-hidden">
           <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-2.5">
             <span className="text-sm font-semibold text-slate-900">Greater London operations</span>
             <span className="ml-auto flex items-center gap-3 text-xs text-slate-500"><i className="inline-block h-0.5 w-5 border-t-2 border-dotted border-slate-500" /> planned route <i className="inline-block h-1 w-5 rounded bg-cyan-500" /> travelled <label className="ml-2 flex cursor-pointer items-center gap-1.5 font-medium text-slate-700"><input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} /> Follow selected</label></span>
           </div>
-          <FleetMapView vehIds={['V1', 'V2', 'V3', 'V4']} height={640} selected={selVeh} onSelect={(id) => set({ selVeh: id })} follow={follow} scanners />
+          <FleetMapView vehIds={['V1', 'V2', 'V3', 'V4', 'V5']} height={640} selected={selVeh} onSelect={(id) => set({ selVeh: id })} follow={follow} scanners />
         </Card>
         <div className="space-y-4">
           <Card><CardHead title="Vehicles" />

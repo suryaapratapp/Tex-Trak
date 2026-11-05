@@ -75,7 +75,10 @@ function buildWorld(): World {
   const L6 = mkLeg('L6', 'V2', 'HOSP', 'RECY', 'hosp_recy', 'hosp_recy', 570, 1.45, 1.4, 'RCY-0612-A', 'recycling')
   const L7 = mkLeg('L7', 'V3', 'DECON', 'PORT', 'decon_port', 'decon_recy', 615, 1.4, 1.4, 'RCY-0612-B', 'recycling')
   const L8 = mkLeg('L8', 'V4', 'HUB', 'COMM', 'hub_comm', 'hub_comm', 780, 1.3, 1.25, 'PCL-77421', 'asset_loan')
-  const legs = [L1, L2, L3, L4, L5, L6, L7, L8]
+  const L9 = mkLeg('L9', 'V5', 'SYN', 'HOSP', 'syn_hosp', 'syn_hosp', 400, 1.45, 1.4, 'SYN-0612-DEL', 'curtain_delivery')
+  const L10 = mkLeg('L10', 'V5', 'HOSP', 'SYN', 'hosp_syn', 'hosp_syn', 960, 1.5, 1.4, 'SYN-0612-COL', 'curtain_collection')
+  const L11 = mkLeg('L11', 'V5', 'SYN', 'HOSP', 'syn_hosp', 'syn_hosp', 1790, 1.4, 1.4, 'SYN-0613-DEL', 'curtain_delivery')
+  const legs = [L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11]
 
   // ---- items
   const N = 72
@@ -265,6 +268,8 @@ function buildWorld(): World {
     sys(aV2 + 11, 'Weighbridge RFID receipt', '38/38 tags read · 141.6 kg vs 142.0 declared (−0.3%) · seal intact', 'RECY', { cons: L6.cons })
     sys(aV2 + 40, 'Certificate of recycling issued', 'RCY-A · fibre-to-fibre processing · hashed to custody ledger · LCA credit 214 kg CO₂e', 'RECY', { cons: L6.cons })
   }
+  sys(L9.depart - 8, 'Curtains loaded', '16 fresh curtains scanned onto the van · Floor 2 replacement', 'SYN', { veh: 'V5', cons: L9.cons })
+  sys(L10.depart - 4, 'Taken-down curtains collected', '16 curtains scanned out of Floor 2 · handed to driver', 'HOSP', { veh: 'V5', cons: L10.cons })
   sys(L8.depart - 6, 'Courier loaded', 'SC-004 (Vscan Air) + 3 parcels · TAT240 …085090 bound', 'HUB', { veh: 'V4', cons: L8.cons })
   sys(L8.arrive + 4, 'Asset loan activated', 'SC-004 handed to Dr A. Rahman (QR) · geofence 150 m @ Camden', 'COMM', { cons: L8.cons })
 
@@ -287,12 +292,14 @@ function buildWorld(): World {
   // ---- consignments
   const nm = N - missingItems.length
   consignments.push(
-    { ref: L1.cons, kind: 'laundry_inbound', veh: 'V1', legId: 'L1', from: 'DECON', to: 'HOSP', items: N, kg: 38.5 * 9.6, cages: cleanCages, desc: 'Clean textiles · morning delivery (3 cages)', carrier: 'Synergy UK / K-Bro', verdict: 'routine' },
-    { ref: L4.cons, kind: 'laundry_outbound', veh: 'V1', legId: 'L4', from: 'HOSP', to: 'DECON', items: nm, kg: nm * 5.4, cages: ['RC-201', 'RC-202'], desc: 'Soiled textiles · evening collection (2 RFID cages)', carrier: 'Synergy UK / K-Bro', verdict: 'routine' },
-    { ref: L5.cons, kind: 'laundry_inbound', veh: 'V1', legId: 'L5', from: 'DECON', to: 'HOSP', items: nm, kg: nm * 5.2, cages: ['RC-301', 'RC-302'], desc: 'Clean textiles · next-morning delivery', carrier: 'Synergy UK / K-Bro', verdict: 'routine' },
+    { ref: L1.cons, kind: 'laundry_inbound', veh: 'V1', legId: 'L1', from: 'DECON', to: 'HOSP', items: N, kg: 38.5 * 9.6, cages: cleanCages, desc: 'Clean textiles · morning delivery (3 cages)', carrier: 'Decon Plant', verdict: 'routine' },
+    { ref: L4.cons, kind: 'laundry_outbound', veh: 'V1', legId: 'L4', from: 'HOSP', to: 'DECON', items: nm, kg: nm * 5.4, cages: ['RC-201', 'RC-202'], desc: 'Soiled textiles · evening collection (2 RFID cages)', carrier: 'Decon Plant', verdict: 'routine' },
+    { ref: L5.cons, kind: 'laundry_inbound', veh: 'V1', legId: 'L5', from: 'DECON', to: 'HOSP', items: nm, kg: nm * 5.2, cages: ['RC-301', 'RC-302'], desc: 'Clean textiles · next-morning delivery', carrier: 'Decon Plant', verdict: 'routine' },
     { ref: L6.cons, kind: 'recycling', veh: 'V2', legId: 'L6', from: 'HOSP', to: 'RECY', items: 38, kg: 142, cages: ['RCY-C1'], desc: 'End-of-life textiles → fibre-to-fibre recycling', carrier: 'GreenLoop Haulage', verdict: 'compliant' },
     { ref: L7.cons, kind: 'recycling', veh: 'V3', legId: 'L7', from: 'DECON', to: 'RECY', items: 44, kg: 168, cages: ['RCY-C2'], desc: 'End-of-life textiles → fibre-to-fibre recycling', carrier: 'BX Logistics (sub-contract)', verdict: 'diverted' },
     { ref: L8.cons, kind: 'asset_loan', veh: 'V4', legId: 'L8', from: 'HUB', to: 'COMM', items: 4, kg: 11.2, cages: ['PKG-8841'], desc: 'Portable ultrasound SC-004 + 3 consumable parcels', carrier: 'NHS Courier Service', verdict: 'routine' },
+    { ref: L9.cons, kind: 'curtain_delivery', veh: 'V5', legId: 'L9', from: 'SYN', to: 'HOSP', items: 16, kg: 38.4, cages: ['TRL-01'], desc: 'Fresh curtains · Floor 2 replacement', carrier: 'Synergy', verdict: 'routine' },
+    { ref: L10.cons, kind: 'curtain_collection', veh: 'V5', legId: 'L10', from: 'HOSP', to: 'SYN', items: 16, kg: 41.6, cages: ['TRL-01'], desc: 'Taken-down curtains · back to reprocessing', carrier: 'Synergy', verdict: 'routine' },
     { ref: 'PCL-88103', kind: 'parcel', veh: '', from: 'HUB', to: 'HOSP', items: 12, kg: 24, cages: [], desc: 'Supplier order · 12 reusable gowns (carrier API, no GNSS)', carrier: 'Parcelforce Express', verdict: 'routine' },
   )
 
@@ -332,7 +339,7 @@ function buildWorld(): World {
 // ------------------------------------------------------------ vehicle model
 export interface VehState { pos: LL; heading: number; speed: number; moving: boolean; dark: boolean; leg: Leg | null; progress: number; battery: number; mv: number; sats: number; hdop: number; signal: number; lastFixT: number; eta: number | null; planEta: number | null; delay: number; atSite: string | null }
 const DARK_FROM: Record<string, number> = { V3: 745 }
-const BASE_BAT: Record<string, number> = { V1: 96, V2: 88, V3: 54, V4: 91 }
+const BASE_BAT: Record<string, number> = { V5: 93, V1: 96, V2: 88, V3: 54, V4: 91 }
 const prof = (u: number) => u + (0.55 / (2 * Math.PI * 5)) * Math.sin(2 * Math.PI * 5 * u)
 const dprof = (u: number) => 1 + 0.55 * Math.cos(2 * Math.PI * 5 * u)
 

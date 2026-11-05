@@ -18,7 +18,7 @@ export function Tour() {
   const nowIdx = sorted.reduce((a, s, i) => (t >= s.t ? i : a), -1)
   return (
     <div className="mb-6">
-      <div className="mb-3 flex items-end justify-between"><div><h2 className="text-lg font-extrabold text-stone-900">How it works — a day in 8 steps</h2><p className="text-sm text-stone-500">Click “Show me” on any step to jump the demo clock there and open the right screen.</p></div></div>
+      <div className="mb-3 flex items-end justify-between"><div><h2 className="text-lg font-extrabold text-stone-900">A day in 8 steps</h2></div></div>
       <div className="scroll-thin flex gap-3 overflow-x-auto pb-2">
         {STEPS.map((s, i) => { const live = sorted[nowIdx] === s; return (
           <div key={i} className={`card flex w-[250px] shrink-0 flex-col p-4 ${live ? 'ring-2 ring-orange-500' : ''}`}>

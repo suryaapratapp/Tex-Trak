@@ -68,7 +68,7 @@ export function FloorPlan({ planId, trail }: { planId: 'H' | 'D'; trail?: { item
         {(['RC-201', 'RC-202'] as const).map((c) => { const b = cageBox(c); const n = snap.loc.filter((l, i) => l.kind === 'zone' && l.zone === 'DIRTY' && w.items[i].cageOut === c).length
           return <g key={c}><rect x={b.x} y={b.y} width={b.w} height={b.h} rx="4" fill="#fff" stroke="#7c3aed" strokeWidth="2" strokeDasharray="5 3" /><text x={b.x + b.w / 2} y={b.y - 6} fontSize="11" fontWeight="700" textAnchor="middle" fill="#6d28d9">{c} · {n}</text></g> })}
       </>}
-      {truckHere && <g transform={planId === 'H' ? 'translate(2,452)' : 'translate(4,150)'}><rect width="52" height="26" rx="4" fill="#0ea5e9" /><rect x="40" y="4" width="12" height="12" fill="#e0f2fe" /><circle cx="12" cy="27" r="4" fill="#1c1917" /><circle cx="40" cy="27" r="4" fill="#1c1917" /><text x="20" y="17" fontSize="9" fontWeight="700" fill="#fff" textAnchor="middle">KB</text></g>}
+      {truckHere && <g transform={planId === 'H' ? 'translate(2,452)' : 'translate(4,150)'}><rect width="52" height="26" rx="4" fill="#0ea5e9" /><rect x="40" y="4" width="12" height="12" fill="#e0f2fe" /><circle cx="12" cy="27" r="4" fill="#1c1917" /><circle cx="40" cy="27" r="4" fill="#1c1917" /><text x="20" y="17" fontSize="9" fontWeight="700" fill="#fff" textAnchor="middle">DP</text></g>}
       {plan.readers.map((r) => { const on = ready(r.id); return (
         <g key={r.id}>
           {on && <circle cx={r.at[0]} cy={r.at[1]} r="26" fill="url(#rg)" className="pulse-ring" />}

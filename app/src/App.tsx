@@ -12,9 +12,10 @@ import Alerts from './pages/Alerts'
 import Esg from './pages/Esg'
 import Devices from './pages/Devices'
 import Inventory from './pages/Inventory'
+import Installations from './pages/Installations'
 import ItemJourney from './pages/ItemJourney'
 
-const PAGES: Record<string, () => React.ReactElement> = { command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, devices: Devices, inventory: Inventory, item: ItemJourney }
+const PAGES: Record<string, () => React.ReactElement> = { command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, devices: Devices, inventory: Inventory, install: Installations, item: ItemJourney }
 export default function App() {
   const page = useStore((s) => s.page)
   const P = PAGES[page] ?? Command

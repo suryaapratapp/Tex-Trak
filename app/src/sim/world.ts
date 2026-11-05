@@ -1,12 +1,13 @@
 import type { LL } from '../lib/geo'
 import routes from './routes.json'
 
-export type SiteKind = 'hospital' | 'decon' | 'recycler' | 'port' | 'incinerator' | 'hub' | 'community'
+export type SiteKind = 'facility' | 'hospital' | 'decon' | 'recycler' | 'port' | 'incinerator' | 'hub' | 'community'
 export interface Site { id: string; name: string; short: string; kind: SiteKind; pos: LL; radius: number; restricted?: boolean; address: string }
 
 export const SITES: Record<string, Site> = {
+  SYN: { id: 'SYN', name: 'Synergy Facility', short: 'Synergy Facility', kind: 'facility', pos: [51.5088, -0.276], radius: 250, address: 'Acton, London W3' },
   HOSP: { id: 'HOSP', name: 'Royal Meridian Hospital', short: 'Hospital', kind: 'hospital', pos: [51.5246, -0.134], radius: 200, address: 'Euston Rd, London NW1' },
-  DECON: { id: 'DECON', name: 'Synergy UK / K-Bro Decontamination Facility', short: 'Decon Plant', kind: 'decon', pos: [51.5295, -0.285], radius: 300, address: 'Park Royal, London NW10' },
+  DECON: { id: 'DECON', name: 'Decon Plant', short: 'Decon Plant', kind: 'decon', pos: [51.5295, -0.285], radius: 300, address: 'Park Royal, London NW10' },
   RECY: { id: 'RECY', name: 'GreenLoop Textile Recycling', short: 'Recycler', kind: 'recycler', pos: [51.533, 0.145], radius: 450, address: 'Dagenham, London RM9' },
   PORT: { id: 'PORT', name: 'Port of Tilbury (export terminal)', short: 'Tilbury Port', kind: 'port', pos: [51.454, 0.357], radius: 1100, restricted: true, address: 'Tilbury, Essex RM18' },
   INCIN: { id: 'INCIN', name: 'Edmonton EcoPark (incineration)', short: 'Incinerator', kind: 'incinerator', pos: [51.6155, -0.0495], radius: 300, restricted: true, address: 'Edmonton, London N18' },
@@ -131,10 +132,11 @@ export const ZONE_NAME: Record<string, string> = Object.fromEntries([...hz, ...d
 // ---------------------------------------------------------------- vehicles
 export interface Vehicle { id: string; reg: string; driver: string; imei: string; simulated: boolean; role: string; color: string; model: string }
 export const VEHICLES: Vehicle[] = [
-  { id: 'V1', reg: 'SY71 KBR', driver: 'Marcus Hale', imei: '862129084785066', simulated: false, role: 'Laundry shuttle (Decon ⇄ Hospital)', color: '#0ea5e9', model: 'Teltonika TAT240' },
+  { id: 'V1', reg: 'DP71 TRK', driver: 'Marcus Hale', imei: '862129084785066', simulated: false, role: 'Laundry shuttle (Decon ⇄ Hospital)', color: '#0ea5e9', model: 'Teltonika TAT240' },
   { id: 'V2', reg: 'LN22 GRL', driver: 'Priya Nair', imei: '862129084785074', simulated: true, role: 'Recycling run · RCY-A', color: '#16a34a', model: 'Teltonika TAT240' },
   { id: 'V3', reg: 'BX19 HLT', driver: 'Dmitri Volkov', imei: '862129084785082', simulated: true, role: 'Recycling run · RCY-B', color: '#e11d48', model: 'Teltonika TAT240' },
   { id: 'V4', reg: 'YC70 CRR', driver: 'Sam Okoro', imei: '862129084785090', simulated: true, role: 'Courier · asset loan delivery', color: '#9333ea', model: 'Teltonika TAT240' },
+  { id: 'V5', reg: 'SY24 CRT', driver: 'Amir Syed', imei: '862129084785108', simulated: true, role: 'Synergy curtain run', color: '#0d9488', model: 'Teltonika TAT240' },
 ]
 export const VEH_BY_ID = Object.fromEntries(VEHICLES.map((v) => [v.id, v]))
 

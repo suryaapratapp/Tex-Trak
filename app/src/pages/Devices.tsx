@@ -12,7 +12,7 @@ export default function Devices() {
   useEffect(() => { TABLES.forEach(async (t) => { const r = await supabase.from(t).select('*', { count: 'exact', head: true }); setCounts((c) => ({ ...c, [t]: r.error ? 'err' : r.count ?? 0 })) }) }, [])
   const readers = [...PLANS.H.readers.map((r) => ({ ...r, site: 'Royal Meridian Hospital' })), ...PLANS.D.readers.map((r) => ({ ...r, site: 'Decon Plant' }))]
   return (
-    <Page title="Devices & Integrations" sub="Physical hardware under test, ingestion path and platform health.">
+    <Page title="Devices" sub="Trackers and readers.">
       <Card className="mb-4"><CardHead title="Remote test checklist" sub="Share this page’s public link with whoever has the tracker — each check turns green by itself when real data arrives." />
         <div className="grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-3">{[
           ['Database reachable', db === 'ok'],
@@ -47,7 +47,6 @@ export default function Devices() {
         <Card><CardHead title="Fleet trackers" /><table className="w-full text-left text-[13px]"><tbody className="divide-y divide-slate-100">{VEHICLES.map((v) => <tr key={v.id}><td className="px-4 py-2.5 font-medium text-slate-900">{v.reg}</td><td className="mono text-xs text-slate-600">{v.imei}</td><td className="text-slate-500">{v.driver}</td><td><Chip tone={v.simulated ? 'slate' : 'green'}>{v.simulated ? 'simulated' : 'hardware'}</Chip></td></tr>)}</tbody></table></Card>
         <Card><CardHead title={`RFID reader estate (${readers.length})`} sub="Fixed ceiling readers · UHF Gen2" /><div className="scroll-thin grid max-h-[260px] gap-1.5 overflow-y-auto p-3 sm:grid-cols-2">{readers.map((r) => <div key={r.id} className="flex items-center gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs"><CheckCircle2 size={13} className="text-emerald-500" /><span className="mono font-medium text-slate-800">{r.id}</span><span className="truncate text-slate-500">{r.label}</span></div>)}</div></Card>
       </div>
-      <div className="mt-4 flex items-center gap-2 text-xs text-slate-400"><Server size={13} /> Interfaces: REST (PostgREST) · Realtime websockets · Edge function /ingest-tracker · CSV/JSON CSRD export</div>
     </Page>
   )
 }

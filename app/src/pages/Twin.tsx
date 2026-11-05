@@ -17,8 +17,8 @@ export default function Twin() {
   const fu = it ? fusion(it, t) : null
   const loc = it ? snap.loc[it.id] : null
   return (
-    <Page title="Facility Digital Twin" sub="Ceiling-mounted RFID readers at every entrance, exit and cage bay capture each tagged textile as it moves."
-      right={<div className="flex rounded-lg bg-white p-1 ring-1 ring-slate-200">{([['H', 'Royal Meridian Hospital'], ['D', 'Synergy / K-Bro Decon Plant']] as const).map(([k, l]) => (<button key={k} onClick={() => set({ twin: k })} className={`rounded-md px-3 py-1.5 text-xs font-medium ${twin === k ? 'bg-ink-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>{l}</button>))}</div>}>
+    <Page title="Facilities" sub="RFID readers at every doorway."
+      right={<div className="flex rounded-lg bg-white p-1 ring-1 ring-slate-200">{([['H', 'Royal Meridian Hospital'], ['D', 'Decon Plant']] as const).map(([k, l]) => (<button key={k} onClick={() => set({ twin: k })} className={`rounded-md px-3 py-1.5 text-xs font-medium ${twin === k ? 'bg-ink-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>{l}</button>))}</div>}>
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Tagged items on site" value={onSite} icon={<Cuboid size={15} />} sub={twin === 'H' ? 'incl. dock, yard & street' : 'incl. inbound/outbound yards'} />
         <Kpi label="RFID reads · last 15 min" value={reads15} icon={<Radio size={15} />} sub={`${plan.readers.length} ceiling readers online`} tone="good" />

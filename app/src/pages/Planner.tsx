@@ -7,17 +7,17 @@ import { fmtDur, useSnap } from '../sim/snap'
 
 interface Inbound { id: string; from: string; reg: string; plan: number; delay: number; kg: number; items: number; live?: boolean; tracker: string }
 const OTHERS: Inbound[] = [
-  { id: 'KB-NW-02', from: 'St Anselm Hospital', reg: 'KB04 TRK', plan: 1055, delay: 6, kg: 1850, items: 342, tracker: 'TAT240' },
-  { id: 'KB-NW-05', from: 'Harrow General', reg: 'KB09 TRK', plan: 1110, delay: 14, kg: 2300, items: 418, tracker: 'TAT240' },
-  { id: 'KB-NW-07', from: 'Kingsmead Care Group', reg: 'KB11 TRK', plan: 1165, delay: 0, kg: 980, items: 176, tracker: 'TAT240' },
-  { id: 'KB-SW-01', from: 'Thames Valley Trust', reg: 'KB02 TRK', plan: 1225, delay: 22, kg: 3100, items: 560, tracker: 'TAT240' },
-  { id: 'KB-NW-09', from: 'Ealing Day Surgery', reg: 'KB15 TRK', plan: 1275, delay: 4, kg: 760, items: 140, tracker: 'TAT240' },
-  { id: 'KB-NE-03', from: 'Barnet Community', reg: 'KB06 TRK', plan: 1335, delay: 10, kg: 1420, items: 255, tracker: 'TAT240' },
+  { id: 'DP-NW-02', from: 'St Anselm Hospital', reg: 'DP04 TRK', plan: 1055, delay: 6, kg: 1850, items: 342, tracker: 'TAT240' },
+  { id: 'DP-NW-05', from: 'Harrow General', reg: 'DP09 TRK', plan: 1110, delay: 14, kg: 2300, items: 418, tracker: 'TAT240' },
+  { id: 'DP-NW-07', from: 'Kingsmead Care Group', reg: 'DP11 TRK', plan: 1165, delay: 0, kg: 980, items: 176, tracker: 'TAT240' },
+  { id: 'DP-SW-01', from: 'Thames Valley Trust', reg: 'DP02 TRK', plan: 1225, delay: 22, kg: 3100, items: 560, tracker: 'TAT240' },
+  { id: 'DP-NW-09', from: 'Ealing Day Surgery', reg: 'DP15 TRK', plan: 1275, delay: 4, kg: 760, items: 140, tracker: 'TAT240' },
+  { id: 'DP-NE-03', from: 'Barnet Community', reg: 'DP06 TRK', plan: 1335, delay: 10, kg: 1420, items: 255, tracker: 'TAT240' },
 ]
 export default function Planner() {
   const snap = useSnap(); const t = snap.t; const w = getWorld(); const [crew, setCrew] = useState(11)
   const L4 = w.legs.find((l) => l.id === 'L4')!; const v1 = snap.veh.V1
-  const ours: Inbound = { id: L4.cons, from: 'Royal Meridian Hospital', reg: 'SY71 KBR', plan: L4.planArrive, delay: v1.leg?.id === 'L4' ? v1.delay : L4.arrive - L4.planArrive, kg: 373, items: 69, live: true, tracker: 'TAT240 …085066' }
+  const ours: Inbound = { id: L4.cons, from: 'Royal Meridian Hospital', reg: 'DP71 TRK', plan: L4.planArrive, delay: v1.leg?.id === 'L4' ? v1.delay : L4.arrive - L4.planArrive, kg: 373, items: 69, live: true, tracker: 'TAT240 …085066' }
   const all = [...OTHERS, ours].sort((a, b) => a.plan - b.plan)
   const row = (x: Inbound) => {
     const eta = x.plan + (x.live ? x.delay : x.delay * Math.min(1, Math.max(0, (t - (x.plan - 120)) / 90)))
@@ -40,7 +40,7 @@ export default function Planner() {
   const needCrew = Math.ceil(total / 8 / 100)
   const next = rows.filter((x) => x.status !== 'arrived').sort((a, b) => a.eta - b.eta)[0]
   return (
-    <Page title="Laundry Planner" sub="Know what is arriving, when — so the wash line, crew and dispatch are planned before the trucks reach the gate.">
+    <Page title="Laundry Planner" sub="What reaches the plant, and when.">
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Inbound tonight" value={`${(total / 1000).toFixed(1)} t`} sub={`${rows.length} consignments · ${rows.reduce((a, b) => a + b.items, 0)} tagged items`} icon={<CalendarClock size={15} />} />
         <Kpi label="Next arrival" value={next ? fmtT(next.eta).slice(0, 5) : '—'} sub={next ? `${next.from} · in ${fmtDur(next.eta - t)}` : 'all received'} />
@@ -58,7 +58,7 @@ export default function Planner() {
         <Card><CardHead title="Capacity vs. arrivals" sub="Plant throughput = crew × 100 kg/h" right={<label className="flex items-center gap-2 text-xs text-slate-600">Crew <input type="range" min={6} max={20} value={crew} onChange={(e) => setCrew(+e.target.value)} className="accent-cyan-600" /><b className="w-5 text-slate-900">{crew}</b></label>} />
           <div className="h-[260px] p-3"><ResponsiveContainer><ComposedChart data={data}><CartesianGrid strokeDasharray="3 3" stroke="#e5ebf2" /><XAxis dataKey="h" tick={{ fontSize: 10 }} interval={3} /><YAxis tick={{ fontSize: 10 }} /><Tooltip /><Legend wrapperStyle={{ fontSize: 11 }} />
             <RBar dataKey="arrivals" name="Arrivals (kg/30m)" fill="#1c1917" radius={[3, 3, 0, 0]} /><Line dataKey="capacity" name="Capacity" stroke="#ea580c" dot={false} strokeWidth={2} /><Line dataKey="backlog" name="Backlog (kg)" stroke="#e11d48" dot={false} strokeWidth={2} /></ComposedChart></ResponsiveContainer></div>
-          <div className="border-t border-slate-100 p-4 text-[12.5px] text-slate-700"><b>Recommendation:</b> {peak > 2500 ? `Backlog peaks at ${(peak / 1000).toFixed(1)} t. Add ${Math.max(1, needCrew - crew)} crew from 20:00 or divert KB-SW-01 to the Slough plant.` : peak > 1000 ? 'Backlog manageable; keep tunnel washer B on standby.' : 'Capacity comfortably covers tonight’s arrivals.'}</div></Card>
+          <div className="border-t border-slate-100 p-4 text-[12.5px] text-slate-700"><b>Recommendation:</b> {peak > 2500 ? `Backlog peaks at ${(peak / 1000).toFixed(1)} t. Add ${Math.max(1, needCrew - crew)} crew from 20:00 or divert DP-SW-01 to the Slough plant.` : peak > 1000 ? 'Backlog manageable; keep tunnel washer B on standby.' : 'Capacity comfortably covers tonight’s arrivals.'}</div></Card>
       </div>
     </Page>
   )

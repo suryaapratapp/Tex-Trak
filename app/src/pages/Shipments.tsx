@@ -33,7 +33,7 @@ export default function Shipments() {
   const [q, setQ] = useState('')
   const list = w.consignments.filter((x) => (x.ref + x.desc).toLowerCase().includes(q.toLowerCase()))
   return (
-    <Page title="Shipments" sub="Track every consignment end-to-end — laundry, recycling, couriers and supplier parcels — in one place.">
+    <Page title="Shipments" sub="Every delivery and collection.">
       <div className="grid gap-4 xl:grid-cols-[400px_1fr]">
         <Card><div className="border-b border-slate-100 p-3"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search reference…" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-500" /></div>
           <ul className="divide-y divide-slate-100">{list.map((x) => { const vv = view(x, t, snap); return (

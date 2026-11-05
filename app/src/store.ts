@@ -7,6 +7,7 @@ interface S {
   t: number; playing: boolean; speed: number
   page: string; selItem: number | null; selVeh: string; selShip: string; selIncident: string | null
   twin: 'H' | 'D'
+  instTab: string
   live: LiveFix | null
   states: Record<string, 'ack' | 'resolved' | 'investigating'>
   set: (p: Partial<S>) => void
@@ -14,7 +15,7 @@ interface S {
   setAlert: (id: string, s: 'ack' | 'resolved' | 'investigating') => void
 }
 export const useStore = create<S>((set, get) => ({
-  t: 330, playing: true, speed: 120, page: location.hash.slice(1) || 'command', selItem: 0, selVeh: 'V1', selShip: 'LND-0612-AM', selIncident: 'INC-2041', twin: 'H', live: null, states: {},
+  t: 330, playing: true, speed: 120, page: location.hash.slice(1) || 'command', selItem: 0, selVeh: 'V1', selShip: 'LND-0612-AM', selIncident: 'INC-2041', twin: 'H', instTab: 'overview', live: null, states: {},
   set: (p) => set(p),
   tick: (dtMs) => { const s = get(); if (!s.playing) return; const t = s.t + ((s.speed / 60) * dtMs) / 1000; if (t >= T1) set({ t: T1, playing: false }); else set({ t }) },
   setAlert: (id, st) => set((s) => ({ states: { ...s.states, [id]: st } })),

@@ -17,7 +17,7 @@ export default function Inventory() {
   const list = rows.filter((r) => (type === 'all' || r.it.type.sku === type) && (status === 'all' || r.l.status === status) && (r.it.qr + r.it.type.name + r.where).toLowerCase().includes(q.toLowerCase()))
   const open = (id: number) => { set({ selItem: id }); go('item') }
   return (
-    <Page title="Inventory" sub="Every tagged product in one list. Click any row to see its full journey — the truck trips on the map, then its path through each building, again for every wash cycle.">
+    <Page title="Inventory" sub="Pick a product to see its journey.">
       <div className="mb-5 inline-flex rounded-full bg-stone-200/70 p-1">{([['textile', `Textiles (${w.items.length})`], ['asset', `High-value assets (${SCANNERS.length})`]] as const).map(([k, l]) => <button key={k} onClick={() => setTab(k)} className={`rounded-full px-4 py-1.5 text-sm font-semibold ${tab === k ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600'}`}>{l}</button>)}</div>
       {tab === 'textile' ? <>
         <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
@@ -46,7 +46,6 @@ export default function Inventory() {
           <tbody className="divide-y divide-stone-100">{SCANNERS.map((s) => { const st = scannerAt(w.legs, s, t); return (
             <tr key={s.id} onClick={() => go('assets')} className="cursor-pointer hover:bg-stone-50"><td className="px-5 py-3"><div className="font-bold text-stone-900">{s.id}</div><div className="text-xs text-stone-500">{s.name}</div></td><td>{s.holder}</td><td>{s.home}</td><td>£{scannerValue(s).toLocaleString()}</td>
               <td><Chip tone={st.outside ? 'red' : st.mode === 'in_transit' ? 'blue' : 'green'}>{st.outside ? 'Off-site' : st.mode === 'in_transit' ? 'In transit' : st.mode === 'at_hub' ? 'At hub' : 'On-site'}</Chip></td><td className="pr-4 text-stone-300"><ChevronRight size={18} /></td></tr>) })}</tbody></table></Card>)}
-      <p className="mt-3 text-xs text-stone-400">Demo time {fmtT(t)} · statuses update as the clock moves.</p>
     </Page>
   )
 }
