@@ -58,14 +58,14 @@ export function Layout({ children }: { children: ReactNode }) {
         <span className="grid h-10 w-10 place-items-center rounded-xl text-white shadow-md" style={{ background: 'linear-gradient(135deg,#14a597,#0a4743)' }}><Waypoints size={20} /></span>
         <span className="text-left"><span className="block text-[18px] font-extrabold leading-none tracking-tight text-stone-900">Tex-Trak</span><span className="mt-1 block text-[11px] font-semibold text-stone-400">Through-life tracking</span></span>
       </button>
-      <div className="px-3 pb-3">
-        <button onClick={() => nav('scan')} className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-[14px] font-extrabold text-white shadow-md transition hover:brightness-110 ${active === 'scan' ? 'ring-2 ring-offset-2 ring-cyan-600' : ''}`} style={{ background: 'linear-gradient(135deg,#14a597,#0b6c65)' }}><ScanLine size={18} /> Scan station</button>
+      <div className="px-4 pb-5">
+        <button onClick={() => nav('scan')} className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-[15px] font-extrabold text-white shadow-md transition hover:brightness-110 ${active === 'scan' ? 'ring-2 ring-offset-2 ring-cyan-600' : ''}`} style={{ background: 'linear-gradient(135deg,#14a597,#0b6c65)' }}><ScanLine size={18} /> Scan station</button>
       </div>
-      <nav className="scroll-thin min-h-0 flex-1 space-y-4 overflow-y-auto px-3 pb-4">
+      <nav className="scroll-thin min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-4">
         {GROUPS.map((g) => { const items = g.items.filter((i) => visible(i, role)); if (!items.length) return null; return (
-          <div key={g.title}><div className="px-3 pb-1 text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-stone-400">{g.title}</div>
+          <div key={g.title}><div className="px-3.5 pb-2 text-[11.5px] font-extrabold uppercase tracking-[0.14em] text-stone-400">{g.title}</div>
             {items.map((i) => (
-              <button key={i.id} onClick={() => nav(i.id)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[13.5px] font-semibold transition ${active === i.id ? 'bg-cyan-50 text-cyan-800' : 'text-stone-600 hover:bg-stone-100'}`}>
+              <button key={i.id} onClick={() => nav(i.id)} className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[15px] font-semibold transition ${active === i.id ? 'bg-cyan-50 text-cyan-800' : 'text-stone-600 hover:bg-stone-100'}`}>
                 <span className={active === i.id ? 'text-cyan-600' : 'text-stone-400'}>{i.icon}</span><span className="flex-1">{i.label}</span>
                 {i.id === 'alerts' && open > 0 && <span className="rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-4 text-white">{open}</span>}
               </button>))}</div>) })}
@@ -83,10 +83,10 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-full">
-      <aside className="hidden w-[248px] shrink-0 border-r border-stone-200/80 bg-white xl:block">{Side}</aside>
+      <aside className="hidden w-[272px] shrink-0 border-r border-stone-200/80 bg-white xl:block">{Side}</aside>
       {menu && <div className="fixed inset-0 z-50 xl:hidden"><div className="absolute inset-0 bg-stone-900/40" onClick={() => setMenu(false)} /><div className="absolute inset-y-0 left-0 w-[280px] bg-white shadow-2xl">{Side}</div></div>}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-stone-200/70 bg-white/80 px-4 py-2.5 backdrop-blur-xl xl:px-6">
+        <header className="flex items-center gap-3 border-b border-stone-200/70 bg-white px-4 py-3.5 xl:px-8">
           <button onClick={() => setMenu(true)} className="grid h-10 w-10 place-items-center rounded-full border border-stone-200 xl:hidden" aria-label="Menu"><Menu size={18} /></button>
           <div className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-stone-500"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: accent }} /><span className="truncate text-stone-800">{role === 'superadmin' ? 'All clients' : CLIENTS[role].name}</span>{role !== 'superadmin' && <span className="hidden truncate sm:inline">· {CLIENTS[role].tagline}</span>}</div>
           <div className="ml-auto flex items-center gap-2">
@@ -96,7 +96,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         </header>
         <main className="scroll-thin min-h-0 flex-1 overflow-y-auto pb-28" onClick={() => who && setWho(false)}>{children}</main>
-        <div className="fixed bottom-3 left-3 right-3 z-40 mx-auto flex max-w-[860px] items-center gap-3 rounded-full border border-stone-200 bg-white/95 px-3 py-2 shadow-[0_18px_50px_-18px_rgba(11,27,51,.45)] backdrop-blur xl:left-[264px] sm:gap-4 sm:px-4">
+        <div className="fixed bottom-3 left-3 right-3 z-40 mx-auto flex max-w-[860px] items-center gap-3 rounded-full border border-stone-200 bg-white/95 px-3 py-2 shadow-[0_18px_50px_-18px_rgba(11,27,51,.45)] backdrop-blur xl:left-[288px] sm:gap-4 sm:px-4">
           <button onClick={() => set({ playing: !playing })} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-stone-900 text-white transition hover:bg-stone-700" title={playing ? 'Pause' : 'Play'}>{playing ? <Pause size={15} /> : <Play size={15} />}</button>
           <div className="shrink-0"><div className="mono text-[17px] font-medium leading-none text-stone-900">{fmtClock(t).slice(0, 5)}</div><div className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-stone-400">{t >= 1440 ? 'Day 2' : 'Day 1'}</div></div>
           <input type="range" min={T0} max={T1} step={0.5} value={t} onChange={(e) => set({ t: +e.target.value })} className="h-1.5 min-w-0 flex-1 cursor-pointer accent-cyan-600" aria-label="Time" />

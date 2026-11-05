@@ -10,31 +10,31 @@ export const SevBadge = ({ sev }: { sev: Sev }) => <span className={`inline-flex
 
 export const Card = ({ children, className = '' }: { children: ReactNode; className?: string }) => <div className={`card ${className}`}>{children}</div>
 export const CardHead = ({ title, sub, right }: { title: ReactNode; sub?: ReactNode; right?: ReactNode }) => (
-  <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
-    <div><h3 className="text-[13px] font-semibold tracking-tight text-slate-900">{title}</h3>{sub && <p className="mt-0.5 text-xs text-slate-500">{sub}</p>}</div>{right}
+  <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3.5">
+    <div><h3 className="text-[16px] font-extrabold tracking-tight text-slate-900">{title}</h3>{sub && <p className="mt-1 text-[13.5px] text-slate-500">{sub}</p>}</div>{right}
   </div>
 )
 export const Kpi = ({ label, value, sub, tone = 'default', icon }: { label: string; value: ReactNode; sub?: ReactNode; tone?: 'default' | 'good' | 'bad' | 'warn'; icon?: ReactNode }) => {
   const c = { default: 'text-slate-900', good: 'text-emerald-600', bad: 'text-rose-600', warn: 'text-amber-600' }[tone]
   return (
-    <div className="card p-4">
-      <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-slate-500">{label}<span className="text-slate-400">{icon}</span></div>
-      <div className={`mt-1.5 text-[26px] font-semibold leading-none tracking-tight ${c}`}>{value}</div>
-      {sub && <div className="mt-1.5 text-xs text-slate-500">{sub}</div>}
+    <div className="card p-5">
+      <div className="flex items-center justify-between text-[12px] font-bold uppercase tracking-wider text-slate-500">{label}<span className="text-slate-400">{icon}</span></div>
+      <div className={`mt-3 text-[32px] font-extrabold leading-none tracking-tight ${c}`}>{value}</div>
+      {sub && <div className="mt-2 text-[13px] text-slate-500">{sub}</div>}
     </div>
   )
 }
 export const Chip = ({ children, tone = 'slate' }: { children: ReactNode; tone?: 'slate' | 'green' | 'red' | 'amber' | 'blue' | 'cyan' | 'violet' }) => {
   const m = { slate: 'bg-slate-100 text-slate-700', green: 'bg-emerald-50 text-emerald-700', red: 'bg-rose-50 text-rose-700', amber: 'bg-amber-50 text-amber-800', blue: 'bg-blue-50 text-blue-700', cyan: 'bg-cyan-50 text-cyan-800', violet: 'bg-violet-50 text-violet-700' }[tone]
-  return <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium ${m}`}>{children}</span>
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${m}`}>{children}</span>
 }
 export const Bar = ({ v, color = '#1c1917', h = 6 }: { v: number; color?: string; h?: number }) => (
   <div className="w-full overflow-hidden rounded-full bg-slate-100" style={{ height: h }}><div className="h-full rounded-full transition-all" style={{ width: `${Math.max(0, Math.min(1, v)) * 100}%`, background: color }} /></div>
 )
 export const Page = ({ title, sub, right, children }: { title: string; sub?: string; right?: ReactNode; children: ReactNode }) => (
-  <div className="mx-auto w-full max-w-[1500px] p-4 sm:p-6">
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-      <div><h1 className="text-[26px] font-extrabold tracking-tight text-slate-900">{title}</h1>{sub && <p className="mt-1 max-w-3xl text-[14.5px] leading-snug text-slate-500">{sub}</p>}</div>{right}
+  <div className="mx-auto w-full max-w-[1500px] p-5 sm:p-8">
+    <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
+      <div><h1 className="text-[30px] font-extrabold tracking-tight text-slate-900">{title}</h1>{sub && <p className="mt-1.5 max-w-3xl text-[15.5px] leading-snug text-slate-500">{sub}</p>}</div>{right}
     </div>{children}
   </div>
 )

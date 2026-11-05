@@ -12,10 +12,11 @@
   /* teal brand */
   --color-cyan-50: #effcf9; --color-cyan-100: #d3f6ef; --color-cyan-200: #a8ebe0; --color-cyan-300: #6fd9cb; --color-cyan-400: #34c1b1;
   --color-cyan-500: #14a597; --color-cyan-600: #0b877d; --color-cyan-700: #0a6c65; --color-cyan-800: #0b5752; --color-cyan-900: #0a4743;
+  --text-xs: 0.8125rem; --text-xs--line-height: 1.2rem; --text-sm: 0.9375rem; --text-sm--line-height: 1.45rem;
   --color-ink-950: #06122a; --color-ink-900: #0b1b33; --color-ink-800: #1a2c47; --color-ink-700: #2f425c;
 }
 html, body, #root { height: 100%; }
-body { font-family: var(--font-sans); background: radial-gradient(1200px 500px at 85% -10%, #e3f6f2 0%, transparent 60%), radial-gradient(900px 500px at -10% 0%, #e8eefc 0%, transparent 55%), #f5f8fc; color: #0b1b33; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font-sans); background: #f4f7fa; color: #0b1b33; -webkit-font-smoothing: antialiased; line-height: 1.5; }
 .leaflet-container { font-family: var(--font-sans); background: #e6edf6; }
 .veh-icon { transition: transform .1s linear; }
 .pulse-ring { animation: pr 1.6s ease-out infinite; transform-origin: center; transform-box: fill-box; }
@@ -23,7 +24,7 @@ body { font-family: var(--font-sans); background: radial-gradient(1200px 500px a
 @keyframes blink { 50% { opacity: .35 } }
 .blink { animation: blink 1.2s infinite; }
 .scroll-thin::-webkit-scrollbar { width: 8px; height: 8px } .scroll-thin::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 8px }
-.card { background: #fff; border: 1px solid #e6edf6; border-radius: 22px; box-shadow: 0 1px 2px rgba(11,27,51,.04), 0 14px 34px -22px rgba(11,27,51,.22); }
+.card { background: #fff; border: 1px solid #e6ebf2; border-radius: 20px; box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 10px 28px -16px rgba(16,24,40,.12); }
 .mono { font-family: var(--font-mono); }
 
 .print-only { display: none; }
@@ -33,3 +34,22 @@ body { font-family: var(--font-sans); background: radial-gradient(1200px 500px a
   body { background: #fff !important; }
   @page { margin: 14mm; }
 }
+
+/* ---- readability: bigger small-text, roomier cards and tables ---- */
+[class~="text-[10px]"], [class~="text-[10.5px]"] { font-size: 11.5px !important; letter-spacing: .06em; }
+[class~="text-[11px]"] { font-size: 12.5px !important; }
+[class~="text-[12px]"], [class~="text-[12.5px]"] { font-size: 13.5px !important; }
+[class~="text-[13px]"] { font-size: 14.5px !important; }
+[class~="text-[13.5px]"] { font-size: 15px !important; }
+.mb-4 { margin-bottom: 1.5rem; } .mt-4 { margin-top: 1.5rem; } .mb-5 { margin-bottom: 1.75rem; }
+.gap-3 { gap: 1rem; } .gap-4 { gap: 1.5rem; } .gap-5 { gap: 1.75rem; }
+.card .p-4 { padding: 1.25rem; } .card .p-3 { padding: 1rem; } .card .px-4 { padding-inline: 1.35rem; } .card .py-3 { padding-block: 1rem; } .card .p-5 { padding: 1.5rem; }
+.card th { padding: .85rem .75rem; font-weight: 700; letter-spacing: .05em; }
+.card td { padding: .95rem .75rem; vertical-align: middle; }
+.card th:first-child, .card td:first-child { padding-left: 1.35rem; } .card th:last-child, .card td:last-child { padding-right: 1.35rem; }
+.card ul.divide-y > li:not(:has(> button)) { padding-block: .9rem; }
+.card ul.divide-y > li > button { padding-block: .95rem; }
+.card ol { padding: 1.35rem; }
+.card ol > li { padding-bottom: 1.1rem; }
+main { scroll-behavior: smooth; }
+button { cursor: pointer; }
