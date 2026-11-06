@@ -1,6 +1,8 @@
+import PlannerLive from './PlannerLive'
 import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, Line, ResponsiveContainer, Tooltip, XAxis, YAxis, ComposedChart, Bar as RBar, Legend } from 'recharts'
 import { CalendarClock, Users } from 'lucide-react'
+import { useStore } from '../store'
 import { Card, CardHead, Chip, Kpi, Page } from '../components/ui'
 import { fmtT, getWorld, itemAt } from '../sim/engine'
 import { fmtDur, useSnap } from '../sim/snap'
@@ -105,11 +107,17 @@ function HospitalView() {
     </>)
 }
 
-export default function Planner() {
+function PlannerDemo() {
   const [view, setView] = useState<'hospital' | 'plant'>('hospital')
   return (
     <Page demo title="Laundry arrivals" sub={view === 'hospital' ? 'What is arriving at the hospital, and when it can be used.' : 'What reaches the plant, and when.'}
       right={<div className="flex rounded-full bg-white p-1 ring-1 ring-stone-200">{([['hospital', 'At the hospital'], ['plant', 'At the plant']] as const).map(([k, l]) => <button key={k} onClick={() => setView(k)} className={`rounded-full px-4 py-1.5 text-xs font-bold ${view === k ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-50'}`}>{l}</button>)}</div>}>
       {view === 'hospital' ? <HospitalView /> : <PlantView />}
     </Page>)
+}
+
+export default function Planner() {
+  const mode = useStore((s) => s.mode)
+  if (mode === 'demo') return <PlannerDemo />
+  return <Page title="Laundry arrivals" sub="What is on its way, and what is on the shelves."><PlannerLive /></Page>
 }

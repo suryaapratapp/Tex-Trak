@@ -131,7 +131,26 @@ Tables for access (`orgs`, `profiles`), shipments (`shipments`, `shipment_events
 
 ## Where the data comes from
 
-- **Real, stored in Supabase:** accounts and access, shipments and their history, the scan log, and the sites, RFID readers and trackers that the Super Admin adds. Tracker positions arrive through the gateway and the `ingest-tracker` function, but only for registered, active IMEIs.
-- **Demonstration only (labelled "Demo data" in the app):** Laundry arrivals, Inventory, Facilities and floors, Daily flow, Community assets, Live map, Alerts, Intelligence, Impact and Recycling proof. These are driven by a built-in simulated day in `app/src/sim/`, the same for everyone. Nobody enters this data, and it does not yet read from real RFID readers.
+**Live data (stored in Supabase, separated by client):**
 
-To make those pages live, RFID reader events need a receiving endpoint (the `rfid_events` table exists), an item master list needs importing, and hospital floor plans need building from Sites and Readers.
+- **Items**: your list of tagged items. Add them one at a time or import a CSV (`epc,qr,product,max_cycles,cycles,value`) on the Inventory page.
+- **Sites, zones and readers**: set up by the Super Admin (Super Admin → Sites, RFID readers).
+- **Reads**: a reader posts the tags it sees to the `ingest-rfid` function. Each read moves the item to the zone behind that reader, updates its state, and is kept in the item's journey. A tag that is not on the item list is logged as an unknown read. An item marked missing that is read again is recorded as found.
+- **QR scans** in the Scan station change an item's state, and washing finished adds one wash cycle.
+- **Shipments** and the shared scan log.
+
+Header switch (Super Admin): **Live data / Demo data**. The Inventory, Facilities and floors and Laundry arrivals pages show your real data when set to Live, or the built-in example day when set to Demo.
+
+**Still demonstration only** (labelled "Demo data"): Daily flow, Community assets, Live map, Alerts, Intelligence, Impact and Recycling proof. These come from the simulated day in `app/src/sim/`.
+
+### Connecting a reader
+
+```
+POST https://qhxdqgkpebmpzzuzqcla.supabase.co/functions/v1/ingest-rfid
+x-ingest-token: <INGEST_TOKEN>
+{"reader":"R-DOCK-01","reads":[{"epc":"E28011606000020D1A2B3C4D","ts":"2026-11-06T09:30:00Z"}]}
+```
+
+Set the secret once: `supabase secrets set INGEST_TOKEN=<long random string> --project-ref qhxdqgkpebmpzzuzqcla`. To try it without hardware: **Super Admin → RFID readers → Send a test read**, or `INGEST_TOKEN=... node tools/rfid-sim.mjs R-DOCK-01 <epc>`.
+
+What a read means for an item depends on the zone's kind: dirty utility → in a dirty cage; washing → processing; clean store → in stock; ward → in use.

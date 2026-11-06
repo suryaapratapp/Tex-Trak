@@ -1,3 +1,4 @@
+import InventoryLive from './InventoryLive'
 import { useMemo, useState } from 'react'
 import { ChevronRight, Search } from 'lucide-react'
 import { Bar, Card, Chip, Page, STATUS_COLOR, STATUS_LABEL, StatusPill } from '../components/ui'
@@ -7,7 +8,7 @@ import { useSnap } from '../sim/snap'
 import { go, useStore } from '../store'
 import { hasModule } from '../sim/registry'
 
-export default function Inventory() {
+function InventoryDemo() {
   const snap = useSnap(); const t = snap.t; const w = getWorld(); const set = useStore((s) => s.set)
   const role = useStore((st) => st.role); const [tab0, setTab] = useState<'textile' | 'asset'>('textile'); const tab = hasModule(role, 'laundry') ? (hasModule(role, 'assets') ? tab0 : 'textile') : 'asset'; const [q, setQ] = useState(''); const [type, setType] = useState('all'); const [status, setStatus] = useState('all'); const [area, setArea] = useState('all'); const [life, setLife] = useState('all')
   const rows = useMemo(() => w.items.map((it) => {
@@ -55,4 +56,10 @@ export default function Inventory() {
               <td><Chip tone={st.outside ? 'red' : st.mode === 'in_transit' ? 'blue' : 'green'}>{st.outside ? 'Off-site' : st.mode === 'in_transit' ? 'In transit' : st.mode === 'at_hub' ? 'At hub' : 'On-site'}</Chip></td><td className="pr-4 text-stone-300"><ChevronRight size={18} /></td></tr>) })}</tbody></table></Card>)}
     </Page>
   )
+}
+
+export default function Inventory() {
+  const mode = useStore((s) => s.mode)
+  if (mode === 'demo') return <InventoryDemo />
+  return <Page title="Inventory" sub="Every tagged item, where it is, and what state it is in."><InventoryLive /></Page>
 }

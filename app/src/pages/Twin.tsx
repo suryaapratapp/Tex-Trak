@@ -1,3 +1,4 @@
+import TwinLive from './TwinLive'
 import { Cuboid, Layers, Radio, ScanLine } from 'lucide-react'
 import { useState } from 'react'
 import { UpperFloor } from '../components/UpperFloor'
@@ -11,7 +12,7 @@ import { PLANS } from '../sim/world'
 import { useSnap } from '../sim/snap'
 import { useStore } from '../store'
 
-export default function Twin() {
+function TwinDemo() {
   const snap = useSnap(); const t = snap.t; const { twin, set, selItem, floor, role } = useStore(); const w = getWorld()
   const plan = PLANS[twin]
   const site = twin === 'H' ? 'HOSP' : 'DECON'
@@ -75,4 +76,10 @@ export default function Twin() {
       </>}
     </Page>
   )
+}
+
+export default function Twin() {
+  const mode = useStore((s) => s.mode)
+  if (mode === 'demo') return <TwinDemo />
+  return <Page title="Facilities and floors" sub="Rooms, readers and what is in each room right now."><TwinLive /></Page>
 }

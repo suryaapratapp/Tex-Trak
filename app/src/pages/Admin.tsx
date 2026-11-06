@@ -6,7 +6,7 @@ import { MapLegend } from '../components/MapLegend'
 import { KIND_COLOR, KIND_GLYPH, KIND_LABEL, NETWORK, UPPER_FLOOR_READERS, isRestricted, totals } from '../sim/registry'
 import { useAuth } from '../lib/auth'
 import { ClientsPanel } from './AdminClients'
-import { ReadersAdmin, SitesAdmin, TrackersAdmin } from './AdminInfra'
+import { FeedCard, ReadersAdmin, SitesAdmin, TrackersAdmin, ZonesAdmin } from './AdminInfra'
 import { toNet, useInfra } from '../lib/infra'
 import { DECON_PLAN, HOSPITAL_PLAN } from '../sim/world'
 import { UPPER } from '../sim/floors'
@@ -59,7 +59,7 @@ export default function Admin() {
             <td>{KIND_LABEL[n.kind]}{isRestricted(n.kind) && <b className="ml-1 text-rose-600">⚠</b>}</td><td>{owner(n.client)}</td><td className="text-stone-600">{n.region}</td><td className="text-right mono">{n.floors || '–'}</td><td className="text-right mono font-bold">{n.readers || '–'}</td><td className="pr-4 text-right"><Chip tone={stateTone[n.state]}>{n.sim ? 'live demo' : n.state}</Chip></td></tr>))}</tbody></table></div>
         <div className="border-t border-stone-100 px-4 py-2.5 text-xs text-stone-500">{rows.length} of {NETWORK.length} sites</div></Card></>}
 
-      {tab === 'readers' && <><ReadersAdmin /><Card>
+      {tab === 'readers' && <><FeedCard /><ZonesAdmin /><ReadersAdmin /><Card>
         <div className="flex flex-wrap items-center gap-2 border-b border-stone-100 p-3"><input value={rq} onChange={(e) => setRq(e.target.value)} placeholder="Search readers" className="min-w-[200px] flex-1 rounded-full border border-stone-200 px-4 py-2 text-sm outline-none focus:border-cyan-500" /><span className="text-xs font-semibold text-stone-500">{rr.length} readers · hospital {HOSPITAL_PLAN.readers.length + 3 * UPPER_FLOOR_READERS} · decon {DECON_PLAN.readers.length}</span></div>
         <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-[13px]"><thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500"><tr><th className="px-4 py-2">Reader</th><th>Site</th><th>Floor</th><th>Location</th><th>Owner</th><th className="pr-4 text-right">Last read</th></tr></thead>
           <tbody className="divide-y divide-stone-100">{rr.map((r) => { const l = (w.readerEvents[r.id] ?? []).slice(-1)[0]; return <tr key={r.id} className="hover:bg-stone-50"><td className="mono px-4 py-2 font-semibold text-stone-900">{r.id}</td><td>{r.site}</td><td>{r.floor}</td><td className="text-stone-600">{r.where}</td><td>{r.client}</td><td className="mono pr-4 text-right text-stone-500">{l ? `${String(Math.floor((l % 1440) / 60)).padStart(2, '0')}:${String(Math.floor(l % 60)).padStart(2, '0')}` : 'online'}</td></tr> })}</tbody></table></div></Card></>}

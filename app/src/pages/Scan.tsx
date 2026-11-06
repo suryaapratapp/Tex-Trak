@@ -19,7 +19,8 @@ const TASKS: { id: Task; label: string; sub: string; module: ModuleId; icon: Rea
   { id: 'asset', label: 'Equipment', sub: 'Check out · check in', module: 'assets', icon: <Radar size={22} /> },
   { id: 'load', label: 'Shipment', sub: 'Dispatch · receive', module: 'shipments', icon: <Package size={22} /> },
 ]
-type Found = { type: 'item'; it: Item } | { type: 'asset'; id: string } | { type: 'load'; sh: Ship } | null
+type LiveItem = { id: string; product: string; qr: string | null; epc: string | null; status: string; wash_cycles: number; max_cycles: number }
+type Found = { type: 'litem'; li: LiveItem } | { type: 'item'; it: Item } | { type: 'asset'; id: string } | { type: 'load'; sh: Ship } | null
 
 export default function Scan() {
   const role = useStore((s) => s.role); const t = useStore((s) => s.t); const w = getWorld()
@@ -34,7 +35,11 @@ export default function Scan() {
   useEffect(() => { void reload() }, [reload])
   const lookup = async (raw: string) => {
     const code = raw.trim().toUpperCase(); setFound(null)
-    if (task === 'textile') { const it = w.items.find((i) => i.qr === code || i.epc === code); if (!it) return setMsg({ level: 'error', title: 'Not recognised', detail: `${raw} is not a textile tag.` }); setFound({ type: 'item', it }); return setMsg(null) }
+    if (task === 'textile') {
+      const { data: li } = await supabase.from('items').select('id,product,qr,epc,status,wash_cycles,max_cycles').or(`qr.eq.${code.replace(/[^A-Z0-9_-]/g, '')},epc.eq.${code.replace(/[^0-9A-F]/g, '') || 'none'}`).limit(1)
+      if (li?.[0]) { setFound({ type: 'litem', li: li[0] as LiveItem }); return setMsg(null) }
+      const it = w.items.find((i) => i.qr === code || i.epc === code); if (!it) return setMsg({ level: 'error', title: 'Not recognised', detail: `${raw} is not a textile tag.` }); setFound({ type: 'item', it }); return setMsg(null)
+    }
     if (task === 'asset') { const sc = SCANNERS.find((s) => s.id === code); if (!sc) return setMsg({ level: 'error', title: 'Not recognised', detail: `${raw} is not an equipment tag.` }); setFound({ type: 'asset', id: sc.id }); return setMsg(null) }
     const { data } = await supabase.from('shipments').select('id,ref,status,items,from_name,to_name,description,org_id').eq('ref', code).maybeSingle()
     if (!data) return setMsg({ level: 'error', title: 'Shipment not found', detail: `${raw} does not match any shipment you can see.` }); setCount(String(data.items)); setFound({ type: 'load', sh: data as Ship }); setMsg(null)
@@ -63,6 +68,10 @@ export default function Scan() {
             <form onSubmit={(e) => { e.preventDefault(); if (manual.trim()) { lookup(manual); setManual('') } }} className="flex gap-2"><input value={manual} onChange={(e) => setManual(e.target.value)} placeholder="Type or paste a code" className="min-w-0 flex-1 rounded-full border border-stone-200 px-4 py-2.5 text-sm outline-none focus:border-cyan-500" /><button className={`${btn} bg-stone-900 text-white`}>Go</button></form>
             {chips.length > 0 && <div><div className="mb-2 text-xs font-bold uppercase tracking-wider text-stone-400">Try a demo scan</div><div className="flex flex-wrap gap-2">{chips.map((c) => <button key={c.raw} onClick={() => lookup(c.raw)} className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-bold text-stone-700 hover:bg-stone-50">{c.label}</button>)}</div></div>}</div></Card>
         <div className="space-y-5">
+          {found?.type === 'litem' && (() => { const li = found.li; const set = async (status: string, text: string) => { const { error } = await supabase.rpc('item_set_status', { p_id: li.id, p_status: status, p_detail: 'Scanned in the field' }); if (error) { setFound(null); return setMsg({ level: 'error', title: error.message, detail: 'Nothing was changed.' }) } void log('textile', li.qr ?? li.epc ?? '', text, status === 'missing' ? 'warn' : 'ok') }; const name = li.qr ?? li.epc ?? ''; return (
+            <Card><CardHead title={li.product} sub={<span className="mono">{name}</span>} right={<StatusPill s={li.status} />} />
+              <div className="space-y-3 p-5"><div className="text-[14px] text-stone-600">{li.wash_cycles} of {li.max_cycles} washes</div>
+                <div className="flex flex-wrap gap-2"><button onClick={() => void set('in_use', `${name} issued to ward`)} className={`${btn} bg-cyan-600 text-white`}>Issue to ward</button><button onClick={() => void set('soiled', `${name} marked soiled`)} className={`${btn} bg-amber-500 text-white`}>Mark soiled</button><button onClick={() => void set('in_cage', `${name} loaded into a dirty cage`)} className={`${btn} bg-violet-600 text-white`}>Load into cage</button><button onClick={() => void set('in_stock', `${name} back in stock`)} className={`${btn} bg-emerald-600 text-white`}>Back in stock</button><button onClick={() => void set('missing', `${name} reported lost`)} className={`${btn} bg-rose-50 text-rose-700 ring-1 ring-rose-200`}>Report lost</button></div></div></Card>) })()}
           {found?.type === 'item' && (() => { const it = found.it; const l = itemAt(it, t); return (
             <Card><CardHead title={it.type.name} sub={<span className="mono">{it.qr}</span>} right={<StatusPill s={l.status} />} />
               <div className="space-y-3 p-5"><div className="grid grid-cols-2 gap-2 text-sm"><div className="rounded-2xl bg-stone-50 p-3"><div className="text-[11px] font-bold uppercase text-stone-400">Where</div><div className="font-bold text-stone-900">{l.kind === 'vehicle' ? 'On truck' : ZONE_NAME[l.zone!]}</div></div><div className="rounded-2xl bg-stone-50 p-3"><div className="text-[11px] font-bold uppercase text-stone-400">Washes</div><div className="font-bold text-stone-900">{l.cycles} of {it.type.maxCycles}</div></div></div>

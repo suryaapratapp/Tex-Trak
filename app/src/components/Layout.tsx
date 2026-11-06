@@ -27,7 +27,7 @@ const visible = (i: NavItem, role: Role) => { const u = useAuth.getState().user;
 export const allowedPages = (role: Role) => GROUPS.flatMap((g) => g.items).filter((i) => visible(i, role)).map((i) => i.id).concat(['item']).concat(hasFeature(role, 'qrlabels') ? ['qrlabels'] : [])
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { t, playing, speed, page, role, set, setRole, tick } = useStore()
+  const { t, playing, speed, page, role, mode, set, setRole, tick } = useStore()
   const { fix, db } = useLiveTracker(); const { user, orgs, signOut } = useAuth(); const isSuper = user?.role === 'superadmin'; const org = orgs.find((o) => o.id === role)
   const [menu, setMenu] = useState(false)
   const open = alertsFor(role).filter((a) => a.t <= t && a.sev !== 'info' && a.sev !== 'low').length
@@ -69,6 +69,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <button onClick={() => setMenu(true)} className="grid h-10 w-10 place-items-center rounded-full border border-stone-200 xl:hidden" aria-label="Menu"><Menu size={18} /></button>
           <div className="flex min-w-0 items-center gap-2 text-[14px] font-semibold"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: role === 'superadmin' ? '#131a2e' : org?.color ?? '#5a46e0' }} /><span className="truncate text-stone-800">{role === 'superadmin' ? 'All clients' : org?.name}</span>{role !== 'superadmin' && org?.tagline && <span className="hidden truncate text-stone-500 sm:inline">· {org.tagline}</span>}</div>
           <div className="ml-auto flex items-center gap-2">
+            {isSuper && <div className="hidden rounded-lg bg-stone-100 p-0.5 sm:flex" title="Choose between your real data and the built-in example day">{(['live', 'demo'] as const).map((m) => <button key={m} onClick={() => set({ mode: m })} className={`rounded-md px-3 py-1.5 text-[13px] font-medium ${mode === m ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800'}`}>{m === 'live' ? 'Live data' : 'Demo data'}</button>)}</div>}
             {hasFeature(role, 'scan') && <button onClick={() => nav('scan')} className="flex items-center gap-1.5 rounded-full bg-cyan-600 px-4 py-2 text-[13.5px] font-bold text-white hover:bg-cyan-700 xl:hidden"><ScanLine size={15} /> Scan</button>}
             {isSuper && <button onClick={() => nav('devices')} className="hidden items-center gap-2 whitespace-nowrap rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-[13px] sm:flex" title="Physical Teltonika TAT240">
               <i className={`h-2 w-2 rounded-full ${fix && liveAge! < 90 ? 'blink bg-emerald-500' : db === 'error' ? 'bg-rose-500' : 'bg-amber-400'}`} /><span className="font-semibold text-stone-800">TAT240</span><span className="text-stone-500">{fix ? (liveAge! < 90 ? 'live' : 'offline') : 'not connected'}</span></button>}
