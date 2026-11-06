@@ -46,8 +46,13 @@ export const useAuth = create<A>((set, get) => ({
   signOut: async () => { await stopTracking(); await supabase.auth.signOut(); await kvDel('auth-cache'); set({ user: null, orgs: [], people: [] }); useStore.getState().set({ role: 'superadmin' }) },
   api: async (action, body) => {
     const { data: s } = await supabase.auth.getSession()
-    const r = await fetch(`${SUPABASE_URL}/functions/v1/admin-users`, { method: 'POST', headers: { 'content-type': 'application/json', ...(s.session ? { authorization: `Bearer ${s.session.access_token}` } : {}) }, body: JSON.stringify({ action, ...body }) })
-    const j = (await r.json().catch(() => ({ error: 'The server did not answer.' }))) as { error?: string }
+    if (!s.session) return { error: 'You are not signed in. Sign in again, then try again.' }
+    let r: Response
+    try { r = await fetch(`${SUPABASE_URL}/functions/v1/admin-users`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${s.session.access_token}` }, body: JSON.stringify({ action, ...body }) }) }
+    catch { return { error: 'No connection. Account changes need an internet connection.' } }
+    const text = await r.text(); let j: { error?: string } = {}
+    try { j = JSON.parse(text) } catch { return { error: `The server sent an unexpected answer (${r.status}). Please try again, and tell surya@circai.co.uk if it keeps happening.` } }
+    if (!r.ok && !j.error) j.error = `The server refused the request (${r.status}).`
     if (!j.error) await get().refresh(); return j
   },
   changePassword: async (current, next) => {

@@ -35,10 +35,19 @@ function OrgCard({ o }: { o: Org }) {
 }
 
 export function ClientsPanel() {
-  const { orgs, api } = useAuth(); const [add, setAdd] = useState(false); const [msg, setMsg] = useState<{ k: 'ok' | 'error'; t: string } | null>(null); const [busy, setBusy] = useState(false)
+  const { orgs, api } = useAuth(); const [add, setAdd] = useState(false); const [msg, setMsg] = useState<{ k: 'ok' | 'error'; t: string } | null>(null); const [busy, setBusy] = useState(false); const [formErr, setFormErr] = useState('')
   const [f, setF] = useState({ name: '', tagline: '', username: '', full_name: '', password: genPassword(), features: featuresOf('core') })
-  const create = async () => { setBusy(true); setMsg(null); const r = await api('create_org', { name: f.name, tagline: f.tagline, features: f.features, admin: { username: f.username, password: f.password, full_name: f.full_name } }); setBusy(false)
-    if (r.error) return setMsg({ k: 'error', t: r.error }); setMsg({ k: 'ok', t: `${f.name} created. Their admin signs in as ${f.username} with password ${f.password}. Copy it now: it is not shown again.` }); setAdd(false); setF({ name: '', tagline: '', username: '', full_name: '', password: genPassword(), features: featuresOf('core') }) }
+  const create = async () => {
+    const username = f.username.trim().toLowerCase(); setFormErr('')
+    if (!f.name.trim()) return setFormErr('Enter the client’s name.')
+    if (!f.features.length) return setFormErr('Choose at least one thing this client can use.')
+    if (!f.full_name.trim()) return setFormErr('Enter the administrator’s full name.')
+    if (!/^[a-z0-9._-]{3,24}$/.test(username)) return setFormErr('The username needs 3 to 24 characters: lowercase letters, digits, dots, dashes or underscores, with no spaces.')
+    if (f.password.length < 8) return setFormErr('The password needs at least 8 characters.')
+    setBusy(true); setMsg(null); const r = await api('create_org', { name: f.name.trim(), tagline: f.tagline, features: f.features, admin: { username, password: f.password, full_name: f.full_name.trim() } }); setBusy(false)
+    if (r.error) return setFormErr(r.error)
+    setMsg({ k: 'ok', t: `${f.name} created. Their admin signs in as ${username} with password ${f.password}. Copy it now: it is not shown again.` }); setAdd(false); setF({ name: '', tagline: '', username: '', full_name: '', password: genPassword(), features: featuresOf('core') })
+  }
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between"><p className="max-w-2xl text-[14.5px] text-stone-500">Create a client, choose what they can use, and give them an admin. Their admin then creates accounts for their own staff and chooses what each person can do, but never more than you gave the client.</p><button onClick={() => setAdd(!add)} className={`${btnPrimary} flex shrink-0 items-center gap-2`}><Plus size={17} />{add ? 'Cancel' : 'New client'}</button></div>
@@ -46,8 +55,8 @@ export function ClientsPanel() {
       {add && <Card className="space-y-5 p-6"><h3 className="text-[17px] font-extrabold text-stone-900">New client</h3>
         <div className="grid gap-4 sm:grid-cols-2"><Field label="Client name" required><input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className={inputCls} /></Field><Field label="Description"><input value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} className={inputCls} /></Field></div>
         <div><div className="mb-2 text-[13.5px] font-bold text-stone-600">What can this client use?</div><FeaturePicker allowed={ALL} value={f.features} onChange={(v) => setF({ ...f, features: v })} /></div>
-        <div><div className="mb-2 text-[13.5px] font-bold text-stone-600">Their administrator</div><div className="grid gap-4 sm:grid-cols-3"><Field label="Full name" required><input value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} className={inputCls} /></Field><Field label="Username" required><input value={f.username} onChange={(e) => setF({ ...f, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, '') })} className={inputCls} /></Field><Field label="Password" hint="Generated. Share it securely."><input value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} className={`${inputCls} mono`} /></Field></div></div>
-        <button disabled={busy || !f.name.trim() || !f.full_name.trim() || f.username.length < 3 || f.password.length < 8 || !f.features.length} onClick={create} className={btnPrimary}>Create client</button></Card>}
+        <div><div className="mb-2 text-[13.5px] font-bold text-stone-600">Their administrator</div><div className="grid gap-4 sm:grid-cols-3"><Field label="Full name" required><input value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} className={inputCls} /></Field><Field label="Username" required><input value={f.username} onChange={(e) => setF({ ...f, username: e.target.value })} autoCapitalize="none" autoCorrect="off" spellCheck={false} className={inputCls} /></Field><Field label="Password" hint="Generated. Share it securely."><input value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} className={`${inputCls} mono`} /></Field></div></div>
+        {formErr && <Notice kind="error" onClose={() => setFormErr('')}>{formErr}</Notice>}<button disabled={busy} onClick={() => void create()} className={btnPrimary}>{busy ? 'Creating…' : 'Create client'}</button></Card>}
       <div className="grid gap-5 lg:grid-cols-2">{orgs.map((o) => <OrgCard key={o.id} o={o} />)}</div>
     </div>)
 }
