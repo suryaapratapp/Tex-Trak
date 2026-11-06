@@ -54,7 +54,7 @@ export default function Esg() {
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], { type: kind === 'json' ? 'application/json' : 'text/csv' })); a.download = `textrak-csrd-${kind === 'json' ? 'datapoints.json' : 'datapoints.csv'}`; a.click()
   }
   return (
-    <Page title="Impact" sub="Environmental and financial impact."
+    <Page demo title="Impact" sub="Environmental and financial impact."
       right={<div className="flex gap-2"><button onClick={() => download('csv')} className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-slate-700 ring-1 ring-slate-200"><Download size={13} /> CSV</button><button onClick={() => download('json')} className="flex items-center gap-1.5 rounded-lg bg-ink-900 px-3 py-1.5 text-xs font-medium text-white"><Download size={13} /> CSRD datapoints (JSON)</button></div>}>
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="CO₂e avoided today (pilot)" value={`${co2.toFixed(0)} kg`} tone="good" icon={<Leaf size={15} />} sub={`≈ ${annual.toFixed(0)} t / yr projected for a 300-bed hospital`} />

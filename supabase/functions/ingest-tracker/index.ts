@@ -24,8 +24,8 @@ Deno.serve(async (req) => {
   const { imei, records } = (await req.json()) as { imei: string; records: Rec[] }
   if (!imei || !Array.isArray(records) || records.length === 0 || records.length > 1000) return json({ error: 'bad payload' }, 400)
 
-  const { data: tracker } = await supabase.from('trackers').select('imei').eq('imei', imei).maybeSingle()
-  if (!tracker) return json({ error: 'unknown IMEI' }, 403)
+  const { data: tracker } = await supabase.from('trackers').select('imei,active').eq('imei', imei).maybeSingle()
+  if (!tracker || tracker.active === false) return json({ error: 'unknown or inactive IMEI' }, 403)
 
   const rows = records.map((r) => {
     const io = (r.io ?? {}) as Record<string, number>

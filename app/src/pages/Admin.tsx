@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Building2, CheckCircle2, Eye, Globe2, Radio, Recycle, ShieldAlert, Users } from 'lucide-react'
 import { Card, CardHead, Chip, Kpi, Page } from '../components/ui'
 import { FleetMapView } from '../components/FleetMapView'
@@ -6,6 +6,8 @@ import { MapLegend } from '../components/MapLegend'
 import { KIND_COLOR, KIND_GLYPH, KIND_LABEL, NETWORK, UPPER_FLOOR_READERS, isRestricted, totals } from '../sim/registry'
 import { useAuth } from '../lib/auth'
 import { ClientsPanel } from './AdminClients'
+import { ReadersAdmin, SitesAdmin, TrackersAdmin } from './AdminInfra'
+import { toNet, useInfra } from '../lib/infra'
 import { DECON_PLAN, HOSPITAL_PLAN } from '../sim/world'
 import { UPPER } from '../sim/floors'
 import { VEHICLES } from '../sim/world'
@@ -18,8 +20,10 @@ const stateTone = { live: 'green', provisioned: 'blue', planned: 'slate' } as co
 export default function Admin() {
   const [tab, setTab] = useState<Tab>('clients'); const [client, setClient] = useState<string>('all'); const [kind, setKind] = useState('all'); const [q, setQ] = useState('')
   const orgs = useAuth((s) => s.orgs)
-  const all = totals(NETWORK)
-  const rows = useMemo(() => NETWORK.filter((n) => (client === 'all' || n.client === client) && (kind === 'all' || n.kind === kind) && (n.name + n.region).toLowerCase().includes(q.toLowerCase())), [client, kind, q])
+  const infra = useInfra(); useEffect(() => { void infra.load() }, [])
+  const custom = useMemo(() => toNet(infra.sites, infra.readers), [infra.sites, infra.readers]); const NET = useMemo(() => [...NETWORK, ...custom], [custom])
+  const all = totals(NET)
+  const rows = useMemo(() => NET.filter((n) => (client === 'all' || n.client === client) && (kind === 'all' || n.kind === kind) && (n.name + n.region).toLowerCase().includes(q.toLowerCase())), [client, kind, q, NET])
   const owner = (c: string) => (c === 'shared' ? 'Shared' : orgs.find((o) => o.id === c)?.name ?? c)
   const readers = [
     ...HOSPITAL_PLAN.readers.map((r) => ({ id: r.id, site: 'Royal Meridian Hospital', floor: 'Ground', where: r.label, client: 'Synergy' })),
@@ -45,7 +49,7 @@ export default function Admin() {
 
       {tab === 'clients' && <ClientsPanel />}
 
-      {tab === 'sites' && <Card>
+      {tab === 'sites' && <><SitesAdmin /><Card>
         <div className="flex flex-wrap items-center gap-2 border-b border-stone-100 p-3">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search sites or regions" className="min-w-[200px] flex-1 rounded-full border border-stone-200 px-4 py-2 text-sm outline-none focus:border-cyan-500" />
           <select value={client} onChange={(e) => setClient(e.target.value as typeof client)} className="rounded-full border border-stone-200 bg-white px-3 py-2 text-sm font-semibold"><option value="all">All clients</option>{orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}<option value="shared">Shared</option></select>
@@ -53,16 +57,16 @@ export default function Admin() {
         <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-[13px]"><thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500"><tr><th className="px-4 py-2">Site</th><th>Type</th><th>Owner</th><th>Region</th><th className="text-right">Floors</th><th className="text-right">RFID readers</th><th className="pr-4 text-right">Status</th></tr></thead>
           <tbody className="divide-y divide-stone-100">{rows.map((n) => (<tr key={n.id} className="hover:bg-stone-50"><td className="px-4 py-2.5"><div className="flex items-center gap-2.5"><i className="grid h-6 w-6 place-items-center rounded-lg text-[11px] text-white" style={{ background: KIND_COLOR[n.kind] }}>{KIND_GLYPH[n.kind]}</i><div><div className="font-bold text-stone-900">{n.name}</div>{n.note && <div className="text-[11px] text-stone-500">{n.note}</div>}</div></div></td>
             <td>{KIND_LABEL[n.kind]}{isRestricted(n.kind) && <b className="ml-1 text-rose-600">⚠</b>}</td><td>{owner(n.client)}</td><td className="text-stone-600">{n.region}</td><td className="text-right mono">{n.floors || '–'}</td><td className="text-right mono font-bold">{n.readers || '–'}</td><td className="pr-4 text-right"><Chip tone={stateTone[n.state]}>{n.sim ? 'live demo' : n.state}</Chip></td></tr>))}</tbody></table></div>
-        <div className="border-t border-stone-100 px-4 py-2.5 text-xs text-stone-500">{rows.length} of {NETWORK.length} sites</div></Card>}
+        <div className="border-t border-stone-100 px-4 py-2.5 text-xs text-stone-500">{rows.length} of {NETWORK.length} sites</div></Card></>}
 
-      {tab === 'readers' && <Card>
+      {tab === 'readers' && <><ReadersAdmin /><Card>
         <div className="flex flex-wrap items-center gap-2 border-b border-stone-100 p-3"><input value={rq} onChange={(e) => setRq(e.target.value)} placeholder="Search readers" className="min-w-[200px] flex-1 rounded-full border border-stone-200 px-4 py-2 text-sm outline-none focus:border-cyan-500" /><span className="text-xs font-semibold text-stone-500">{rr.length} readers · hospital {HOSPITAL_PLAN.readers.length + 3 * UPPER_FLOOR_READERS} · decon {DECON_PLAN.readers.length}</span></div>
         <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-[13px]"><thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500"><tr><th className="px-4 py-2">Reader</th><th>Site</th><th>Floor</th><th>Location</th><th>Owner</th><th className="pr-4 text-right">Last read</th></tr></thead>
-          <tbody className="divide-y divide-stone-100">{rr.map((r) => { const l = (w.readerEvents[r.id] ?? []).slice(-1)[0]; return <tr key={r.id} className="hover:bg-stone-50"><td className="mono px-4 py-2 font-semibold text-stone-900">{r.id}</td><td>{r.site}</td><td>{r.floor}</td><td className="text-stone-600">{r.where}</td><td>{r.client}</td><td className="mono pr-4 text-right text-stone-500">{l ? `${String(Math.floor((l % 1440) / 60)).padStart(2, '0')}:${String(Math.floor(l % 60)).padStart(2, '0')}` : 'online'}</td></tr> })}</tbody></table></div></Card>}
+          <tbody className="divide-y divide-stone-100">{rr.map((r) => { const l = (w.readerEvents[r.id] ?? []).slice(-1)[0]; return <tr key={r.id} className="hover:bg-stone-50"><td className="mono px-4 py-2 font-semibold text-stone-900">{r.id}</td><td>{r.site}</td><td>{r.floor}</td><td className="text-stone-600">{r.where}</td><td>{r.client}</td><td className="mono pr-4 text-right text-stone-500">{l ? `${String(Math.floor((l % 1440) / 60)).padStart(2, '0')}:${String(Math.floor(l % 60)).padStart(2, '0')}` : 'online'}</td></tr> })}</tbody></table></div></Card></>}
 
-      {tab === 'map' && <Card className="relative overflow-hidden"><CardHead title="UK network" sub="Ports and incinerators are ringed in red; recycling plants in green." /><FleetMapView vehIds={[]} height={600} network={NETWORK} /><MapLegend /></Card>}
+      {tab === 'map' && <Card className="relative overflow-hidden"><CardHead title="UK network" sub="Ports and incinerators are ringed in red; recycling plants in green." /><FleetMapView vehIds={[]} height={600} network={NET} /><MapLegend /></Card>}
 
-      {tab === 'devices' && <Card><div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-[13px]"><thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500"><tr><th className="px-4 py-2">Vehicle</th><th>Tracker</th><th>IMEI</th><th>Owner</th><th>Role</th><th className="pr-4 text-right">Source</th></tr></thead>
-        <tbody className="divide-y divide-stone-100">{VEHICLES.map((v) => <tr key={v.id}><td className="px-4 py-2.5 font-bold text-stone-900"><i className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ background: v.color }} />{v.reg}</td><td>{v.model}</td><td className="mono text-xs">{v.imei}</td><td>{v.id === 'V4' ? 'Client A' : 'Synergy'}</td><td className="text-stone-600">{v.role}</td><td className="pr-4 text-right"><Chip tone={v.simulated ? 'slate' : 'green'}>{v.simulated ? 'simulated' : 'physical unit'}</Chip></td></tr>)}</tbody></table></div></Card>}
+      {tab === 'devices' && <><TrackersAdmin /><Card><div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-[13px]"><thead className="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500"><tr><th className="px-4 py-2">Vehicle</th><th>Tracker</th><th>IMEI</th><th>Owner</th><th>Role</th><th className="pr-4 text-right">Source</th></tr></thead>
+        <tbody className="divide-y divide-stone-100">{VEHICLES.map((v) => <tr key={v.id}><td className="px-4 py-2.5 font-bold text-stone-900"><i className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ background: v.color }} />{v.reg}</td><td>{v.model}</td><td className="mono text-xs">{v.imei}</td><td>{v.id === 'V4' ? 'Client A' : 'Synergy'}</td><td className="text-stone-600">{v.role}</td><td className="pr-4 text-right"><Chip tone={v.simulated ? 'slate' : 'green'}>{v.simulated ? 'simulated' : 'physical unit'}</Chip></td></tr>)}</tbody></table></div></Card></>}
     </Page>)
 }

@@ -21,7 +21,7 @@ export default function Twin() {
   const fu = it ? fusion(it, t) : null
   const loc = it ? snap.loc[it.id] : null
   return (
-    <Page title="Facilities & floors" sub={twin === 'H' ? 'Royal Meridian Hospital · choose a floor' : 'Decon Plant'}
+    <Page demo title="Facilities & floors" sub={twin === 'H' ? 'Royal Meridian Hospital · choose a floor' : 'Decon Plant'}
       right={<div className="flex flex-wrap gap-2">
         <div className="flex rounded-full bg-white p-1 ring-1 ring-stone-200">{([['H', 'Hospital'], ['D', 'Decon Plant']] as const).map(([k, l]) => (<button key={k} onClick={() => set({ twin: k })} className={`rounded-full px-3.5 py-1.5 text-xs font-bold ${twin === k ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-50'}`}>{l}</button>))}</div>
         {twin === 'H' && <div className="flex rounded-full bg-white p-1 ring-1 ring-stone-200"><span className="grid place-items-center px-2 text-stone-400"><Layers size={14} /></span>{(['G', '1', '2', '3'] as const).filter((f) => f === 'G' ? hasModule(role, 'laundry') : hasModule(role, 'curtains') || hasModule(role, 'laundry')).map((f) => (<button key={f} onClick={() => set({ floor: f })} className={`rounded-full px-3.5 py-1.5 text-xs font-bold ${floor === f ? 'bg-cyan-600 text-white' : 'text-stone-600 hover:bg-stone-50'}`}>{f === 'G' ? 'Ground' : `Floor ${f}`}</button>))}</div>}

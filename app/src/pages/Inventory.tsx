@@ -9,16 +9,18 @@ import { hasModule } from '../sim/registry'
 
 export default function Inventory() {
   const snap = useSnap(); const t = snap.t; const w = getWorld(); const set = useStore((s) => s.set)
-  const role = useStore((st) => st.role); const [tab0, setTab] = useState<'textile' | 'asset'>('textile'); const tab = hasModule(role, 'laundry') ? (hasModule(role, 'assets') ? tab0 : 'textile') : 'asset'; const [q, setQ] = useState(''); const [type, setType] = useState('all'); const [status, setStatus] = useState('all')
+  const role = useStore((st) => st.role); const [tab0, setTab] = useState<'textile' | 'asset'>('textile'); const tab = hasModule(role, 'laundry') ? (hasModule(role, 'assets') ? tab0 : 'textile') : 'asset'; const [q, setQ] = useState(''); const [type, setType] = useState('all'); const [status, setStatus] = useState('all'); const [area, setArea] = useState('all'); const [life, setLife] = useState('all')
   const rows = useMemo(() => w.items.map((it) => {
     const l = snap.loc[it.id]
     const where = l.status === 'missing' ? `Last seen: ${ZONE_NAME[it.missing!.lastZone]}` : l.kind === 'vehicle' ? `On truck ${VEH_BY_ID[l.veh!].reg}` : l.kind === 'moving' ? `Moving to ${ZONE_NAME[l.zone!]}` : ZONE_NAME[l.zone!]
-    return { it, l, where, conf: fusion(it, t).conf }
+    return { it, l, where, area: l.status === 'missing' ? 'Missing' : l.kind === 'vehicle' ? 'On a truck' : ZONE_NAME[l.zone!], conf: fusion(it, t).conf }
   }), [snap])
-  const list = rows.filter((r) => (type === 'all' || r.it.type.sku === type) && (status === 'all' || r.l.status === status) && (r.it.qr + r.it.type.name + r.where).toLowerCase().includes(q.toLowerCase()))
+  const left = (r: (typeof rows)[0]) => 1 - r.l.cycles / r.it.type.maxCycles
+  const areas = [...new Set(rows.map((r) => r.area))].sort()
+  const list = rows.filter((r) => (type === 'all' || r.it.type.sku === type) && (status === 'all' || r.l.status === status) && (area === 'all' || r.area === area) && (life === 'all' || (life === 'low' ? left(r) < 0.1 : life === 'mid' ? left(r) >= 0.1 && left(r) < 0.3 : left(r) >= 0.3)) && (r.it.qr + r.it.type.name + r.where).toLowerCase().includes(q.toLowerCase()))
   const open = (id: number) => { set({ selItem: id }); go('item') }
   return (
-    <Page title="Inventory" sub="Pick a product to see its journey.">
+    <Page demo title="Inventory" sub="Pick a product to see its journey.">
       <div className="mb-5 inline-flex rounded-full bg-stone-200/70 p-1">{([['textile', `Textiles (${w.items.length})`], ['asset', `High-value assets (${SCANNERS.length})`]] as const).filter(([k]) => hasModule(role, k === 'textile' ? 'laundry' : 'assets')).map(([k, l]) => <button key={k} onClick={() => setTab(k)} className={`rounded-full px-4 py-1.5 text-sm font-semibold ${tab === k ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600'}`}>{l}</button>)}</div>
       {tab === 'textile' ? <>
         <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
@@ -30,8 +32,12 @@ export default function Inventory() {
         </div>
         <Card>
           <div className="flex flex-wrap items-center gap-3 border-b border-stone-100 p-4">
-            <div className="relative min-w-[240px] flex-1"><Search size={15} className="absolute left-3 top-2.5 text-stone-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search product, QR code or location…" className="w-full rounded-full border border-stone-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-stone-900" /></div>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-full border border-stone-200 bg-white px-3 py-2 text-sm"><option value="all">All states</option>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            <div className="relative min-w-[240px] flex-1"><Search size={15} className="absolute left-3 top-2.5 text-stone-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search product, QR code or location…" className="h-10 w-full rounded-lg border border-stone-200 pl-9 pr-3 text-sm outline-none focus:border-cyan-500" /></div>
+            <select value={type} onChange={(e) => setType(e.target.value)} className="h-10 rounded-lg border border-stone-200 bg-white px-3 text-[14px]" aria-label="Product type"><option value="all">All products</option>{PRODUCTS.map((p) => <option key={p.sku} value={p.sku}>{p.name}</option>)}</select>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className="h-10 rounded-lg border border-stone-200 bg-white px-3 text-[14px]" aria-label="State"><option value="all">All states</option>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            <select value={area} onChange={(e) => setArea(e.target.value)} className="h-10 rounded-lg border border-stone-200 bg-white px-3 text-[14px]" aria-label="Location"><option value="all">Anywhere</option>{areas.map((a) => <option key={a}>{a}</option>)}</select>
+            <select value={life} onChange={(e) => setLife(e.target.value)} className="h-10 rounded-lg border border-stone-200 bg-white px-3 text-[14px]" aria-label="Life left"><option value="all">Any life left</option><option value="low">Under 10% left</option><option value="mid">10–30% left</option><option value="high">Over 30% left</option></select>
+            {(type !== 'all' || status !== 'all' || area !== 'all' || life !== 'all' || q) && <button onClick={() => { setType('all'); setStatus('all'); setArea('all'); setLife('all'); setQ('') }} className="text-[14px] font-medium text-cyan-700 hover:underline">Clear filters</button>}
             <span className="text-sm text-stone-500">{list.length} shown</span>
           </div>
           <div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-sm">

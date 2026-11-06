@@ -15,7 +15,7 @@ export default function Alerts() {
   const okIds = new Set(alertsFor(role).map((a) => a.id)); const inc = w.incidents.filter((i) => i.t <= t && i.alerts.some((x) => okIds.has(x))); const si = inc.find((i) => i.id === selIncident) ?? inc[0]
   const a = list.find((x) => x.id === selA) ?? null
   return (
-    <Page title="Alerts" sub="Problems that need attention."
+    <Page demo title="Alerts" sub="Problems that need attention."
       right={<div className="flex rounded-lg bg-white p-1 ring-1 ring-slate-200">{(['alerts', 'rules'] as const).map((k) => <button key={k} onClick={() => setTab(k)} className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize ${tab === k ? 'bg-ink-900 text-white' : 'text-slate-600'}`}>{k === 'rules' ? 'Rule catalogue' : 'Alerts'}</button>)}</div>}>
       {tab === 'rules' ? (
         <Card><table className="w-full text-left text-[13px]"><thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500"><tr><th className="px-4 py-2">Rule</th><th>Severity</th><th>Logic</th><th>Fired today</th></tr></thead><tbody className="divide-y divide-slate-100">

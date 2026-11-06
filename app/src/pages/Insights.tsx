@@ -34,7 +34,7 @@ export default function Insights() {
   if (hasModule(role, 'recycling')) secs.push([recycling(t, role), '4'])
   const top = secs.flatMap(([s]) => s.findings.map((f) => ({ ...f, from: s.title }))).filter((f) => f.tone === 'bad' || f.tone === 'warn').sort((a, b) => RANK[a.tone] - RANK[b.tone]).slice(0, 4)
   return (
-    <Page title="Intelligence" sub="What the data is telling you, in order of importance.">
+    <Page demo title="Intelligence" sub="What the data is telling you, in order of importance.">
       <Card className="mb-5"><CardHead title="Do these first" />
         <div className="grid gap-2 p-4 md:grid-cols-2">{top.length === 0 && <div className="col-span-2 rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800">Nothing needs action right now.</div>}
           {top.map((f, i) => <button key={i} onClick={() => f.page && go(f.page)} className={`flex gap-3 rounded-2xl p-3.5 text-left ${TONE[f.tone].bg}`}><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-xs font-extrabold text-stone-900">{i + 1}</span><span><span className="block text-[11px] font-bold uppercase tracking-wider text-stone-400">{f.from}</span><span className="block text-[13.5px] font-extrabold text-stone-900">{f.title}</span><span className="block text-xs leading-snug text-stone-600">{f.body}</span></span></button>)}</div></Card>

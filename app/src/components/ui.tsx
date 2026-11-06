@@ -31,10 +31,10 @@ export const Chip = ({ children, tone = 'slate' }: { children: ReactNode; tone?:
 export const Bar = ({ v, color = '#1c1917', h = 6 }: { v: number; color?: string; h?: number }) => (
   <div className="w-full overflow-hidden rounded-full bg-slate-100" style={{ height: h }}><div className="h-full rounded-full transition-all" style={{ width: `${Math.max(0, Math.min(1, v)) * 100}%`, background: color }} /></div>
 )
-export const Page = ({ title, sub, right, children }: { title: string; sub?: string; right?: ReactNode; children: ReactNode }) => (
+export const Page = ({ title, sub, right, demo, children }: { title: string; sub?: string; right?: ReactNode; demo?: boolean; children: ReactNode }) => (
   <div className="mx-auto w-full max-w-[1500px] p-5 sm:p-8">
     <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
-      <div><h1 className="text-[30px] font-extrabold tracking-tight text-slate-900">{title}</h1>{sub && <p className="mt-1.5 max-w-3xl text-[15.5px] leading-snug text-slate-500">{sub}</p>}</div>{right}
+      <div><h1 className="text-[30px] font-extrabold tracking-tight text-slate-900">{title}{demo && <span title="This page shows a built-in example day. Live data from readers and scans is not connected yet." className="ml-3 inline-block translate-y-[-4px] rounded-full bg-amber-50 px-3 py-1 align-middle text-[12px] font-medium text-amber-800 ring-1 ring-amber-200">Demo data</span>}</h1>{sub && <p className="mt-1.5 max-w-3xl text-[15.5px] leading-snug text-slate-500">{sub}</p>}</div>{right}
     </div>{children}
   </div>
 )

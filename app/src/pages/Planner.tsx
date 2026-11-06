@@ -108,7 +108,7 @@ function HospitalView() {
 export default function Planner() {
   const [view, setView] = useState<'hospital' | 'plant'>('hospital')
   return (
-    <Page title="Laundry arrivals" sub={view === 'hospital' ? 'What is arriving at the hospital, and when it can be used.' : 'What reaches the plant, and when.'}
+    <Page demo title="Laundry arrivals" sub={view === 'hospital' ? 'What is arriving at the hospital, and when it can be used.' : 'What reaches the plant, and when.'}
       right={<div className="flex rounded-full bg-white p-1 ring-1 ring-stone-200">{([['hospital', 'At the hospital'], ['plant', 'At the plant']] as const).map(([k, l]) => <button key={k} onClick={() => setView(k)} className={`rounded-full px-4 py-1.5 text-xs font-bold ${view === k ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-50'}`}>{l}</button>)}</div>}>
       {view === 'hospital' ? <HospitalView /> : <PlantView />}
     </Page>)

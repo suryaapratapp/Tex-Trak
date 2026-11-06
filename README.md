@@ -128,3 +128,10 @@ Every step is written to a history. The database enforces the order of steps and
 ## Database
 
 Tables for access (`orgs`, `profiles`), shipments (`shipments`, `shipment_events`) and a shared `scan_log`, all with row level security. Changes to shipments go through `shipment_book` and `shipment_step`, which validate each transition.
+
+## Where the data comes from
+
+- **Real, stored in Supabase:** accounts and access, shipments and their history, the scan log, and the sites, RFID readers and trackers that the Super Admin adds. Tracker positions arrive through the gateway and the `ingest-tracker` function, but only for registered, active IMEIs.
+- **Demonstration only (labelled "Demo data" in the app):** Laundry arrivals, Inventory, Facilities and floors, Daily flow, Community assets, Live map, Alerts, Intelligence, Impact and Recycling proof. These are driven by a built-in simulated day in `app/src/sim/`, the same for everyone. Nobody enters this data, and it does not yet read from real RFID readers.
+
+To make those pages live, RFID reader events need a receiving endpoint (the `rfid_events` table exists), an item master list needs importing, and hospital floor plans need building from Sites and Readers.

@@ -115,7 +115,7 @@ export default function Provenance() {
   const ok = verdicts.filter((v) => v.tone === 'ok').length, bad = verdicts.filter((v) => v.tone === 'bad').length
   const kgOk = list.filter((_, i) => verdicts[i].tone === 'ok').reduce((a, c) => a + c.kg, 0)
   return (
-    <Page title="Recycling proof" sub="Did the load reach the recycler, or the port or incinerator?">
+    <Page demo title="Recycling proof" sub="Did the load reach the recycler, or the port or incinerator?">
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Loads audited" value={list.length} icon={<FileBadge size={15} />} />
         <Kpi label="Verified recycled" value={ok} tone="good" sub={`${kgOk} kg proven`} />

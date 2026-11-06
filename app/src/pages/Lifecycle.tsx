@@ -44,7 +44,7 @@ export default function Lifecycle() {
   const doneN = timeline.filter((r) => r.t <= t).length
   const co2 = loc.cycles * (it.type.co2New - it.type.co2Cycle)
   return (
-    <Page title="Daily flow" sub="Where every item is right now.">
+    <Page demo title="Daily flow" sub="Where every item is right now.">
       <Card className="mb-4 overflow-x-auto p-4">
         <div className="flex min-w-[1100px] items-stretch gap-1.5">
           {STAGES.map((s, i) => (

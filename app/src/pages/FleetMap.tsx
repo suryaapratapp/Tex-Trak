@@ -26,7 +26,7 @@ export default function FleetMap() {
     : { txt: 'Parked', tone: 'slate' as const }
   const pingS = 360
   return (
-    <Page title="Live map" sub="Trackers on every vehicle, in real time.">
+    <Page demo title="Live map" sub="Trackers on every vehicle, in real time.">
       <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
         <Card className="overflow-hidden">
           <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-2.5">
