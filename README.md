@@ -111,3 +111,20 @@ Field staff use **Scan station**; everyone else works from the dashboards.
 
 ---
 Developed by CIRCAI LTD.
+
+## Shipments, end to end
+
+**Shipments → My shipments** (stored in Supabase, scoped to each client):
+
+1. **Book**: type, from, to, contents, item count, carrier, planned times. Gets a reference such as `SHP-1001`.
+2. **Dispatch**: confirm it is loaded and sealed (in the app or by scanning the reference in the Scan station).
+3. **On the way**: add updates or report a delay.
+4. **Receive**: enter how many items arrived. A different number is recorded as a problem; a problem can be marked resolved.
+
+Every step is written to a history. The database enforces the order of steps and who can see what, so one client can never see another's shipments.
+
+**Live tracking** is the separate tracker-based view (vehicle position and ETA).
+
+## Database
+
+Tables for access (`orgs`, `profiles`), shipments (`shipments`, `shipment_events`) and a shared `scan_log`, all with row level security. Changes to shipments go through `shipment_book` and `shipment_step`, which validate each transition.

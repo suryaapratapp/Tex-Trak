@@ -17,7 +17,7 @@ export default function Login() {
   return (
     <div className="grid min-h-full place-items-center bg-stone-900 px-4 py-10">
       <div className="w-full max-w-[440px]">
-        <div className="mb-8 flex items-center justify-center gap-3"><Logo size={52} /><div><div className="text-[26px] font-extrabold leading-none tracking-tight text-white">Tex-Trak</div><div className="mt-1 text-[13px] font-semibold text-stone-400">Through-life tracking</div></div></div>
+        <div className="mb-8 flex items-center justify-center gap-3"><Logo size={52} /><div><div className="text-[26px] font-extrabold leading-none tracking-tight text-white">Tex-Trak</div><div className="mt-1 text-[13px] font-semibold text-stone-400">Healthcare traceability</div></div></div>
         <form onSubmit={submit} className="card space-y-5 p-8">
           <div><h1 className="text-[22px] font-extrabold text-stone-900">{setup ? 'First-time setup' : 'Sign in'}</h1><p className="mt-1 text-[14.5px] text-stone-500">{setup ? 'Create the Super Admin account. This only works once.' : 'Use the username and password you were given.'}</p></div>
           {done && <Notice kind="ok">Super Admin created. You can sign in now.</Notice>}

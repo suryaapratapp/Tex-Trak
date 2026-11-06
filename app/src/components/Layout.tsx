@@ -16,10 +16,10 @@ const GROUPS: Group[] = [
   { title: 'Field work', items: [{ id: 'scan', label: 'Scan station', icon: <ScanLine size={I} /> }] },
   { title: 'Curtains · QR', items: [
     { id: 'qrdash', label: 'Dashboard', icon: <BarChart3 size={I} /> }, { id: 'qrproducts', label: 'Products', icon: <Tag size={I} /> }, { id: 'qrinstall', label: 'Install', icon: <ArrowDownToLine size={I} /> }, { id: 'qrtakedown', label: 'Take down', icon: <Repeat2 size={I} /> },
-    { id: 'qrregister', label: 'Register labels', icon: <QrCode size={I} /> }, { id: 'qrlabels', label: 'QR labels', icon: <Layers size={I} /> }, { id: 'qrlocations', label: 'Locations', icon: <MapPin size={I} /> }, { id: 'qrreports', label: 'Reports', icon: <FileText size={I} /> }, { id: 'qrusers', label: 'Users and settings', icon: <Users size={I} /> }] },
+    { id: 'qrregister', label: 'Register labels', icon: <QrCode size={I} /> }, { id: 'qrlabels', label: 'QR labels', icon: <Layers size={I} /> }, { id: 'qrlocations', label: 'Locations', icon: <MapPin size={I} /> }, { id: 'qrreports', label: 'Reports', icon: <FileText size={I} /> }] },
   { title: 'Laundry · RFID', items: [{ id: 'planner', label: 'Laundry arrivals', icon: <Activity size={I} /> }, { id: 'inventory', label: 'Inventory', icon: <Boxes size={I} /> }, { id: 'twin', label: 'Facilities and floors', icon: <Building2 size={I} /> }, { id: 'lifecycle', label: 'Daily flow', icon: <Workflow size={I} /> }] },
-  { title: 'Equipment and loads', items: [{ id: 'assets', label: 'Community assets', icon: <Radar size={I} /> }, { id: 'shipments', label: 'Shipments', icon: <Truck size={I} /> }, { id: 'provenance', label: 'Recycling proof', icon: <Recycle size={I} /> }] },
-  { title: 'Reporting', items: [{ id: 'esg', label: 'Impact', icon: <Leaf size={I} /> }] },
+  { title: 'Equipment and loads', items: [{ id: 'assets', label: 'Community assets', icon: <Radar size={I} /> }, { id: 'shipments', label: 'Shipments', icon: <Truck size={I} /> }] },
+  { title: 'Reporting', items: [{ id: 'provenance', label: 'Recycling proof', icon: <Recycle size={I} /> }, { id: 'esg', label: 'Impact', icon: <Leaf size={I} /> }] },
   { title: 'Administration', items: [{ id: 'admin', label: 'Super Admin', icon: <Shield size={I} />, adminOnly: true }, { id: 'devices', label: 'Trackers', icon: <Cpu size={I} />, adminOnly: true }, { id: 'team', label: 'Team', icon: <UsersRound size={I} />, teamOnly: true }, { id: 'account', label: 'My account', icon: <UserCircle size={I} />, always: true }] },
 ]
 const JUMPS: [string, number][] = [['Morning delivery', 335], ['Recycling runs', 612], ['Day operations', 600], ['Evening collection', 1045], ['Decon processing', 1230], ['Next morning', 1760]]
@@ -41,7 +41,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const Side = (
     <div className="flex h-full flex-col bg-stone-900 text-stone-300">
-      <button onClick={() => nav('command')} className="flex items-center gap-3 px-6 pb-5 pt-6"><Logo size={42} /><span className="text-left"><span className="block text-[20px] font-extrabold leading-none tracking-tight text-white">Tex-Trak</span><span className="mt-1 block text-[11.5px] font-semibold text-stone-400">Through-life tracking</span></span></button>
+      <button onClick={() => nav('command')} className="flex items-center gap-3 px-6 pb-5 pt-6"><Logo size={42} /><span className="text-left"><span className="block text-[20px] font-extrabold leading-none tracking-tight text-white">Tex-Trak</span><span className="mt-1 block text-[11.5px] font-semibold text-stone-400">Healthcare traceability</span></span></button>
       <nav className="scroll-dark min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-4 pt-2">
         {GROUPS.map((g) => { const items = g.items.filter((i) => visible(i, role)); if (!items.length) return null; return (
           <div key={g.title}><div className="px-3 pb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-stone-500">{g.title}</div>

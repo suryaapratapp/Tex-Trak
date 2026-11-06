@@ -12,12 +12,13 @@ export const REASONS: { value: Reason; label: string; help: string }[] = [
 export interface Hospital { id: string; name: string; code: string }
 export interface Loc { id: string; hospitalId: string; floor: string; ward: string; bay: string }
 export interface Place { hospitalId: string; floor?: string; ward?: string; bay?: string }
-export interface Product { code: string; productCode: string; type: string; size?: string; colour?: string; batch?: string; status: Status; registeredAt: number; installedAt?: number; dueAt?: number; place?: Place; notes?: string }
+export interface Product { code: string; productCode: string; type: string; size?: string; colour?: string; batch?: string; status: Status; registeredAt: number; dueDays?: number; installedAt?: number; dueAt?: number; place?: Place; notes?: string }
 export interface Hist { id: number; ts: number; type: 'registered' | 'installed' | 'removed' | 'retired'; code: string; hospitalId?: string; where?: string; reason?: Reason; notes?: string; by: string; replaces?: string }
 export interface CodeFormat { prefix: string; letters: number; digits: number }
 export interface Batch { id: number; ts: number; productCode: string; name: string; count: number; first: string; last: string; registered: boolean; start: number; fmt: CodeFormat; prefix: string }
 
 const DAY = 86400000
+export const DEFAULT_DUE_DAYS = 7
 const SPEC: [string, string, string, [string, string, string[]][]][] = [
   ['qmh', 'Queen Mary Hospital', 'QMH', [['Ground', 'Emergency Ward', ['E1', 'E2', 'E3', 'E4', 'E5', 'E6']], ['Level 1', 'Surgical Ward', ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']], ['Level 2', 'Medical Ward', ['M1', 'M2', 'M3', 'M4', 'M5']], ['Level 3', 'Maternity Ward', ['N1', 'N2', 'N3', 'N4', 'N5']]]],
   ['rai', 'Royal Albert Infirmary', 'RAI', [['Ground', 'Outpatients', ['O1', 'O2', 'O3']], ['Level 1', 'Respiratory Ward', ['RP1', 'RP2', 'RP3', 'RP4', 'RP5']], ['Level 2', 'Cardiology Ward', ['C1', 'C2', 'C3', 'C4']]]],
@@ -51,13 +52,13 @@ function seed() {
 }
 export interface Result { ok: boolean; message: string }
 interface S {
-  hospitals: Hospital[]; locs: Loc[]; products: Record<string, Product>; history: Hist[]; dueDays: number; format: CodeFormat; counters: Record<string, number>; batches: Batch[]
-  register: (codes: string[], meta: { batch?: string; size?: string; colour?: string; productCode?: string; type?: string }) => { added: string[]; skipped: string[] }
+  hospitals: Hospital[]; locs: Loc[]; products: Record<string, Product>; history: Hist[]; format: CodeFormat; counters: Record<string, number>; batches: Batch[]
+  register: (codes: string[], meta: { batch?: string; size?: string; colour?: string; productCode?: string; type?: string; dueDays?: number }) => { added: string[]; skipped: string[] }
   install: (code: string, place: Place, opts?: { replaces?: string }) => Result
   takeDown: (code: string, reason: Reason, notes?: string) => Result & { place?: Place }
   retire: (code: string, notes?: string) => Result
   importLocations: (rows: { hospital: string; code?: string; floor?: string; ward: string; bay: string }[]) => { added: number; hospitals: number }
-  setDueDays: (n: number) => void; setFormat: (f: CodeFormat) => void
+  setFormat: (f: CodeFormat) => void
   generate: (productCode: string, name: string, count: number, register: boolean) => Batch
   reset: () => void
 }
@@ -67,13 +68,13 @@ const BY = 'Administrator'
 const nextId = (h: Hist[]) => (h[0]?.id ?? 0) + 1
 
 export const useQr = create<S>()(persist((set, get) => ({
-  hospitals: HOSPITALS, locs: LOCS, ...seed(), dueDays: 180, format: DEFAULT_FORMAT, counters: { [seriesKey(DEFAULT_FORMAT, 'MVN191')]: 49 }, batches: [],
+  hospitals: HOSPITALS, locs: LOCS, ...seed(), format: DEFAULT_FORMAT, counters: { [seriesKey(DEFAULT_FORMAT, 'MVN191')]: 49 }, batches: [],
   register: (codes, meta) => {
     const added: string[] = [], skipped: string[] = []; const st = get(); const products = { ...st.products }; const history = [...st.history]; const now = Date.now()
     codes.map(normalise).filter(Boolean).forEach((code) => {
       const ex = products[code]
       if (ex && ex.status !== 'removed') { skipped.push(code); return }
-      products[code] = { code, productCode: meta.productCode ?? 'MVN191', type: meta.type ?? 'Curtain', size: meta.size || undefined, colour: meta.colour || undefined, batch: meta.batch || undefined, status: 'registered', registeredAt: now }
+      products[code] = { code, productCode: meta.productCode ?? 'MVN191', type: meta.type ?? 'Curtain', size: meta.size || undefined, colour: meta.colour || undefined, batch: meta.batch || undefined, dueDays: meta.dueDays && meta.dueDays > 0 ? Math.round(meta.dueDays) : DEFAULT_DUE_DAYS, status: 'registered', registeredAt: now }
       history.unshift({ id: nextId(history), ts: now, type: 'registered', code, by: BY }); added.push(code)
     })
     set({ products, history }); return { added, skipped }
@@ -86,7 +87,7 @@ export const useQr = create<S>()(persist((set, get) => ({
     if (p.status === 'removed') return { ok: false, message: `${code} was taken down. Register it again once it is back in stock.` }
     if (place.bay && !opts?.replaces) { const taken = Object.values(st.products).find((x) => x.status === 'in_use' && x.place?.hospitalId === place.hospitalId && x.place.floor === place.floor && x.place.ward === place.ward && x.place.bay === place.bay); if (taken) return { ok: false, message: `${place.bay} already has ${taken.code}. Take it down first, or use Take down to swap it.` } }
     const now = Date.now(); const where = [place.ward, place.bay].filter(Boolean).join(' · ') || 'hospital level'
-    set({ products: { ...st.products, [code]: { ...p, status: 'in_use', installedAt: now, dueAt: now + st.dueDays * DAY, place } }, history: [{ id: nextId(st.history), ts: now, type: 'installed', code, hospitalId: place.hospitalId, where, by: BY, replaces: opts?.replaces }, ...st.history] })
+    set({ products: { ...st.products, [code]: { ...p, status: 'in_use', installedAt: now, dueAt: now + (p.dueDays ?? DEFAULT_DUE_DAYS) * DAY, place } }, history: [{ id: nextId(st.history), ts: now, type: 'installed', code, hospitalId: place.hospitalId, where, by: BY, replaces: opts?.replaces }, ...st.history] })
     return { ok: true, message: `${code} installed at ${placeText(st, place)}` }
   },
   takeDown: (raw, reason, notes) => {
@@ -112,7 +113,6 @@ export const useQr = create<S>()(persist((set, get) => ({
     })
     set({ hospitals, locs }); return { added, hospitals: newH }
   },
-  setDueDays: (n) => set({ dueDays: Math.max(1, Math.round(n)) }),
   setFormat: (format) => set({ format }),
   generate: (productCode, name, count, register) => {
     const st = get(); const key = seriesKey(st.format, productCode); const start = (st.counters[key] ?? 0) + 1
@@ -122,7 +122,7 @@ export const useQr = create<S>()(persist((set, get) => ({
     if (register) get().register(Array.from({ length: count }, (_, i) => code(start + i)), { productCode, type: name, batch: `B-${new Date().getFullYear()}-${String(batch.id).padStart(2, '0')}` })
     return batch
   },
-  reset: () => set({ hospitals: HOSPITALS, locs: LOCS, ...seed(), dueDays: 180, format: DEFAULT_FORMAT, counters: { [seriesKey(DEFAULT_FORMAT, 'MVN191')]: 49 }, batches: [] }),
+  reset: () => set({ hospitals: HOSPITALS, locs: LOCS, ...seed(), format: DEFAULT_FORMAT, counters: { [seriesKey(DEFAULT_FORMAT, 'MVN191')]: 49 }, batches: [] }),
 }), { name: 'textrak-qr-v1', version: 1 }))
 
 export const daysLeft = (p: Product) => (p.dueAt ? Math.ceil((p.dueAt - Date.now()) / DAY) : null)

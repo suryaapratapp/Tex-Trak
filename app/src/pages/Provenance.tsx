@@ -51,7 +51,7 @@ function Certificate({ c, verdict, onDone }: { c: Consignment; verdict: Verdict;
   const col = verdict.tone === 'ok' ? '#047857' : verdict.tone === 'bad' ? '#be123c' : '#0369a1'
   const cell: React.CSSProperties = { border: '1px solid #cbd5e1', padding: '5px 8px', fontSize: 11, textAlign: 'left', verticalAlign: 'top' }
   return createPortal(
-    <div className="print-only" style={{ fontFamily: 'Manrope, Arial, sans-serif', color: '#0b1b33', maxWidth: 760, margin: '0 auto' }}>
+    <div className="print-only" style={{ fontFamily: 'Inter, Arial, sans-serif', color: '#0b1b33', maxWidth: 760, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '3px solid #5a46e0', paddingBottom: 10 }}>
         <div><div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 800, color: '#5a46e0' }}>TEX-TRAK · THROUGH-LIFE PROVENANCE</div><div style={{ fontSize: 24, fontWeight: 800, marginTop: 2 }}>Recycling evidence certificate</div></div>
         <div style={{ textAlign: 'right', fontSize: 11 }}><div style={{ fontWeight: 800, fontSize: 15 }}>{c.ref}</div><div>Issued {new Date().toLocaleString('en-GB')}</div></div>

@@ -49,3 +49,4 @@ export const useAuth = create<A>((set, get) => ({
 }))
 
 export const orgInfo = (id: string) => { const o = useAuth.getState().orgs.find((x) => x.id === id); return { name: o?.name ?? id, tagline: o?.tagline ?? '', color: o?.color ?? '#5a46e0' } }
+if (import.meta.env.DEV) (window as unknown as { __auth: typeof useAuth }).__auth = useAuth

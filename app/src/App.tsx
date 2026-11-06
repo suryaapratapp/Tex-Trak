@@ -28,10 +28,9 @@ import Register from './qr/Register'
 import Labels from './qr/Labels'
 import Locations from './qr/Locations'
 import Reports from './qr/Reports'
-import Users from './qr/Users'
 import Account from './qr/Account'
 
-const PAGES: Record<string, () => React.ReactElement> = { team: Team, qrdash: QrDashboard, qrproducts: Products, qrinstall: Install, qrtakedown: Takedown, qrregister: Register, qrlabels: Labels, qrlocations: Locations, qrreports: Reports, qrusers: Users, account: Account, admin: Admin, scan: Scan, insights: Insights, command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, devices: Devices, inventory: Inventory,  item: ItemJourney }
+const PAGES: Record<string, () => React.ReactElement> = { team: Team, qrdash: QrDashboard, qrproducts: Products, qrinstall: Install, qrtakedown: Takedown, qrregister: Register, qrlabels: Labels, qrlocations: Locations, qrreports: Reports, account: Account, admin: Admin, scan: Scan, insights: Insights, command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, devices: Devices, inventory: Inventory,  item: ItemJourney }
 export default function App() {
   const page = useStore((s) => s.page); const { ready, user, init } = useAuth()
   useEffect(() => { void init() }, [init])

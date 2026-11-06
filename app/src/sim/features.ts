@@ -16,7 +16,7 @@ export const FEATURES: Feature[] = [
   { id: 'assets', label: 'Community assets', module: 'assets' }, { id: 'shipments', label: 'Shipments', module: 'shipments' }, { id: 'provenance', label: 'Recycling proof', module: 'recycling' },
   { id: 'qrdash', label: 'Curtain dashboard', module: 'curtains' }, { id: 'qrproducts', label: 'Products', module: 'curtains' }, { id: 'qrinstall', label: 'Install', module: 'curtains' }, { id: 'qrtakedown', label: 'Take down', module: 'curtains' },
   { id: 'qrregister', label: 'Register labels', module: 'curtains' }, { id: 'qrlabels', label: 'QR labels (generate and print)', module: 'curtains' }, { id: 'qrlocations', label: 'Locations', module: 'curtains' },
-  { id: 'qrreports', label: 'Reports', module: 'curtains' }, { id: 'qrusers', label: 'Settings', module: 'curtains' },
+  { id: 'qrreports', label: 'Reports', module: 'curtains' }
 ]
 export const featuresOf = (...m: ModuleId[]) => FEATURES.filter((f) => m.includes(f.module)).map((f) => f.id)
 /** Starting points when choosing what a staff member can do. */

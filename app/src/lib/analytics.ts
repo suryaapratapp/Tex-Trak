@@ -59,7 +59,7 @@ export function shipments(t: number, role: Role): Section {
   const f: Finding[] = []
   exc.forEach((c) => f.push({ tone: 'bad', title: `${c.ref} never reached ${SITES[c.to].short}`, body: `Carrier ${c.carrier}. Open the exception, freeze payment and ask the haulier for gate logs.`, page: 'shipments' }))
   live.forEach((c) => { const v = VEH_BY_ID[c.veh]; f.push({ tone: slip(c) > 8 ? 'warn' : 'info', title: `${c.ref} · ${v.reg} on its way`, body: `${SITES[c.from].short} → ${SITES[c.to].short}, ${slip(c) >= 0 ? '+' : ''}${Math.round(slip(c))} min vs plan.`, page: 'shipments' }) })
-  if (late.length) f.push({ tone: 'warn', title: `${late.length} delivery${late.length > 1 ? 'ies' : 'y'} arrived late`, body: 'Late deliveries are listed under Shipments with the minutes lost.', page: 'shipments' })
+  if (late.length) f.push({ tone: 'warn', title: late.length > 1 ? `${late.length} deliveries arrived late` : '1 delivery arrived late', body: 'Late deliveries are listed under Shipments with the minutes lost.', page: 'shipments' })
   if (!f.length) f.push({ tone: 'good', title: 'No shipments in flight', body: 'Everything dispatched has been delivered.' })
   return { id: 'shipments', title: 'Shipments', page: 'shipments',
     tiles: [{ label: 'On-time rate', value: fin.length ? `${pct(fin.length - late.length, fin.length)}%` : '–', tone: late.length ? 'warn' : 'good', sub: `${fin.length} delivered` }, { label: 'In transit', value: String(live.length), sub: 'live tracking' }, { label: 'Exceptions', value: String(exc.length), tone: exc.length ? 'bad' : 'good', sub: 'need action' }],
