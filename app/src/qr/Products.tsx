@@ -42,7 +42,7 @@ export default function Products() {
           <h3 className="mb-3 mt-7 text-[15px] font-extrabold">History</h3>
           <ol className="space-y-3 border-l-2 border-stone-100 pl-5">{history.filter((h) => h.code === sel.code).map((h) => <li key={h.id} className="relative text-[14px]"><i className="absolute -left-[27px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-cyan-500" /><div className="font-bold text-stone-900">{{ registered: 'Registered', installed: 'Installed', removed: `Taken down${h.reason ? ` (${REASONS.find((r) => r.value === h.reason)?.label.toLowerCase()})` : ''}`, retired: 'Retired' }[h.type]}</div><div className="text-stone-500">{h.where ? `${h.where} · ` : ''}{fmtDateTime(h.ts)} · {h.by}</div></li>)}</ol>
           {flash && <div className="mt-5"><Notice kind={flash.kind}>{flash.text}</Notice></div>}
-          {sel.status !== 'retired' && sel.status !== 'in_use' && <button onClick={() => { const r = retire(sel.code); r.ok ? ok(r.message) : err(r.message) }} className={`${btnGhost} mt-6 w-full`}>Retire this product</button>}
+          {sel.status !== 'retired' && sel.status !== 'in_use' && <button onClick={async () => { const r = await retire(sel.code); r.ok ? ok(r.message) : err(r.message) }} className={`${btnGhost} mt-6 w-full`}>Retire this product</button>}
         </aside></div>}
     </Page>)
 }

@@ -6,9 +6,9 @@ import { fmtDateTime, placeText, useQr } from './store'
 export default function Install() {
   const st = useQr(); const [loc, setLoc] = useState<Pick>(EMPTY); const { flash, ok, err, clear } = useFlash(); const [done, setDone] = useState<{ code: string; where: string; ts: number }[]>([])
   const place = toPlace(loc)
-  const scan = (code: string) => {
+  const scan = async (code: string) => {
     if (!place) return err('Choose the hospital first.')
-    const r = st.install(code, place); if (!r.ok) return err(r.message)
+    const r = await st.install(code, place); if (!r.ok) return err(r.message)
     ok(r.message); setDone((d) => [{ code: code.trim().toUpperCase(), where: placeText(useQr.getState(), place), ts: Date.now() }, ...d])
   }
   return (

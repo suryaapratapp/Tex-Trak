@@ -29,6 +29,7 @@ import Labels from './qr/Labels'
 import Locations from './qr/Locations'
 import Reports from './qr/Reports'
 import Account from './qr/Account'
+import { QrShell } from './qr/Shell'
 
 const PAGES: Record<string, () => React.ReactElement> = { team: Team, qrdash: QrDashboard, qrproducts: Products, qrinstall: Install, qrtakedown: Takedown, qrregister: Register, qrlabels: Labels, qrlocations: Locations, qrreports: Reports, account: Account, admin: Admin, scan: Scan, insights: Insights, command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, devices: Devices, inventory: Inventory,  item: ItemJourney }
 export default function App() {
@@ -37,5 +38,5 @@ export default function App() {
   if (!ready) return <div className="grid h-full place-items-center bg-stone-900 text-[14px] font-semibold text-stone-400">Loading…</div>
   if (!user) return <Login />
   const P = PAGES[page] ?? Command
-  return <Layout><P /></Layout>
+  return <Layout>{page.startsWith('qr') ? <QrShell><P /></QrShell> : <P />}</Layout>
 }

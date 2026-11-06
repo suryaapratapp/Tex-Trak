@@ -9,14 +9,14 @@ export default function Takedown() {
   const [loc, setLoc] = useState<Pick>(EMPTY); const [sel, setSel] = useState<Set<string>>(new Set()); const [pending, setPending] = useState<Pending[]>([]); const [swaps, setSwaps] = useState<{ n: string; o: string; w: string }[]>([]); const { flash, ok, err, clear } = useFlash()
   const place = toPlace(loc)
   const here = Object.values(st.products).filter((p) => p.status === 'in_use' && p.place && place && p.place.hospitalId === place.hospitalId && (!place.floor || p.place.floor === place.floor) && (!place.ward || p.place.ward === place.ward) && (!place.bay || p.place.bay === place.bay))
-  const down = (code: string) => { const r = st.takeDown(code, reason, note); if (!r.ok) { err(r.message); return false } setPending((p) => [...p, { code: code.trim().toUpperCase(), place: r.place }]); return true }
-  const scanOld = (c: string) => { if (down(c)) { ok(`${c.toUpperCase()} taken down. Now scan its replacement.`); setNote('') } }
-  const scanNew = (c: string) => {
+  const down = async (code: string) => { const r = await st.takeDown(code, reason, note); if (!r.ok) { err(r.message); return false } setPending((p) => [...p, { code: code.trim().toUpperCase(), place: r.place }]); return true }
+  const scanOld = async (c: string) => { if (await down(c)) { ok(`${c.toUpperCase()} taken down. Now scan its replacement.`); setNote('') } }
+  const scanNew = async (c: string) => {
     const target = pending[0]; if (!target?.place) return err('Nothing is waiting for a replacement.')
-    const r = useQr.getState().install(c, target.place, { replaces: target.code }); if (!r.ok) return err(r.message)
+    const r = await useQr.getState().install(c, target.place, { replaces: target.code }); if (!r.ok) return err(r.message)
     ok(r.message); setSwaps((s) => [{ n: c.trim().toUpperCase(), o: target.code, w: placeText(useQr.getState(), target.place) }, ...s]); setPending((p) => p.slice(1))
   }
-  const takeSelected = () => { let n = 0; sel.forEach((code) => { if (down(code)) n++ }); setSel(new Set()); if (n) ok(`${n} taken down. Scan a replacement for each.`) }
+  const takeSelected = async () => { let n = 0; for (const code of sel) { if (await down(code)) n++ } setSel(new Set()); if (n) ok(`${n} taken down. Scan a replacement for each.`) }
   return (
     <Page title="Take down" sub="Remove the old curtain, then scan the new one">
       <div className="mx-auto max-w-[900px] space-y-6">

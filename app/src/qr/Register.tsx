@@ -9,7 +9,7 @@ import { QrCode } from 'lucide-react'
 
 export default function Register() {
   const reg = useQr((s) => s.register); const [meta, setMeta] = useState({ batch: '', size: '', colour: '', dueDays: '7' }); const [done, setDone] = useState<string[]>([]); const [list, setList] = useState(false); const [text, setText] = useState(''); const { flash, ok, err, clear } = useFlash()
-  const add = (codes: string[]) => { const r = reg(codes, { ...meta, dueDays: +meta.dueDays || 7 }); if (r.added.length) { setDone((d) => [...r.added, ...d]); ok(`${r.added.length} registered${r.skipped.length ? `, ${r.skipped.length} already on the system` : ''}`) } else err(`${r.skipped[0] ?? 'That code'} is already on the system.`) }
+  const add = async (codes: string[]) => { const r = await reg(codes, { ...meta, dueDays: +meta.dueDays || 7 }); if (r.error) return err(r.error); if (r.added.length) { setDone((d) => [...r.added, ...d]); ok(`${r.added.length} registered${r.skipped.length ? `, ${r.skipped.length} already on the system` : ''}`) } else err(`${r.skipped[0] ?? 'That code'} is already on the system.`) }
   return (
     <Page title="Register labels" sub="Bring newly labelled products onto the system" right={hasFeature(useStore.getState().role, 'qrlabels') ? <button onClick={() => go('qrlabels')} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-3 text-[14.5px] font-medium text-white hover:bg-cyan-700"><QrCode size={17} /> Generate QR codes</button> : undefined}>
       <div className="mx-auto max-w-[1000px] space-y-6">

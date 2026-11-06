@@ -8,7 +8,7 @@ import { alertsFor, consFor } from '../lib/scope'
 import { laundry, recycling } from '../lib/analytics'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { useQr, isOverdue } from '../qr/store'
+import { useQr, useQrLoad, isOverdue } from '../qr/store'
 import { go, useStore } from '../store'
 
 const DOT: Record<string, string> = { info: '#a3abc2', warn: '#e0a030', bad: '#e5586b', good: '#3fb68b' }
@@ -25,7 +25,7 @@ function Card({ icon, color, title, headline, label, status, bad, page }: { icon
 
 export default function Command() {
   const snap = useSnap(); const t = snap.t; const w = getWorld(); const role = useStore((s) => s.role); const user = useAuth((s) => s.user)
-  const prods = Object.values(useQr((s) => s.products)); const [open, setOpen] = useState(0)
+  useQrLoad(60000); const prods = Object.values(useQr((s) => s.products)); const [open, setOpen] = useState(0)
   const mods = (m: Parameters<typeof hasModule>[1]) => hasModule(role, m)
   useEffect(() => { if (!hasFeature(role, 'shipments')) return; void supabase.from('shipments').select('id', { count: 'exact', head: true }).in('status', ['booked', 'in_transit']).then(({ count }) => setOpen(count ?? 0)) }, [role])
   const lau = laundry(t, snap); const rec = recycling(t, role)

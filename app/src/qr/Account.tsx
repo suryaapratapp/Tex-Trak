@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Page } from '../components/ui'
 import { btnPrimary, Field, inputCls, Notice, Section } from './ui'
 import { ROLE_LABEL, useAuth } from '../lib/auth'
+import { PasswordInput } from '../components/PasswordInput'
 import { FEATURES } from '../sim/features'
 
 export default function Account(): React.ReactElement {
@@ -16,7 +17,7 @@ export default function Account(): React.ReactElement {
       <div className="mx-auto max-w-[800px] space-y-6">
         <Section title="Signed in as"><dl className="divide-y divide-stone-100">{rows.map(([k, v]) => <div key={k} className="flex justify-between gap-6 py-3.5 text-[15px]"><dt className="shrink-0 text-stone-500">{k}</dt><dd className="text-right font-bold text-stone-900">{v}</dd></div>)}</dl></Section>
         <Section title="Change password" sub="Use at least 8 characters.">
-          <div className="space-y-4"><Field label="Current password"><input type="password" value={f.cur} onChange={(e) => setF({ ...f, cur: e.target.value })} className={inputCls} autoComplete="current-password" /></Field><Field label="New password"><input type="password" value={f.next} onChange={(e) => setF({ ...f, next: e.target.value })} className={inputCls} autoComplete="new-password" /></Field><Field label="Repeat new password"><input type="password" value={f.rep} onChange={(e) => setF({ ...f, rep: e.target.value })} className={inputCls} autoComplete="new-password" /></Field>
+          <div className="space-y-4"><Field label="Current password"><PasswordInput value={f.cur} onChange={(v) => setF({ ...f, cur: v })} autoComplete="current-password" /></Field><Field label="New password"><PasswordInput value={f.next} onChange={(v) => setF({ ...f, next: v })} autoComplete="new-password" /></Field><Field label="Repeat new password"><PasswordInput value={f.rep} onChange={(v) => setF({ ...f, rep: v })} autoComplete="new-password" /></Field>
             {m && <Notice kind={m.k} onClose={() => setM(null)}>{m.t}</Notice>}<button disabled={!f.cur || f.next.length < 8} onClick={submit} className={`${btnPrimary} w-full`}>Change password</button></div></Section>
       </div>
     </Page>)
