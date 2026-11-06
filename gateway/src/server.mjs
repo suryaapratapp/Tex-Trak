@@ -5,7 +5,8 @@ import { parseImei, parsePacket } from './codec.mjs'
 const PORT = +(process.env.PORT ?? 5027)
 const INGEST_URL = process.env.INGEST_URL
 const INGEST_TOKEN = process.env.INGEST_TOKEN
-const ALLOWED = (process.env.ALLOWED_IMEIS ?? '862129084785066').split(',')
+// Optional extra allow-list. Normally leave it unset: the ingest function only accepts IMEIs the Super Admin has registered and switched on.
+const ALLOWED = process.env.ALLOWED_IMEIS ? process.env.ALLOWED_IMEIS.split(',').map((x) => x.trim()) : null
 if (!INGEST_URL || !INGEST_TOKEN) { console.error('Set INGEST_URL and INGEST_TOKEN'); process.exit(1) }
 
 async function forward(imei, records) {
@@ -23,7 +24,7 @@ net.createServer((sock) => {
       if (!imei) {
         const p = parseImei(buf); if (!p) return
         buf = buf.subarray(p.used)
-        if (!ALLOWED.includes(p.imei)) { console.warn('rejected IMEI', p.imei); sock.write(Buffer.from([0])); return sock.end() }
+        if (!/^\d{15}$/.test(p.imei) || (ALLOWED && !ALLOWED.includes(p.imei))) { console.warn('rejected IMEI', p.imei); sock.write(Buffer.from([0])); return sock.end() }
         imei = p.imei; sock.write(Buffer.from([1])); console.log('login', imei)
       }
       for (;;) {

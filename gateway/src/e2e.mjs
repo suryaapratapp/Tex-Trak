@@ -6,7 +6,7 @@ import { runSimulator } from './simulate.mjs'
 const got = []
 const mock = http.createServer((req, res) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => { got.push({ token: req.headers['x-ingest-token'], body: JSON.parse(b) }); res.end('{"stored":1}') }) })
 await new Promise((r) => mock.listen(0, r))
-const gw = spawn('node', ['src/server.mjs'], { env: { ...process.env, PORT: '15027', INGEST_URL: `http://127.0.0.1:${mock.address().port}`, INGEST_TOKEN: 'test-token' }, stdio: ['ignore', 'pipe', 'inherit'] })
+const gw = spawn('node', ['src/server.mjs'], { env: { ...process.env, PORT: '15027', INGEST_URL: `http://127.0.0.1:${mock.address().port}`, INGEST_TOKEN: 'test-token', ALLOWED_IMEIS: '862129084785066' }, stdio: ['ignore', 'pipe', 'inherit'] })
 await new Promise((r) => gw.stdout.on('data', (d) => d.toString().includes('listening') && r()))
 let ok = true
 try {
