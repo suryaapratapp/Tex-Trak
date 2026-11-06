@@ -16,7 +16,7 @@ const GROUPS: Group[] = [
   { title: 'Field work', items: [{ id: 'scan', label: 'Scan station', icon: <ScanLine size={I} /> }] },
   { title: 'Curtains · QR', items: [
     { id: 'qrdash', label: 'Dashboard', icon: <BarChart3 size={I} /> }, { id: 'qrproducts', label: 'Products', icon: <Tag size={I} /> }, { id: 'qrinstall', label: 'Install', icon: <ArrowDownToLine size={I} /> }, { id: 'qrtakedown', label: 'Take down', icon: <Repeat2 size={I} /> },
-    { id: 'qrregister', label: 'Register labels', icon: <QrCode size={I} /> }, { id: 'qrlabels', label: 'QR labels', icon: <Layers size={I} /> }, { id: 'qrlocations', label: 'Locations', icon: <MapPin size={I} /> }, { id: 'qrreports', label: 'Reports', icon: <FileText size={I} /> }] },
+    { id: 'qrregister', label: 'Register labels', icon: <QrCode size={I} /> }, { id: 'qrlocations', label: 'Locations', icon: <MapPin size={I} /> }, { id: 'qrreports', label: 'Reports', icon: <FileText size={I} /> }] },
   { title: 'Laundry · RFID', items: [{ id: 'planner', label: 'Laundry arrivals', icon: <Activity size={I} /> }, { id: 'inventory', label: 'Inventory', icon: <Boxes size={I} /> }, { id: 'twin', label: 'Facilities and floors', icon: <Building2 size={I} /> }, { id: 'lifecycle', label: 'Daily flow', icon: <Workflow size={I} /> }] },
   { title: 'Equipment and loads', items: [{ id: 'assets', label: 'Community assets', icon: <Radar size={I} /> }, { id: 'shipments', label: 'Shipments', icon: <Truck size={I} /> }] },
   { title: 'Reporting', items: [{ id: 'provenance', label: 'Recycling proof', icon: <Recycle size={I} /> }, { id: 'esg', label: 'Impact', icon: <Leaf size={I} /> }] },
@@ -24,7 +24,7 @@ const GROUPS: Group[] = [
 ]
 const JUMPS: [string, number][] = [['Morning delivery', 335], ['Recycling runs', 612], ['Day operations', 600], ['Evening collection', 1045], ['Decon processing', 1230], ['Next morning', 1760]]
 const visible = (i: NavItem, role: Role) => { const u = useAuth.getState().user; if (i.always) return !!u; if (i.adminOnly) return u?.role === 'superadmin'; if (i.teamOnly) return u?.role === 'org_admin'; return hasFeature(role, i.id) }
-export const allowedPages = (role: Role) => GROUPS.flatMap((g) => g.items).filter((i) => visible(i, role)).map((i) => i.id).concat(['item'])
+export const allowedPages = (role: Role) => GROUPS.flatMap((g) => g.items).filter((i) => visible(i, role)).map((i) => i.id).concat(['item']).concat(hasFeature(role, 'qrlabels') ? ['qrlabels'] : [])
 
 export function Layout({ children }: { children: ReactNode }) {
   const { t, playing, speed, page, role, set, setRole, tick } = useStore()
@@ -40,28 +40,28 @@ export function Layout({ children }: { children: ReactNode }) {
   const nav = (id: string) => { go(id); setMenu(false) }
 
   const Side = (
-    <div className="flex h-full flex-col bg-stone-900 text-stone-300">
-      <button onClick={() => nav('command')} className="flex items-center gap-3 px-6 pb-5 pt-6"><Logo size={42} /><span className="text-left"><span className="block text-[20px] font-extrabold leading-none tracking-tight text-white">Tex-Trak</span><span className="mt-1 block text-[11.5px] font-semibold text-stone-400">Healthcare traceability</span></span></button>
-      <nav className="scroll-dark min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-4 pt-2">
+    <div className="flex h-full flex-col border-r border-stone-200 bg-white text-stone-600">
+      <button onClick={() => nav('command')} className="flex items-center gap-3 px-6 pb-5 pt-6"><Logo size={42} /><span className="text-left"><span className="block text-[20px] font-semibold leading-none tracking-tight text-stone-900">Tex-Trak</span><span className="mt-1 block text-[11.5px] font-semibold text-stone-400">Track · Trace · Prove</span></span></button>
+      <nav className="scroll-thin min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-4 pt-2">
         {GROUPS.map((g) => { const items = g.items.filter((i) => visible(i, role)); if (!items.length) return null; return (
-          <div key={g.title}><div className="px-3 pb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-stone-500">{g.title}</div>
+          <div key={g.title}><div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-400">{g.title}</div>
             {items.map((i) => (
-              <button key={i.id} onClick={() => nav(i.id)} className={`relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14.5px] font-semibold transition ${active === i.id ? 'bg-white/10 text-white' : 'text-stone-400 hover:bg-white/5 hover:text-stone-100'}`}>
-                {active === i.id && <i className="absolute -left-4 top-2 h-6 w-1 rounded-r bg-cyan-400" />}
-                <span className={active === i.id ? 'text-cyan-300' : 'text-stone-500'}>{i.icon}</span><span className="flex-1">{i.label}</span>
+              <button key={i.id} onClick={() => nav(i.id)} className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[14.5px] font-medium transition ${active === i.id ? 'bg-cyan-50 text-cyan-700' : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'}`}>
+                {active === i.id && <i className="absolute -left-4 top-2 h-6 w-1 rounded-r bg-cyan-600" />}
+                <span className={active === i.id ? 'text-cyan-600' : 'text-stone-400'}>{i.icon}</span><span className="flex-1">{i.label}</span>
                 {i.id === 'alerts' && open > 0 && <span className="rounded-full bg-rose-500 px-1.5 text-[10.5px] font-bold leading-4 text-white">{open}</span>}
               </button>))}</div>) })}
       </nav>
-      <div className="border-t border-white/10 p-4">
-        <div className="flex items-center gap-1"><button onClick={() => nav('account')} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/5"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-500 text-[14px] font-extrabold text-white">{(user?.full_name ?? '?')[0]}</span><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-bold text-white">{user?.full_name}</span><span className="block truncate text-[12px] text-stone-400">{user ? (isSuper ? ROLE_LABEL.superadmin : `${ROLE_LABEL[user.role]} · ${orgs.find((o) => o.id === user.org_id)?.name ?? ''}`) : ''}</span></span></button>
-          <button onClick={() => void signOut()} title="Sign out" aria-label="Sign out" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-stone-400 hover:bg-white/5 hover:text-white"><LogOut size={17} /></button></div>
-        <div className="mt-3 px-2 text-[11.5px] font-semibold text-stone-500">Developed by CIRCAI LTD</div>
+      <div className="border-t border-stone-200 p-4">
+        <div className="flex items-center gap-1"><button onClick={() => nav('account')} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-stone-50"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-100 text-[14px] font-semibold text-cyan-700">{(user?.full_name ?? '?')[0]}</span><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-semibold text-stone-900">{user?.full_name}</span><span className="block truncate text-[12px] text-stone-400">{user ? (isSuper ? ROLE_LABEL.superadmin : `${ROLE_LABEL[user.role]} · ${orgs.find((o) => o.id === user.org_id)?.name ?? ''}`) : ''}</span></span></button>
+          <button onClick={() => void signOut()} title="Sign out" aria-label="Sign out" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700"><LogOut size={17} /></button></div>
+        <div className="mt-3 px-2 text-[11.5px] font-medium text-stone-400">Developed by CIRCAI LTD</div>
       </div>
     </div>)
 
   return (
     <div className="flex h-full">
-      <aside className="hidden w-[272px] shrink-0 xl:block">{Side}</aside>
+      <aside className="hidden w-[264px] shrink-0 xl:block">{Side}</aside>
       {menu && <div className="fixed inset-0 z-50 xl:hidden"><div className="absolute inset-0 bg-stone-900/50" onClick={() => setMenu(false)} /><div className="absolute inset-y-0 left-0 w-[290px] shadow-2xl">{Side}</div></div>}
       <div className="flex min-w-0 flex-1 flex-col">
         {isSuper && role !== 'superadmin' && <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-100 px-4 py-2 text-[14px] font-semibold text-amber-900"><Eye size={16} /> Previewing as {org?.name ?? role}. This is exactly what their users can see.<button onClick={() => setRole('superadmin')} className="rounded-full bg-amber-900 px-3.5 py-1 text-[13px] font-bold text-white">Exit preview</button></div>}

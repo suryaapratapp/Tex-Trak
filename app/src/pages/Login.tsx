@@ -15,9 +15,9 @@ export default function Login() {
     const m = await signIn(f.username, f.password); setBusy(false); if (m) setErr(m)
   }
   return (
-    <div className="grid min-h-full place-items-center bg-stone-900 px-4 py-10">
+    <div className="grid min-h-full place-items-center bg-gradient-to-br from-cyan-50 via-white to-stone-100 px-4 py-10">
       <div className="w-full max-w-[440px]">
-        <div className="mb-8 flex items-center justify-center gap-3"><Logo size={52} /><div><div className="text-[26px] font-extrabold leading-none tracking-tight text-white">Tex-Trak</div><div className="mt-1 text-[13px] font-semibold text-stone-400">Healthcare traceability</div></div></div>
+        <div className="mb-8 flex items-center justify-center gap-3"><Logo size={52} /><div><div className="text-[26px] font-semibold leading-none tracking-tight text-stone-900">Tex-Trak</div><div className="mt-1 text-[13px] font-semibold text-stone-400">Track · Trace · Prove</div></div></div>
         <form onSubmit={submit} className="card space-y-5 p-8">
           <div><h1 className="text-[22px] font-extrabold text-stone-900">{setup ? 'First-time setup' : 'Sign in'}</h1><p className="mt-1 text-[14.5px] text-stone-500">{setup ? 'Create the Super Admin account. This only works once.' : 'Use the username and password you were given.'}</p></div>
           {done && <Notice kind="ok">Super Admin created. You can sign in now.</Notice>}
@@ -29,7 +29,7 @@ export default function Login() {
           <button disabled={busy || !f.username || !f.password} className="h-12 w-full rounded-2xl bg-cyan-600 text-[15px] font-bold text-white transition hover:bg-cyan-700 disabled:bg-stone-200 disabled:text-stone-400">{busy ? 'Please wait…' : setup ? 'Create Super Admin' : 'Sign in'}</button>
           <button type="button" onClick={() => { setSetup(!setup); setErr(''); setDone(false) }} className="w-full text-center text-[13.5px] font-semibold text-stone-400 hover:text-stone-700">{setup ? 'Back to sign in' : 'First time? Set up the Super Admin'}</button>
         </form>
-        <p className="mt-6 text-center text-[13px] font-semibold text-stone-500">Developed by CIRCAI LTD</p>
+        <p className="mt-6 text-center text-[13px] font-medium text-stone-400">Developed by CIRCAI LTD</p>
       </div>
     </div>)
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Download, Printer } from 'lucide-react'
 import { Page } from '../components/ui'
+import { go } from '../store'
 import { QrImg } from '../components/QrImg'
 import { btnPrimary, btnGhost, Field, inputCls, Notice, Section } from './ui'
 import { batchCodes, capacity, DEFAULT_FORMAT, REGISTER_CAP, serialCode, seriesKey, useQr, type Batch } from './store'
@@ -29,7 +30,7 @@ export default function Labels() {
   const csv = (b: Batch) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['Code\n' + batchCodes(b).join('\n')], { type: 'text/csv' })); a.download = `labels-${b.first}-${b.last}.csv`; a.click() }
   void DEFAULT_FORMAT; void products
   return (
-    <Page title="QR labels" sub="Generate and print label codes">
+    <Page title="Generate QR codes" sub="Make a batch of label codes to print or export" right={<button onClick={() => go('qrregister')} className="rounded-lg border border-stone-200 bg-white px-5 py-3 text-[14.5px] font-medium text-stone-700 hover:bg-stone-50">Back to Register labels</button>}>
       <div className="mx-auto max-w-[900px] space-y-6">
         <Section title={<span className="flex items-center"><Num n={1} c="#5340e0" />What are you labelling?</span>}>
           <div className="grid gap-4 sm:grid-cols-2"><Field label="Product code" hint="The middle block of the code. Letters and digits only."><input value={product} onChange={(e) => setProduct(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} className={inputCls} /></Field><Field label="Product name" hint="For reporting; not part of the code."><input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} /></Field></div>

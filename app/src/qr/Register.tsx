@@ -2,12 +2,16 @@ import { useState } from 'react'
 import { Page } from '../components/ui'
 import { btnGhost, Field, inputCls, Notice, ScanField, Section, useFlash } from './ui'
 import { useQr } from './store'
+import { go } from '../store'
+import { useStore } from '../store'
+import { hasFeature } from '../sim/registry'
+import { QrCode } from 'lucide-react'
 
 export default function Register() {
   const reg = useQr((s) => s.register); const [meta, setMeta] = useState({ batch: '', size: '', colour: '', dueDays: '7' }); const [done, setDone] = useState<string[]>([]); const [list, setList] = useState(false); const [text, setText] = useState(''); const { flash, ok, err, clear } = useFlash()
   const add = (codes: string[]) => { const r = reg(codes, { ...meta, dueDays: +meta.dueDays || 7 }); if (r.added.length) { setDone((d) => [...r.added, ...d]); ok(`${r.added.length} registered${r.skipped.length ? `, ${r.skipped.length} already on the system` : ''}`) } else err(`${r.skipped[0] ?? 'That code'} is already on the system.`) }
   return (
-    <Page title="Register labels" sub="Bring newly labelled products onto the system">
+    <Page title="Register labels" sub="Bring newly labelled products onto the system" right={hasFeature(useStore.getState().role, 'qrlabels') ? <button onClick={() => go('qrlabels')} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-3 text-[14.5px] font-medium text-white hover:bg-cyan-700"><QrCode size={17} /> Generate QR codes</button> : undefined}>
       <div className="mx-auto max-w-[1000px] space-y-6">
         <Section title="Batch details" sub="Applied to everything you register in this run.">
           <div className="grid gap-4 sm:grid-cols-2"><Field label="Batch reference"><input value={meta.batch} onChange={(e) => setMeta({ ...meta, batch: e.target.value })} placeholder="e.g. B-2026-08" className={inputCls} /></Field><Field label="Size"><input value={meta.size} onChange={(e) => setMeta({ ...meta, size: e.target.value })} placeholder="e.g. 3000 x 2000" className={inputCls} /></Field><Field label="Change due after (days)" hint="How long each one stays up before it is flagged for change. Default 7."><input value={meta.dueDays} onChange={(e) => setMeta({ ...meta, dueDays: e.target.value.replace(/\D/g, '') })} inputMode="numeric" className={inputCls} /></Field><Field label="Colour"><input value={meta.colour} onChange={(e) => setMeta({ ...meta, colour: e.target.value })} placeholder="e.g. Sky Blue" className={inputCls} /></Field></div></Section>

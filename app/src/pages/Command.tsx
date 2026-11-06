@@ -1,74 +1,57 @@
-import { useState } from 'react'
-import { ArrowRight, Boxes, Compass, Package, Radar, Recycle, ScanLine } from 'lucide-react'
-import { Card, CardHead, SevBadge } from '../components/ui'
-import { FleetMapView } from '../components/FleetMapView'
-import { MapLegend } from '../components/MapLegend'
-import { Tour } from '../components/Tour'
-import { fmtT, getWorld, scannerAt, SCANNERS } from '../sim/engine'
-import { hasModule } from '../sim/registry'
-import { useAuth } from '../lib/auth'
+import { useEffect, useState } from 'react'
+import { ArrowRight, Boxes, Package, Radar, Recycle, ScanLine, Tag } from 'lucide-react'
+import { getWorld, scannerAt, SCANNERS } from '../sim/engine'
+import { hasFeature, hasModule } from '../sim/registry'
 import { useSnap } from '../sim/snap'
 import { insights } from '../lib/insights'
-import { alertsFor, consFor, vehiclesFor } from '../lib/scope'
+import { alertsFor, consFor } from '../lib/scope'
 import { laundry, recycling } from '../lib/analytics'
-import { useQr, isOverdue, isDueSoon } from '../qr/store'
+import { useAuth } from '../lib/auth'
+import { supabase } from '../lib/supabase'
+import { useQr, isOverdue } from '../qr/store'
 import { go, useStore } from '../store'
 
-const TONE: Record<string, string> = { info: 'bg-stone-50', warn: 'bg-amber-50', bad: 'bg-rose-50', good: 'bg-emerald-50' }
-const DOT: Record<string, string> = { info: '#8fa1bb', warn: '#f59e0b', bad: '#e11d48', good: '#10b981' }
+const DOT: Record<string, string> = { info: '#a3abc2', warn: '#e0a030', bad: '#e5586b', good: '#3fb68b' }
 
-function UseCase({ n, title, icon, page, color, stats, tone }: { n: string; title: string; icon: React.ReactNode; page: string; color: string; stats: [string | number, string][]; tone?: string }) {
+function Card({ icon, color, title, headline, label, status, bad, page }: { icon: React.ReactNode; color: string; title: string; headline: string | number; label: string; status: string; bad?: boolean; page: string }) {
   return (
-    <button onClick={() => go(page)} className="card group p-5 text-left transition hover:-translate-y-0.5">
-      <div className="flex items-center justify-between"><span className="grid h-11 w-11 place-items-center rounded-2xl" style={{ background: color + '1f', color }}>{icon}</span></div>
-      <h3 className="mt-3 flex items-center gap-2 text-[17px] font-extrabold text-stone-900">{title}<ArrowRight size={16} className="text-stone-300 transition group-hover:translate-x-1 group-hover:text-stone-900" /></h3>
-      {tone && <p className="mt-0.5 text-xs font-bold" style={{ color: tone.startsWith('!') ? '#e11d48' : '#10b981' }}>{tone.replace('!', '')}</p>}
-      <div className="mt-3 grid grid-cols-3 gap-2">{stats.map(([v, l]) => <div key={l} className="rounded-xl bg-stone-50 px-2.5 py-2"><div className="whitespace-nowrap text-lg font-extrabold leading-none text-stone-900">{v}</div><div className="mt-1 text-[10.5px] font-semibold leading-tight text-stone-500">{l}</div></div>)}</div>
+    <button onClick={() => go(page)} className="card group p-6 text-left transition hover:border-cyan-200 hover:shadow-md">
+      <div className="flex items-center justify-between"><span className="grid h-11 w-11 place-items-center rounded-xl" style={{ background: color + '18', color }}>{icon}</span><ArrowRight size={17} className="text-stone-300 transition group-hover:translate-x-0.5 group-hover:text-cyan-600" /></div>
+      <h3 className="mt-5 text-[16px] font-semibold text-stone-800">{title}</h3>
+      <div className="mt-1 flex items-baseline gap-2"><span className="text-[34px] font-semibold leading-none tracking-tight text-stone-900">{headline}</span><span className="text-[14px] text-stone-500">{label}</span></div>
+      <div className="mt-4 flex items-center gap-2 text-[13.5px] text-stone-500"><i className="h-2 w-2 rounded-full" style={{ background: bad ? DOT.bad : DOT.good }} />{status}</div>
     </button>)
 }
 
 export default function Command() {
-  const snap = useSnap(); const t = snap.t; const w = getWorld(); const { set, role } = useStore(); const [tour, setTour] = useState(false)
-  const prods = Object.values(useQr((s) => s.products))
+  const snap = useSnap(); const t = snap.t; const w = getWorld(); const role = useStore((s) => s.role); const user = useAuth((s) => s.user)
+  const prods = Object.values(useQr((s) => s.products)); const [open, setOpen] = useState(0)
   const mods = (m: Parameters<typeof hasModule>[1]) => hasModule(role, m)
-  const alerts = alertsFor(role).filter((a) => a.t <= t && a.sev !== 'info').slice(-4).reverse()
-  const ins = insights(t, snap).filter((i) => role === 'superadmin' || (role === 'synergy' ? !/SC-|scanner/i.test(i.title + i.body) : /RCY|recycl|SC-|scanner|asset/i.test(i.title + i.body)))
+  useEffect(() => { if (!hasFeature(role, 'shipments')) return; void supabase.from('shipments').select('id', { count: 'exact', head: true }).in('status', ['booked', 'in_transit']).then(({ count }) => setOpen(count ?? 0)) }, [role])
   const lau = laundry(t, snap); const rec = recycling(t, role)
-  const uses = w.events.filter((e) => e.src === 'QR' && e.title.includes('USE') && e.t <= t)
-  const co2 = mods('laundry') ? uses.reduce((a, e) => { const p = w.items[e.item!].type; return a + p.co2New - p.co2Cycle }, 0) : 0
-  const rows = SCANNERS.map((s) => scannerAt(w.legs, s, t)); const off = rows.filter((r) => r.outside).length
-  const cons = consFor(role).filter((c) => c.legId); const live = cons.filter((c) => { const l = w.legs.find((x) => x.id === c.legId)!; return l.depart <= t && l.arrive > t }).length
-  const exc = cons.filter((c) => c.verdict === 'diverted' && t >= 760).length
-  const open = alertsFor(role).filter((a) => a.t <= t && (a.sev === 'high' || a.sev === 'critical')).length
-  const tracked = (mods('laundry') ? w.items.length : 0) + (mods('assets') ? SCANNERS.length : 0) + (mods('curtains') ? prods.length : 0)
-  const kpis: [string, string, boolean?][] = [['Items tracked', tracked.toLocaleString('en-GB')], ['Open alerts', String(open), open > 0], ['Loads on the road', String(live)], ['CO₂e avoided', mods('laundry') ? `${co2.toFixed(0)} kg` : rec.tiles[2].value]]
+  const off = SCANNERS.map((s) => scannerAt(w.legs, s, t)).filter((r) => r.outside).length
+  const exc = consFor(role).filter((c) => c.verdict === 'diverted' && t >= 760).length
+  const missing = Number(lau.tiles[1].value)
+  const overdue = prods.filter(isOverdue).length
+  const alerts = alertsFor(role).filter((a) => a.t <= t && (a.sev === 'high' || a.sev === 'critical')).length
+  const attention = insights(t, snap).filter((i) => i.tone === 'bad' || i.tone === 'warn').filter((i) => role === 'superadmin' || (role === 'clientA' ? /RCY|recycl|SC-|scanner|asset/i.test(i.title + i.body) : !/SC-|scanner/i.test(i.title + i.body))).slice(0, 3)
   const hour = Math.floor((t % 1440) / 60); const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   return (
-    <div className="mx-auto w-full max-w-[1500px] space-y-7 p-5 sm:p-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><h1 className="text-[26px] font-extrabold tracking-tight text-stone-900">{hello}, {useAuth.getState().user?.full_name.split(' ')[0] ?? ''}</h1><p className="text-sm text-stone-500">{role === 'superadmin' ? 'Everything across all clients.' : 'Here is what is happening across your sites.'}</p></div>
-        <div className="flex gap-2"><button onClick={() => go('scan')} className="flex items-center gap-2 rounded-full bg-cyan-600 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-cyan-700"><ScanLine size={16} /> Scan</button>{mods('laundry') && <button onClick={() => setTour(!tour)} className="flex items-center gap-2 rounded-full border border-stone-200 bg-white px-5 py-2.5 text-sm font-extrabold text-stone-700 hover:bg-stone-50"><Compass size={16} /> {tour ? 'Hide tour' : 'Guided tour'}</button>}</div>
+    <div className="mx-auto w-full max-w-[1100px] space-y-8 p-6 sm:p-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div><h1 className="text-[28px] font-semibold tracking-tight text-stone-900">{hello}, {user?.full_name.split(' ')[0] ?? ''}</h1><p className="mt-1 text-[15px] text-stone-500">{alerts ? `${alerts} alert${alerts === 1 ? '' : 's'} need a look today.` : 'Everything is running normally.'}</p></div>
+        {hasFeature(role, 'scan') && <button onClick={() => go('scan')} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-3 text-[14.5px] font-medium text-white shadow-sm hover:bg-cyan-700"><ScanLine size={17} /> Scan</button>}
       </div>
-      {tour && <Tour />}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{kpis.map(([l, v, bad]) => <div key={l} className="card px-4 py-3.5"><div className="text-[11px] font-bold uppercase tracking-wider text-stone-400">{l}</div><div className={`mt-1 text-[28px] font-extrabold leading-none tracking-tight ${bad ? 'text-rose-600' : 'text-stone-900'}`}>{v}</div></div>)}</div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
-        {mods('laundry') && <UseCase n="1" title="Laundry & arrivals" icon={<Boxes size={21} />} page="planner" color="#7c3aed" tone={lau.tiles[1].value !== '0' ? `!${lau.tiles[1].value} items unaccounted for` : 'Nothing missing'} stats={[[snap.byStatus.in_use ?? 0, 'in use now'], [snap.byStatus.in_cage ?? 0, 'in dirty cages'], [lau.tiles[0].value, 'on-time runs']]} />}
-        {mods('assets') && <UseCase n="2" title="Community assets" icon={<Radar size={21} />} page="assets" color="#2f6fed" tone={off ? `!${off} off-site` : 'All on site'} stats={[[SCANNERS.length, 'devices'], [off, 'off-site'], [rows.filter((r) => r.mode === 'in_transit').length, 'in transit']]} />}
-        {mods('shipments') && <UseCase n="3" title="Shipments" icon={<Package size={21} />} page="shipments" color="#d97706" tone={exc ? `!${exc} exception` : 'All on track'} stats={[[cons.length, 'loads today'], [live, 'in transit'], [exc, 'exceptions']]} />}
-        {mods('recycling') && <UseCase n="4" title="Recycling proof" icon={<Recycle size={21} />} page="provenance" color="#16a34a" tone={rec.tiles[1].value !== '0 kg' ? `!${rec.tiles[1].value} not proven` : undefined} stats={[[rec.tiles[0].value, 'proven'], [rec.tiles[1].value, 'not proven'], [rec.tiles[2].value, 'CO₂e credit']]} />}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5">
+        {mods('curtains') && <Card icon={<Tag size={20} />} color="#6a57e6" title="Curtains" headline={prods.filter((p) => p.status === 'in_use').length} label="installed" status={overdue ? `${overdue} overdue for change` : 'None overdue'} bad={!!overdue} page="qrdash" />}
+        {mods('laundry') && <Card icon={<Boxes size={20} />} color="#8b5cf6" title="Laundry" headline={snap.byStatus.in_use ?? 0} label="in use now" status={missing ? `${missing} items missing` : 'Nothing missing'} bad={!!missing} page="planner" />}
+        {mods('assets') && <Card icon={<Radar size={20} />} color="#3b82f6" title="Equipment" headline={SCANNERS.length} label="tracked" status={off ? `${off} off-site` : 'All on site'} bad={!!off} page="assets" />}
+        {mods('shipments') && <Card icon={<Package size={20} />} color="#e0a030" title="Shipments" headline={open} label="open" status={exc ? `${exc} problem to look at` : 'No problems'} bad={!!exc} page="shipments" />}
+        {mods('recycling') && <Card icon={<Recycle size={20} />} color="#3fb68b" title="Recycling" headline={rec.tiles[0].value} label="proven" status={rec.tiles[1].value !== '0 kg' ? `${rec.tiles[1].value} not proven` : 'All proven'} bad={rec.tiles[1].value !== '0 kg'} page="provenance" />}
       </div>
-      {mods('curtains') && <button onClick={() => go('qrdash')} className="card group flex w-full flex-wrap items-center gap-x-8 gap-y-2 p-5 text-left transition hover:-translate-y-0.5"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-100 text-cyan-700"><ScanLine size={20} /></span><span className="text-[16px] font-extrabold text-stone-900">Curtains (QR)</span>{[[prods.filter((p) => p.status === 'in_use').length, 'installed'], [prods.filter(isOverdue).length, 'overdue'], [prods.filter(isDueSoon).length, 'due in 30 days'], [prods.filter((p) => p.status === 'registered').length, 'in stock']].map(([v, l]) => <span key={l as string} className="text-[14px] text-stone-500"><b className="text-xl font-extrabold text-stone-900">{v}</b> {l}</span>)}<ArrowRight size={16} className="ml-auto text-stone-300 transition group-hover:translate-x-1 group-hover:text-stone-900" /></button>}
 
-      <div className="grid items-start gap-6 xl:grid-cols-3">
-        <Card className="overflow-hidden xl:col-span-2"><CardHead title="Live fleet" right={<button onClick={() => go('map')} className="text-sm font-bold text-cyan-700 hover:underline">Full map</button>} />
-          <div className="relative"><FleetMapView vehIds={vehiclesFor(role)} height={560} onSelect={(id) => { set({ selVeh: id }); go('map') }} scanners={mods('assets')} sites={role === 'clientA' ? ['HUB', 'COMM', 'RECY', 'PORT', 'PORT2', 'INCIN', 'INCIN2'] : undefined} /><MapLegend compact /></div></Card>
-        <div className="space-y-6">
-          <Card><CardHead title="What needs attention" right={<button onClick={() => go('insights')} className="text-sm font-bold text-cyan-700 hover:underline">All insights</button>} />
-            <div className="space-y-2 p-4">{ins.slice(0, 4).map((i, k) => <button key={k} onClick={() => i.page && go(i.page)} className={`flex w-full gap-3 rounded-2xl p-3 text-left ${TONE[i.tone]}`}><i className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: DOT[i.tone] }} /><span><span className="block text-[13.5px] font-extrabold text-stone-900">{i.title}</span><span className="block text-xs leading-snug text-stone-500">{i.body}</span></span></button>)}{ins.length === 0 && <div className="p-2 text-sm text-stone-400">All clear.</div>}</div></Card>
-          <Card><CardHead title="Latest alerts" right={<button onClick={() => go('alerts')} className="text-sm font-bold text-cyan-700 hover:underline">All</button>} />
-            <ul className="divide-y divide-stone-100">{alerts.length === 0 && <li className="p-5 text-sm text-stone-400">All clear.</li>}{alerts.map((a) => <li key={a.id} className="flex items-start gap-3 px-5 py-3"><SevBadge sev={a.sev} /><span className="min-w-0 flex-1 text-[13px] font-bold text-stone-800">{a.title}</span><span className="mono text-[11px] text-stone-400">{fmtT(a.t).slice(0, 5)}</span></li>)}</ul></Card>
-        </div>
-      </div>
+      {attention.length > 0 && <section><div className="mb-3 flex items-center justify-between"><h2 className="text-[16px] font-semibold text-stone-800">Needs attention</h2><button onClick={() => go('alerts')} className="text-[14px] font-medium text-cyan-700 hover:underline">All alerts</button></div>
+        <div className="card divide-y divide-stone-100">{attention.map((i, k) => <button key={k} onClick={() => i.page && go(i.page)} className="flex w-full items-start gap-3 px-5 py-4 text-left hover:bg-stone-50"><i className="mt-2 h-2 w-2 shrink-0 rounded-full" style={{ background: DOT[i.tone] }} /><span><span className="block text-[14.5px] font-medium text-stone-800">{i.title}</span><span className="mt-0.5 block text-[13.5px] leading-snug text-stone-500">{i.body}</span></span></button>)}</div></section>}
     </div>)
 }
