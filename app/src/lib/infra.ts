@@ -4,7 +4,7 @@ import type { NetSite } from '../sim/registry'
 
 export interface DbSite { id: string; code: string; name: string; kind: string; lat: number; lng: number; radius_m: number; org_id: string | null; region: string; floors: number; status: 'live' | 'provisioned' | 'planned'; address: string; source: 'seed' | 'admin' }
 export interface DbReader { id: string; site_id: string; zone_id: string | null; code: string; label: string; floor: string; position: string; online: boolean; last_seen: string | null; source: 'seed' | 'admin' }
-export interface DbTracker { imei: string; name: string; model: string; vendor: string; serial_no: string | null; org_id: string | null; active: boolean; battery_pct: number | null; last_seen: string | null; created_at: string }
+export interface DbTracker { kind: 'tracker' | 'phone'; imei: string; name: string; model: string; vendor: string; serial_no: string | null; org_id: string | null; active: boolean; battery_pct: number | null; last_seen: string | null; created_at: string }
 export interface DbZone { id: string; site_id: string; code: string; name: string; kind: string; floor: number | null }
 interface I { zones: DbZone[]; sites: DbSite[]; readers: DbReader[]; trackers: DbTracker[]; loaded: boolean; load: () => Promise<void> }
 export const useInfra = create<I>((set) => ({

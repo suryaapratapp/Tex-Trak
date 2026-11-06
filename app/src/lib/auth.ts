@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { SUPABASE_URL, supabase } from './supabase'
 import { useStore } from '../store'
+import { isNetworkError, isNative, kvDel, kvGet, kvSet } from './offline'
+import { startTracking, stopTracking } from '../native/tracking'
 
 export type AccountRole = 'superadmin' | 'org_admin' | 'staff'
 export interface Org { id: string; name: string; tagline: string; color: string; features: string[]; active: boolean }
@@ -14,16 +16,23 @@ interface A {
   api: (action: string, body: Record<string, unknown>) => Promise<{ error?: string; [k: string]: unknown }>
   changePassword: (current: string, next: string) => Promise<string | null>
 }
+function applyRole(user: Profile) { const st = useStore.getState(); if (user.role !== 'superadmin') st.set({ role: user.org_id as string }); else if (!st.role) st.set({ role: 'superadmin' }) }
 export const useAuth = create<A>((set, get) => ({
   ready: false, user: null, orgs: [], people: [],
   refresh: async () => {
-    const { data: s } = await supabase.auth.getSession(); const uid = s.session?.user.id
+    const hasToken = !!Object.keys(localStorage).find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+    const { data: s, error: se } = await supabase.auth.getSession(); const uid = s.session?.user.id
+    const cached = await kvGet<{ user: Profile; orgs: Org[] }>('auth-cache')
+    // No connection: a phone that signed in before stays signed in, using what it saved.
+    if ((!uid || se) && cached && hasToken) { set({ user: cached.user, orgs: cached.orgs, people: [], ready: true }); applyRole(cached.user); return }
     if (!uid) { set({ user: null, orgs: [], people: [], ready: true }); return }
-    const { data: me } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
-    if (!me || !me.active) { await supabase.auth.signOut(); set({ user: null, orgs: [], people: [], ready: true }); return }
+    const { data: me, error: me_e } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
+    if (me_e && isNetworkError(me_e) && cached?.user.id === uid) { set({ user: cached.user, orgs: cached.orgs, people: [], ready: true }); applyRole(cached.user); return }
+    if (!me || !me.active) { await supabase.auth.signOut(); await kvDel('auth-cache'); set({ user: null, orgs: [], people: [], ready: true }); return }
     const [{ data: orgs }, { data: people }] = await Promise.all([supabase.from('orgs').select('*').order('name'), supabase.from('profiles').select('*').order('full_name')])
     const user = me as Profile; set({ user, orgs: (orgs ?? []) as Org[], people: (people ?? []) as Profile[], ready: true })
-    const st = useStore.getState(); if (user.role !== 'superadmin') st.set({ role: user.org_id as string }); else if (!st.role) st.set({ role: 'superadmin' })
+    void kvSet('auth-cache', { user, orgs: orgs ?? [] }); applyRole(user)
+    if (isNative) void startTracking(user)
   },
   init: async () => { await get().refresh(); supabase.auth.onAuthStateChange((e) => { if (e === 'SIGNED_OUT') set({ user: null, orgs: [], people: [], ready: true }) }) },
   signIn: async (u, p) => {
@@ -34,7 +43,7 @@ export const useAuth = create<A>((set, get) => ({
     const org = get().orgs.find((o) => o.id === user.org_id); if (user.role !== 'superadmin' && !org?.active) { await get().signOut(); return 'Your organisation’s access is switched off.' }
     useStore.getState().set({ page: 'command' }); location.hash = 'command'; return null
   },
-  signOut: async () => { await supabase.auth.signOut(); set({ user: null, orgs: [], people: [] }); useStore.getState().set({ role: 'superadmin' }) },
+  signOut: async () => { await stopTracking(); await supabase.auth.signOut(); await kvDel('auth-cache'); set({ user: null, orgs: [], people: [] }); useStore.getState().set({ role: 'superadmin' }) },
   api: async (action, body) => {
     const { data: s } = await supabase.auth.getSession()
     const r = await fetch(`${SUPABASE_URL}/functions/v1/admin-users`, { method: 'POST', headers: { 'content-type': 'application/json', ...(s.session ? { authorization: `Bearer ${s.session.access_token}` } : {}) }, body: JSON.stringify({ action, ...body }) })

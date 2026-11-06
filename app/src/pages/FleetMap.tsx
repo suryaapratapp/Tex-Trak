@@ -7,11 +7,12 @@ import { fmtT, getWorld } from '../sim/engine'
 import { SITES, VEHICLES, VEH_BY_ID } from '../sim/world'
 import { fmtDur, useSnap } from '../sim/snap'
 import { go, useStore } from '../store'
+import LiveDevices from './LiveDevices'
 import { MapLegend } from '../components/MapLegend'
 import { clientNet } from '../sim/registry'
 import { vehiclesFor } from '../lib/scope'
 
-export default function FleetMap() {
+function FleetMapDemo() {
   const snap = useSnap(); const t = snap.t; const { set, role, netMap } = useStore(); const [follow, setFollow] = useState(false)
   const ids = vehiclesFor(role); const selVeh = ids.includes(useStore.getState().selVeh) ? useStore.getState().selVeh : ids[0]
   const w = getWorld(); const v = VEH_BY_ID[selVeh]; const st = snap.veh[selVeh]
@@ -61,4 +62,10 @@ export default function FleetMap() {
       <Card className="mt-4"><CardHead title="GNSS events" sub="Geofence entries / exits from all trackers" /><EventFeed limit={8} filter={(e) => e.src === 'GNSS'} /></Card>
     </Page>
   )
+}
+
+export default function FleetMap() {
+  const mode = useStore((s) => s.mode)
+  if (mode === 'demo') return <FleetMapDemo />
+  return <Page title="Live map" sub="Phones and trackers, as they move."><LiveDevices /></Page>
 }

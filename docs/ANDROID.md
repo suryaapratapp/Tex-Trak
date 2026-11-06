@@ -23,8 +23,20 @@ $BT/apksigner sign --ks <your.jks> --out Tex-Trak-Synergy.apk aligned.apk
 
 Keep the same keystore for every release, or phones will refuse to update over the old app.
 
+## Offline
+
+- **Scanning offline:** Install, Take down and Register work with no signal. The phone checks each scan against the curtain list it last downloaded, shows the result at once, saves it, and sends it when the connection returns (every 20 seconds, when the network comes back, and when the app is reopened). Each saved scan carries its own id and the time it happened, so nothing is counted twice and the history keeps the true time.
+- **Strip at the top:** shows "You are offline" or "Sending N scans", and turns red if the server refused a scan (for example the curtain was installed elsewhere in the meantime). Tap it to see every scan, with Try again / Remove.
+- **Signing in offline:** a phone that has signed in once stays signed in, so it opens with no signal. The first sign-in on a phone needs a connection. A quick PIN (optional) locks the app and unlocks it offline; five wrong tries require a full sign-in.
+- **Needs a connection:** generating labels, importing locations and changing the label format.
+
+## Location
+
+On first sign-in the app asks permission, then records the phone's location, including with the screen off, and shows a persistent notification while it does. The phone appears in **Super Admin → Trackers** (kind "Phone") named after the signed-in username; if someone else signs in on the same phone it is renamed. Movement shows on **Live map**. Points are saved on the phone and sent when there is signal.
+
+For reliable background tracking set the app's battery use to "Unrestricted" in Android settings. Tracking starts when the app is opened and runs until sign-out; if Android closes the app, it resumes the next time it is opened.
+
 ## Notes
 
-- Needs a connection. There is no offline mode yet.
 - Printing label sheets is done from the web app on a computer.
 - Support: surya@circai.co.uk

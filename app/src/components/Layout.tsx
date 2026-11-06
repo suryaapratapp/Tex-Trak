@@ -8,6 +8,8 @@ import { ROLE_LABEL, useAuth } from '../lib/auth'
 import { alertsFor } from '../lib/scope'
 import { Logo } from './Logo'
 import { GuidedTour } from './Tour'
+import { SyncBar } from './SyncBar'
+import { useQr } from '../qr/store'
 
 interface NavItem { id: string; label: string; icon: ReactNode; adminOnly?: boolean; teamOnly?: boolean; always?: boolean }
 interface Group { title: string; items: NavItem[] }
@@ -56,7 +58,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </nav>
       <div className="border-t border-stone-200 p-4">
         <div className="flex items-center gap-1"><button onClick={() => nav('account')} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-stone-50"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-100 text-[14px] font-semibold text-cyan-700">{(user?.full_name ?? '?')[0]}</span><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-semibold text-stone-900">{user?.full_name}</span><span className="block truncate text-[12px] text-stone-400">{user ? (isSuper ? ROLE_LABEL.superadmin : `${ROLE_LABEL[user.role]} · ${orgs.find((o) => o.id === user.org_id)?.name ?? ''}`) : ''}</span></span></button>
-          <button onClick={() => void signOut()} title="Sign out" aria-label="Sign out" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700"><LogOut size={17} /></button></div>
+          <button onClick={() => { const n = useQr.getState().ops.filter((o) => o.state === 'pending').length; if (n && !confirm(`${n} saved scan${n === 1 ? ' has' : 's have'} not been sent yet. If you sign out now they stay on this phone until you sign in again and have a connection. Sign out anyway?`)) return; void signOut() }} title="Sign out" aria-label="Sign out" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700"><LogOut size={17} /></button></div>
         <div className="mt-3 px-2 text-[11.5px] font-medium text-stone-400">Developed by CIRCAI LTD</div>
       </div>
     </div>)
@@ -67,6 +69,7 @@ export function Layout({ children }: { children: ReactNode }) {
       {menu && <div className="fixed inset-0 z-50 xl:hidden"><div className="absolute inset-0 bg-stone-900/50" onClick={() => setMenu(false)} /><div className="absolute inset-y-0 left-0 w-[290px] shadow-2xl">{Side}</div></div>}
       <div className="flex min-w-0 flex-1 flex-col">
         {isSuper && role !== 'superadmin' && <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-100 px-4 py-2 text-[14px] font-semibold text-amber-900"><Eye size={16} /> Previewing as {org?.name ?? role}. This is exactly what their users can see.<button onClick={() => setRole('superadmin')} className="rounded-full bg-amber-900 px-3.5 py-1 text-[13px] font-bold text-white">Exit preview</button></div>}
+        <SyncBar />
         <header className="flex items-center gap-3 border-b border-stone-200/70 bg-white px-4 py-3.5 xl:px-8">
           <button onClick={() => setMenu(true)} className="grid h-10 w-10 place-items-center rounded-full border border-stone-200 xl:hidden" aria-label="Menu"><Menu size={18} /></button>
           <div className="flex min-w-0 items-center gap-2 text-[14px] font-semibold"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: role === 'superadmin' ? '#131a2e' : org?.color ?? '#5a46e0' }} /><span className="truncate text-stone-800">{role === 'superadmin' ? 'All clients' : org?.name}</span>{role !== 'superadmin' && org?.tagline && <span className="hidden truncate text-stone-500 sm:inline">· {org.tagline}</span>}</div>

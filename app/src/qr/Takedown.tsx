@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Page } from '../components/ui'
 import { btnPrimary, EMPTY, inputCls, LocationPicker, Notice, ScanField, Section, toPlace, useFlash, Field, type Pick } from './ui'
 import { REASONS, placeText, useQr, type Place, type Reason } from './store'
+import { ScanLog } from './ScanLog'
 
 interface Pending { code: string; place?: Place }
 export default function Takedown() {
@@ -14,7 +15,7 @@ export default function Takedown() {
   const scanNew = async (c: string) => {
     const target = pending[0]; if (!target?.place) return err('Nothing is waiting for a replacement.')
     const r = await useQr.getState().install(c, target.place, { replaces: target.code }); if (!r.ok) return err(r.message)
-    ok(r.message); setSwaps((s) => [{ n: c.trim().toUpperCase(), o: target.code, w: placeText(useQr.getState(), target.place) }, ...s]); setPending((p) => p.slice(1))
+    ok(r.message + (r.queued ? ' · saved on this phone' : '')); setSwaps((s) => [{ n: c.trim().toUpperCase(), o: target.code, w: placeText(useQr.getState(), target.place) }, ...s]); setPending((p) => p.slice(1))
   }
   const takeSelected = async () => { let n = 0; for (const code of sel) { if (await down(code)) n++ } setSel(new Set()); if (n) ok(`${n} taken down. Scan a replacement for each.`) }
   return (
@@ -35,7 +36,8 @@ export default function Takedown() {
           <ul className="mb-5 space-y-2">{pending.map((p) => <li key={p.code} className="flex items-center justify-between rounded-2xl bg-amber-50 px-4 py-3 text-[14px]"><span className="mono font-bold text-amber-900">{p.code}</span><span className="text-amber-800">{placeText(st, p.place)}</span></li>)}</ul>
           <ScanField label="Scan the new curtain" onScan={scanNew} /><button onClick={() => setPending([])} className="mt-4 text-[14px] font-bold text-stone-500 underline underline-offset-4">Skip replacements</button></Section>}
         {flash && <Notice kind={flash.kind} onClose={clear}>{flash.text}</Notice>}
-        {swaps.length > 0 && <Section title={`Swaps this session (${swaps.length})`}><ul className="divide-y divide-stone-100">{swaps.map((s, i) => <li key={i} className="py-3 text-[14.5px]"><span className="mono font-bold">{s.n}</span> replaced <span className="mono text-stone-500">{s.o}</span><div className="text-[13px] text-stone-500">{s.w}</div></li>)}</ul></Section>}
+        <ScanLog kinds={['takedown', 'install']} />
+
       </div>
     </Page>)
 }

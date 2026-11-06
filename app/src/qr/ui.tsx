@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Camera, CheckCircle2, CircleAlert, X } from 'lucide-react'
 import { Scanner } from '../components/Scanner'
+import { feedback } from '../lib/offline'
 import { useQr, type Place, type Status, daysLeft, isOverdue, STATUS_LABEL, type Product } from './store'
 
 export const inputCls = 'h-12 w-full rounded-2xl border border-stone-200 bg-white px-4 text-[15px] text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100'
@@ -59,5 +60,5 @@ export const DaysChip = ({ p }: { p: Product }) => { const d = daysLeft(p); if (
 export function useFlash() {
   const [m, setM] = useState<{ kind: 'ok' | 'error' | 'info'; text: string } | null>(null)
   useEffect(() => { if (m?.kind === 'ok') { const t = setTimeout(() => setM(null), 5000); return () => clearTimeout(t) } }, [m])
-  return { flash: m, ok: (text: string) => setM({ kind: 'ok', text }), err: (text: string) => setM({ kind: 'error', text }), clear: () => setM(null) }
+  return { flash: m, ok: (text: string) => { feedback(true); setM({ kind: 'ok', text }) }, err: (text: string) => { feedback(false); setM({ kind: 'error', text }) }, clear: () => setM(null) }
 }
