@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, Boxes, Package, Radar, Recycle, ScanLine, Tag } from 'lucide-react'
+import { ArrowRight, Boxes, Compass, Package, Radar, Recycle, ScanLine, Tag } from 'lucide-react'
 import { getWorld, scannerAt, SCANNERS } from '../sim/engine'
 import { hasFeature, hasModule } from '../sim/registry'
 import { useSnap } from '../sim/snap'
@@ -35,12 +35,14 @@ export default function Command() {
   const overdue = prods.filter(isOverdue).length
   const alerts = alertsFor(role).filter((a) => a.t <= t && (a.sev === 'high' || a.sev === 'critical')).length
   const attention = insights(t, snap).filter((i) => i.tone === 'bad' || i.tone === 'warn').filter((i) => role === 'superadmin' || (role === 'clientA' ? /RCY|recycl|SC-|scanner|asset/i.test(i.title + i.body) : !/SC-|scanner/i.test(i.title + i.body))).slice(0, 3)
+  const tourOk = ['twin', 'map', 'provenance'].every((f) => hasFeature(role, f))
   const hour = Math.floor((t % 1440) / 60); const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   return (
     <div className="mx-auto w-full max-w-[1100px] space-y-8 p-6 sm:p-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div><h1 className="text-[28px] font-semibold tracking-tight text-stone-900">{hello}, {user?.full_name.split(' ')[0] ?? ''}</h1><p className="mt-1 text-[15px] text-stone-500">{alerts ? `${alerts} alert${alerts === 1 ? '' : 's'} need a look today.` : 'Everything is running normally.'}</p></div>
-        {hasFeature(role, 'scan') && <button onClick={() => go('scan')} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-3 text-[14.5px] font-medium text-white shadow-sm hover:bg-cyan-700"><ScanLine size={17} /> Scan</button>}
+        <div className="flex items-center">{tourOk && <button onClick={() => useStore.getState().set({ tour: 0, tourReturn: useStore.getState().mode })} className="mr-2 flex items-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-5 py-3 text-[14.5px] font-medium text-cyan-700 hover:bg-cyan-100"><Compass size={17} /> Get started</button>}
+        {hasFeature(role, 'scan') && <button onClick={() => go('scan')} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-3 text-[14.5px] font-medium text-white shadow-sm hover:bg-cyan-700"><ScanLine size={17} /> Scan</button>}</div>
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5">

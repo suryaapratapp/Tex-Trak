@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound } from 'lucide-react'
 import { go, jump, SPEEDS, useStore } from '../store'
 import { fmtClock, T0, T1 } from '../sim/engine'
@@ -7,6 +7,7 @@ import { hasFeature, type Role } from '../sim/registry'
 import { ROLE_LABEL, useAuth } from '../lib/auth'
 import { alertsFor } from '../lib/scope'
 import { Logo } from './Logo'
+import { GuidedTour } from './Tour'
 
 interface NavItem { id: string; label: string; icon: ReactNode; adminOnly?: boolean; teamOnly?: boolean; always?: boolean }
 interface Group { title: string; items: NavItem[] }
@@ -29,7 +30,8 @@ export const allowedPages = (role: Role) => GROUPS.flatMap((g) => g.items).filte
 export function Layout({ children }: { children: ReactNode }) {
   const { t, playing, speed, page, role, mode, set, setRole, tick } = useStore()
   const { fix, db } = useLiveTracker(); const { user, orgs, signOut } = useAuth(); const isSuper = user?.role === 'superadmin'; const org = orgs.find((o) => o.id === role)
-  const [menu, setMenu] = useState(false)
+  const [menu, setMenu] = useState(false); const mainRef = useRef<HTMLElement>(null)
+  useEffect(() => { mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior }) }, [page])
   const open = alertsFor(role).filter((a) => a.t <= t && a.sev !== 'info' && a.sev !== 'low').length
   useEffect(() => { let last = performance.now(); const id = setInterval(() => { const n = performance.now(); tick(n - last); last = n }, 100); return () => clearInterval(id) }, [tick])
   useEffect(() => { const f = () => set({ page: location.hash.slice(1) || 'command' }); addEventListener('hashchange', f); return () => removeEventListener('hashchange', f) }, [set])
@@ -75,8 +77,9 @@ export function Layout({ children }: { children: ReactNode }) {
               <i className={`h-2 w-2 rounded-full ${fix && liveAge! < 90 ? 'blink bg-emerald-500' : db === 'error' ? 'bg-rose-500' : 'bg-amber-400'}`} /><span className="font-semibold text-stone-800">TAT240</span><span className="text-stone-500">{fix ? (liveAge! < 90 ? 'live' : 'offline') : 'not connected'}</span></button>}
           </div>
         </header>
-        <main className="scroll-thin min-h-0 flex-1 overflow-y-auto pb-28">{children}
+        <main ref={mainRef} className="scroll-thin min-h-0 flex-1 overflow-y-auto pb-28">{children}
           <footer className="mx-auto max-w-[1500px] px-8 pb-6 pt-2 text-center text-[13px] font-semibold text-stone-400">Tex-Trak · Developed by CIRCAI LTD</footer></main>
+        <GuidedTour />
         <div className="fixed bottom-3 left-3 right-3 z-40 mx-auto flex max-w-[860px] items-center gap-3 rounded-full border border-stone-200 bg-white/95 px-3 py-2 shadow-[0_18px_50px_-18px_rgba(19,26,46,.45)] backdrop-blur xl:left-[288px] sm:gap-4 sm:px-4">
           <button onClick={() => set({ playing: !playing })} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-stone-900 text-white transition hover:bg-stone-700" title={playing ? 'Pause' : 'Play'}>{playing ? <Pause size={15} /> : <Play size={15} />}</button>
           <div className="shrink-0"><div className="mono text-[17px] font-medium leading-none text-stone-900">{fmtClock(t).slice(0, 5)}</div><div className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-stone-400">{t >= 1440 ? 'Day 2' : 'Day 1'}</div></div>
