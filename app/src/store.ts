@@ -17,7 +17,7 @@ interface S {
   setRole: (r: Role) => void
 }
 export const useStore = create<S>((set, get) => ({
-  t: 330, playing: true, speed: 120, page: location.hash.slice(1) || 'command', selItem: 0, selVeh: 'V1', selShip: 'LND-0612-AM', selIncident: 'INC-2041', mode: 'live', tour: null, tourReturn: null, twin: 'H', floor: 'G', netMap: false, role: 'superadmin' as Role, live: null, states: {},
+  t: 1000, playing: false, speed: 120, page: location.hash.slice(1) || 'command', selItem: 0, selVeh: 'V1', selShip: 'LND-0612-AM', selIncident: 'INC-2041', mode: 'live', tour: null, tourReturn: null, twin: 'H', floor: 'G', netMap: false, role: 'superadmin' as Role, live: null, states: {},
   set: (p) => set(p),
   tick: (dtMs) => { const s = get(); if (!s.playing) return; const t = s.t + ((s.speed / 60) * dtMs) / 1000; if (t >= T1) set({ t: T1, playing: false }); else set({ t }) },
   setRole: (role) => { set({ role, page: 'command' }); location.hash = 'command' },

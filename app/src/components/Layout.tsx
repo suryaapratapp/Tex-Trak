@@ -77,16 +77,16 @@ export function Layout({ children }: { children: ReactNode }) {
               <i className={`h-2 w-2 rounded-full ${fix && liveAge! < 90 ? 'blink bg-emerald-500' : db === 'error' ? 'bg-rose-500' : 'bg-amber-400'}`} /><span className="font-semibold text-stone-800">TAT240</span><span className="text-stone-500">{fix ? (liveAge! < 90 ? 'live' : 'offline') : 'not connected'}</span></button>}
           </div>
         </header>
-        <main ref={mainRef} className="scroll-thin min-h-0 flex-1 overflow-y-auto pb-28">{children}
+        <main ref={mainRef} className={`scroll-thin min-h-0 flex-1 overflow-y-auto ${mode === 'demo' ? 'pb-28' : 'pb-8'}`}>{children}
           <footer className="mx-auto max-w-[1500px] px-8 pb-6 pt-2 text-center text-[13px] font-semibold text-stone-400">Tex-Trak · Developed by CIRCAI LTD</footer></main>
         <GuidedTour />
-        <div className="fixed bottom-3 left-3 right-3 z-40 mx-auto flex max-w-[860px] items-center gap-3 rounded-full border border-stone-200 bg-white/95 px-3 py-2 shadow-[0_18px_50px_-18px_rgba(19,26,46,.45)] backdrop-blur xl:left-[288px] sm:gap-4 sm:px-4">
+        {mode === 'demo' && <div className="fixed bottom-3 left-3 right-3 z-40 mx-auto flex max-w-[860px] items-center gap-3 rounded-full border border-stone-200 bg-white/95 px-3 py-2 shadow-[0_18px_50px_-18px_rgba(19,26,46,.45)] backdrop-blur xl:left-[288px] sm:gap-4 sm:px-4">
           <button onClick={() => set({ playing: !playing })} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-stone-900 text-white transition hover:bg-stone-700" title={playing ? 'Pause' : 'Play'}>{playing ? <Pause size={15} /> : <Play size={15} />}</button>
           <div className="shrink-0"><div className="mono text-[17px] font-medium leading-none text-stone-900">{fmtClock(t).slice(0, 5)}</div><div className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-stone-400">{t >= 1440 ? 'Day 2' : 'Day 1'}</div></div>
           <input type="range" min={T0} max={T1} step={0.5} value={t} onChange={(e) => set({ t: +e.target.value })} className="h-1.5 min-w-0 flex-1 cursor-pointer accent-cyan-600" aria-label="Time" />
           <select value={speed} onChange={(e) => set({ speed: +e.target.value })} className="hidden rounded-full border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-stone-700 sm:block">{SPEEDS.map((s) => <option key={s} value={s}>{s}×</option>)}</select>
           <select value="" onChange={(e) => { if (e.target.value) { jump(+e.target.value); set({ playing: true }) } }} className="w-[92px] rounded-full border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-stone-700 sm:w-auto"><option value="">Jump to</option>{JUMPS.map(([n, m]) => <option key={n} value={m}>{n}</option>)}</select>
-        </div>
+        </div>}
       </div>
     </div>
   )
