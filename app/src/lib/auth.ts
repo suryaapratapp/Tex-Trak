@@ -32,7 +32,7 @@ export const useAuth = create<A>((set, get) => ({
     const [{ data: orgs }, { data: people }] = await Promise.all([supabase.from('orgs').select('*').order('name'), supabase.from('profiles').select('*').order('full_name')])
     const user = me as Profile; set({ user, orgs: (orgs ?? []) as Org[], people: (people ?? []) as Profile[], ready: true })
     void kvSet('auth-cache', { user, orgs: orgs ?? [] }); applyRole(user)
-    if (isNative) void startTracking(user)
+    void startTracking(user)
   },
   init: async () => { await get().refresh(); supabase.auth.onAuthStateChange((e) => { if (e === 'SIGNED_OUT') set({ user: null, orgs: [], people: [], ready: true }) }) },
   signIn: async (u, p) => {

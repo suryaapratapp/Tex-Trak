@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound } from 'lucide-react'
+import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound, BookOpen } from 'lucide-react'
 import { go, jump, SPEEDS, useStore } from '../store'
 import { fmtClock, T0, T1 } from '../sim/engine'
 import { useLiveTracker } from '../lib/useLive'
@@ -23,7 +23,7 @@ const GROUPS: Group[] = [
   { title: 'Laundry · RFID', items: [{ id: 'planner', label: 'Laundry arrivals', icon: <Activity size={I} /> }, { id: 'inventory', label: 'Inventory', icon: <Boxes size={I} /> }, { id: 'twin', label: 'Facilities and floors', icon: <Building2 size={I} /> }, { id: 'lifecycle', label: 'Daily flow', icon: <Workflow size={I} /> }] },
   { title: 'Equipment and loads', items: [{ id: 'assets', label: 'Community assets', icon: <Radar size={I} /> }, { id: 'shipments', label: 'Shipments', icon: <Truck size={I} /> }] },
   { title: 'Reporting', items: [{ id: 'provenance', label: 'Recycling proof', icon: <Recycle size={I} /> }, { id: 'esg', label: 'Impact', icon: <Leaf size={I} /> }] },
-  { title: 'Administration', items: [{ id: 'admin', label: 'Super Admin', icon: <Shield size={I} />, adminOnly: true }, { id: 'devices', label: 'Trackers', icon: <Cpu size={I} />, adminOnly: true }, { id: 'team', label: 'Team', icon: <UsersRound size={I} />, teamOnly: true }, { id: 'account', label: 'My account', icon: <UserCircle size={I} />, always: true }] },
+  { title: 'Administration', items: [{ id: 'admin', label: 'Super Admin', icon: <Shield size={I} />, adminOnly: true }, { id: 'devices', label: 'Trackers', icon: <Cpu size={I} />, adminOnly: true }, { id: 'team', label: 'Team', icon: <UsersRound size={I} />, teamOnly: true }, { id: 'help', label: 'Help and training', icon: <BookOpen size={I} />, always: true }, { id: 'account', label: 'My account', icon: <UserCircle size={I} />, always: true }] },
 ]
 const JUMPS: [string, number][] = [['Morning delivery', 335], ['Recycling runs', 612], ['Day operations', 600], ['Evening collection', 1045], ['Decon processing', 1230], ['Next morning', 1760]]
 const visible = (i: NavItem, role: Role) => { const u = useAuth.getState().user; if (i.always) return !!u; if (i.adminOnly) return u?.role === 'superadmin'; if (i.teamOnly) return u?.role === 'org_admin'; return hasFeature(role, i.id) }

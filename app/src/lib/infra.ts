@@ -10,7 +10,7 @@ interface I { zones: DbZone[]; sites: DbSite[]; readers: DbReader[]; trackers: D
 export const useInfra = create<I>((set) => ({
   zones: [], sites: [], readers: [], trackers: [], loaded: false,
   load: async () => {
-    const [s, r, t, z] = await Promise.all([supabase.from('sites').select('*').eq('source', 'admin').order('name'), supabase.from('readers').select('*').eq('source', 'admin').order('code'), supabase.from('trackers').select('*').order('created_at', { ascending: false }), supabase.from('zones').select('*').order('floor').order('name')])
+    const [s, r, t, z] = await Promise.all([supabase.from('sites').select('*').eq('source', 'admin').order('name'), supabase.from('readers').select('id,site_id,zone_id,code,position,online,last_seen,label,floor,source,direction').eq('source', 'admin').order('code'), supabase.from('trackers').select('*').order('created_at', { ascending: false }), supabase.from('zones').select('*').order('floor').order('name')])
     set({ zones: (z.data ?? []) as DbZone[], sites: (s.data ?? []) as DbSite[], readers: (r.data ?? []) as DbReader[], trackers: (t.data ?? []) as DbTracker[], loaded: true })
   },
 }))

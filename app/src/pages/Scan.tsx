@@ -12,20 +12,21 @@ import { go, useStore } from '../store'
 interface Entry { id: number; created_at: string; kind: string; level: 'ok' | 'warn' | 'error'; text: string }
 interface Ship { id: string; ref: string; status: string; items: number; from_name: string; to_name: string; description: string; org_id: string }
 
-type Task = 'textile' | 'asset' | 'load' | 'curtain'
+type Task = 'smart' | 'textile' | 'asset' | 'load' | 'curtain'
 const TASKS: { id: Task; label: string; sub: string; module: ModuleId; icon: React.ReactNode }[] = [
+  { id: 'smart', label: 'Any code', sub: 'RFID · QR · barcode', module: 'core', icon: <ScanLine size={22} /> },
   { id: 'textile', label: 'Textile item', sub: 'Issue, soil, cage', module: 'laundry', icon: <Boxes size={22} /> },
   { id: 'curtain', label: 'Curtain', sub: 'Install · take down', module: 'curtains', icon: <ScanLine size={22} /> },
   { id: 'asset', label: 'Equipment', sub: 'Check out · check in', module: 'assets', icon: <Radar size={22} /> },
   { id: 'load', label: 'Shipment', sub: 'Dispatch · receive', module: 'shipments', icon: <Package size={22} /> },
 ]
 type LiveItem = { id: string; product: string; qr: string | null; epc: string | null; status: string; wash_cycles: number; max_cycles: number }
-type Found = { type: 'litem'; li: LiveItem } | { type: 'item'; it: Item } | { type: 'asset'; id: string } | { type: 'load'; sh: Ship } | null
+type Found = { type: 'litem'; li: LiveItem } | { type: 'item'; it: Item } | { type: 'asset'; id: string } | { type: 'load'; sh: Ship } | { type: 'curtain'; c: { code: string; status: string; type: string; due_at: string | null; ward: string | null; bay: string | null } } | null
 
 export default function Scan() {
   const role = useStore((s) => s.role); const t = useStore((s) => s.t); const w = getWorld()
-  const tasks = TASKS.filter((x) => hasModule(role, x.module) || (x.id === 'load' && hasModule(role, 'recycling')))
-  const [task, setTask] = useState<Task>(tasks[0]?.id ?? 'load'); const [manual, setManual] = useState(''); const [found, setFound] = useState<Found>(null); const [msg, setMsg] = useState<{ level: 'ok' | 'warn' | 'error'; title: string; detail: string } | null>(null)
+  const tasks = TASKS.filter((x) => x.id === 'smart' || hasModule(role, x.module) || (x.id === 'load' && hasModule(role, 'recycling')))
+  const [task, setTask] = useState<Task>('smart'); const [manual, setManual] = useState(''); const [found, setFound] = useState<Found>(null); const [msg, setMsg] = useState<{ level: 'ok' | 'warn' | 'error'; title: string; detail: string } | null>(null)
   const user = useAuth((x) => x.user); const orgId = role === 'superadmin' ? null : role
   const [list, setList] = useState<Entry[]>([]); const [open, setOpen] = useState<Ship[]>([]); const [count, setCount] = useState('')
   const reload = useCallback(async () => {
@@ -33,16 +34,27 @@ export default function Scan() {
     const { data: sh } = await supabase.from('shipments').select('id,ref,status,items,from_name,to_name,description,org_id').in('status', ['booked', 'in_transit']).order('created_at', { ascending: false }).limit(4); setOpen((sh ?? []) as Ship[])
   }, [])
   useEffect(() => { void reload() }, [reload])
+  const ITEM_COLS = 'id,product,qr,epc,status,wash_cycles,max_cycles'
+  const findItem = async (code: string) => {
+    const safe = code.replace(/[^A-Z0-9_.-]/g, ''); const hex = code.replace(/^0X/, '').replace(/[^0-9A-F]/g, '')
+    const parts = [`qr.eq.${safe}`, `barcode.eq.${safe}`]; if (hex.length >= 8) parts.push(`epc.eq.${hex}`)
+    const { data } = await supabase.from('items').select(ITEM_COLS).or(parts.join(',')).limit(1); return (data?.[0] as LiveItem | undefined) ?? null
+  }
+  const findShip = async (code: string) => { if (!/^SHP-\d+$/.test(code)) return null; const { data } = await supabase.from('shipments').select('id,ref,status,items,from_name,to_name,description,org_id').eq('ref', code).maybeSingle(); return (data as Ship | null) ?? null }
+  const findCurtain = async (code: string) => { const { data } = await supabase.from('qr_products').select('code,status,type,due_at,ward,bay').eq('code', code.replace(/[^A-Z0-9-]/g, '')).limit(1); return data?.[0] ?? null }
   const lookup = async (raw: string) => {
-    const code = raw.trim().toUpperCase(); setFound(null)
-    if (task === 'textile') {
-      const { data: li } = await supabase.from('items').select('id,product,qr,epc,status,wash_cycles,max_cycles').or(`qr.eq.${code.replace(/[^A-Z0-9_-]/g, '')},epc.eq.${code.replace(/[^0-9A-F]/g, '') || 'none'}`).limit(1)
-      if (li?.[0]) { setFound({ type: 'litem', li: li[0] as LiveItem }); return setMsg(null) }
-      const it = w.items.find((i) => i.qr === code || i.epc === code); if (!it) return setMsg({ level: 'error', title: 'Not recognised', detail: `${raw} is not a textile tag.` }); setFound({ type: 'item', it }); return setMsg(null)
+    const code = raw.trim().toUpperCase(); setFound(null); const none = (what: string) => setMsg({ level: 'error', title: 'Not recognised', detail: `${raw} is not ${what}. Check you scanned the right label, or ask your administrator to add it.` })
+    const sh = (task === 'smart' || task === 'load') ? await findShip(code) : null
+    if (sh) { setCount(String(sh.items)); setFound({ type: 'load', sh }); return setMsg(null) }
+    if (task === 'load') return setMsg({ level: 'error', title: 'Shipment not found', detail: `${raw} does not match any shipment you can see.` })
+    if (task === 'smart' || task === 'textile') {
+      const li = await findItem(code); if (li) { setFound({ type: 'litem', li }); return setMsg(null) }
+      const it = w.items.find((i) => i.qr === code || i.epc === code); if (it) { setFound({ type: 'item', it }); return setMsg(null) }
+      if (task === 'textile') return none('a textile tag')
     }
-    if (task === 'asset') { const sc = SCANNERS.find((s) => s.id === code); if (!sc) return setMsg({ level: 'error', title: 'Not recognised', detail: `${raw} is not an equipment tag.` }); setFound({ type: 'asset', id: sc.id }); return setMsg(null) }
-    const { data } = await supabase.from('shipments').select('id,ref,status,items,from_name,to_name,description,org_id').eq('ref', code).maybeSingle()
-    if (!data) return setMsg({ level: 'error', title: 'Shipment not found', detail: `${raw} does not match any shipment you can see.` }); setCount(String(data.items)); setFound({ type: 'load', sh: data as Ship }); setMsg(null)
+    if (task === 'smart') { const c = await findCurtain(code); if (c) { setFound({ type: 'curtain', c }); return setMsg(null) } }
+    if (task === 'smart' || task === 'asset') { const sc = SCANNERS.find((x) => x.id === code); if (sc) { setFound({ type: 'asset', id: sc.id }); return setMsg(null) } if (task === 'asset') return none('an equipment tag') }
+    none('a known item, curtain, shipment or equipment tag')
   }
   const log = async (kind: string, code: string, text: string, level: 'ok' | 'warn' = 'ok') => {
     const org = orgId ?? (await supabase.from('orgs').select('id').limit(1)).data?.[0]?.id; setMsg({ level, title: text, detail: 'Saved to the scan log.' }); setFound(null)
@@ -68,6 +80,10 @@ export default function Scan() {
             <form onSubmit={(e) => { e.preventDefault(); if (manual.trim()) { lookup(manual); setManual('') } }} className="flex gap-2"><input value={manual} onChange={(e) => setManual(e.target.value)} placeholder="Type or paste a code" className="min-w-0 flex-1 rounded-full border border-stone-200 px-4 py-2.5 text-sm outline-none focus:border-cyan-500" /><button className={`${btn} bg-stone-900 text-white`}>Go</button></form>
             {chips.length > 0 && <div><div className="mb-2 text-xs font-bold uppercase tracking-wider text-stone-400">Try a demo scan</div><div className="flex flex-wrap gap-2">{chips.map((c) => <button key={c.raw} onClick={() => lookup(c.raw)} className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-bold text-stone-700 hover:bg-stone-50">{c.label}</button>)}</div></div>}</div></Card>
         <div className="space-y-5">
+          {found?.type === 'curtain' && (() => { const c = found.c; return (
+            <Card><CardHead title={c.type} sub={<span className="mono">{c.code}</span>} right={<span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-bold text-stone-600">{{ registered: 'In stock', in_use: 'In use', removed: 'Taken down', retired: 'Retired' }[c.status] ?? c.status}</span>} />
+              <div className="space-y-3 p-5"><div className="text-[14px] text-stone-600">{c.status === 'in_use' ? `Installed at ${[c.ward, c.bay].filter(Boolean).join(' · ')}${c.due_at ? ` · change due ${new Date(c.due_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}` : c.status === 'registered' ? 'Ready to be installed.' : 'Not in service.'}</div>
+                <div className="flex flex-wrap gap-2">{c.status === 'registered' && <button onClick={() => go('qrinstall')} className={`${btn} bg-cyan-600 text-white`}>Install it</button>}{c.status === 'in_use' && <button onClick={() => go('qrtakedown')} className={`${btn} bg-amber-500 text-white`}>Take it down</button>}</div></div></Card>) })()}
           {found?.type === 'litem' && (() => { const li = found.li; const set = async (status: string, text: string) => { const { error } = await supabase.rpc('item_set_status', { p_id: li.id, p_status: status, p_detail: 'Scanned in the field' }); if (error) { setFound(null); return setMsg({ level: 'error', title: error.message, detail: 'Nothing was changed.' }) } void log('textile', li.qr ?? li.epc ?? '', text, status === 'missing' ? 'warn' : 'ok') }; const name = li.qr ?? li.epc ?? ''; return (
             <Card><CardHead title={li.product} sub={<span className="mono">{name}</span>} right={<StatusPill s={li.status} />} />
               <div className="space-y-3 p-5"><div className="text-[14px] text-stone-600">{li.wash_cycles} of {li.max_cycles} washes</div>

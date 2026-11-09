@@ -143,7 +143,11 @@ Header switch (Super Admin): **Live data / Demo data**. The Inventory, Facilitie
 
 **Still demonstration only** (labelled "Demo data"): Daily flow, Community assets, Live map, Alerts, Intelligence, Impact and Recycling proof. These come from the simulated day in `app/src/sim/`.
 
-### Connecting a reader
+### Connecting a reader (see docs/TRAINING.md, section 6)
+
+In Super Admin → RFID readers, press **Connect** on a reader to get its own address (`…/ingest-rfid?reader=<code>&key=<key>`) and put it in the reader's configuration page. The older shared-token form below also still works.
+
+#### Shared-token form
 
 ```
 POST https://qhxdqgkpebmpzzuzqcla.supabase.co/functions/v1/ingest-rfid
@@ -154,3 +158,9 @@ x-ingest-token: <INGEST_TOKEN>
 Set the secret once: `supabase secrets set INGEST_TOKEN=<long random string> --project-ref qhxdqgkpebmpzzuzqcla`. To try it without hardware: **Super Admin → RFID readers → Send a test read**, or `INGEST_TOKEN=... node tools/rfid-sim.mjs R-DOCK-01 <epc>`.
 
 What a read means for an item depends on the zone's kind: dirty utility → in a dirty cage; washing → processing; clean store → in stock; ward → in use.
+
+## Documents
+
+- `docs/TRAINING.md`: training guide for every role (also inside the app under Help and training).
+- `docs/FEATURE_PLAN.md`: every feature, how it was verified, and what still needs a real device.
+- `docs/ANDROID.md`: building and installing the Android app.

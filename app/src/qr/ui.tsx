@@ -19,9 +19,25 @@ export function Notice({ kind, children, onClose }: { kind: 'ok' | 'error' | 'in
   return <div className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-[14.5px] font-semibold ${t}`}>{kind === 'error' ? <CircleAlert size={19} className="mt-0.5 shrink-0" /> : <CheckCircle2 size={19} className="mt-0.5 shrink-0" />}<span className="flex-1">{children}</span>{onClose && <button onClick={onClose} aria-label="Dismiss"><X size={16} /></button>}</div>
 }
 
+/** Bluetooth / USB scanners and RFID handhelds type the code very fast and press Enter. This catches that even when no box is focused. */
+function useWedge(onCode: (c: string) => void, enabled: boolean) {
+  useEffect(() => {
+    if (!enabled) return
+    let buf = ''; let last = 0
+    const h = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null; if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return
+      const now = Date.now(); if (now - last > 80) buf = ''; last = now
+      if (e.key === 'Enter') { if (buf.length >= 4) { onCode(buf); e.preventDefault() } buf = ''; return }
+      if (e.key.length === 1) buf += e.key
+    }
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
+  }, [onCode, enabled])
+}
+
 export function ScanField({ label, onScan, disabled, placeholder = 'Code' }: { label: string; onScan: (code: string) => void; disabled?: boolean; placeholder?: string }) {
   const [v, setV] = useState(''); const [cam, setCam] = useState(false); const [tapFree, setTapFree] = useState(false); const ref = useRef<HTMLInputElement>(null)
   const submit = (code: string) => { const c = code.trim(); if (!c) return; onScan(c); setV(''); ref.current?.focus() }
+  useWedge(submit, !disabled); useEffect(() => { if (!disabled) ref.current?.focus() }, [disabled])
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-3"><span className="text-[14px] font-bold text-stone-600">{label}</span>

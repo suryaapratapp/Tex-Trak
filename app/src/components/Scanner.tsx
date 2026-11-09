@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeSupportedFormats as F } from 'html5-qrcode'
 import { Camera, CameraOff } from 'lucide-react'
 
 export function Scanner({ onScan }: { onScan: (text: string) => void }) {
   const [on, setOn] = useState(false); const [err, setErr] = useState(''); const last = useRef({ t: '', at: 0 }); const cb = useRef(onScan); cb.current = onScan
   useEffect(() => {
     if (!on) return
-    const h = new Html5Qrcode('qr-reader'); let started = false
-    h.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 220, height: 220 } }, (txt) => { const n = Date.now(); if (txt === last.current.t && n - last.current.at < 2500) return; last.current = { t: txt, at: n }; navigator.vibrate?.(60); cb.current(txt) }, () => {})
+    const h = new Html5Qrcode('qr-reader', { verbose: false, useBarCodeDetectorIfSupported: true, formatsToSupport: [F.QR_CODE, F.DATA_MATRIX, F.CODE_128, F.CODE_39, F.CODE_93, F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.ITF, F.CODABAR, F.PDF_417, F.AZTEC] }); let started = false
+    h.start({ facingMode: 'environment' }, { fps: 12, qrbox: (w: number, hgt: number) => ({ width: Math.min(w - 20, 320), height: Math.min(hgt - 20, 190) }), aspectRatio: 1.5 }, (txt) => { const n = Date.now(); if (txt === last.current.t && n - last.current.at < 2500) return; last.current = { t: txt, at: n }; navigator.vibrate?.(60); cb.current(txt) }, () => {})
       .then(() => { started = true }).catch(() => { setErr('Camera not available. Use the demo codes or type a code below.'); setOn(false) })
     return () => { (started ? h.stop() : Promise.resolve()).then(() => h.clear()).catch(() => {}) }
   }, [on])
