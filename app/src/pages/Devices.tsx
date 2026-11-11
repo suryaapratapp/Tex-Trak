@@ -3,11 +3,16 @@ import { Battery, CheckCircle2, Cpu, Database, Radio, Satellite, Server } from '
 import { Card, CardHead, Chip, Page } from '../components/ui'
 import { supabase, SUPABASE_URL, TAT240_IMEI } from '../lib/supabase'
 import { useLiveTracker } from '../lib/useLive'
+import { useInfra } from '../lib/infra'
+import { useAuth } from '../lib/auth'
+import { go, useStore } from '../store'
 import { PLANS, VEHICLES } from '../sim/world'
 
 const TABLES = ['sites', 'readers', 'product_types', 'assets', 'trackers', 'tracker_positions', 'custody_events', 'alerts', 'alert_rules']
 export default function Devices() {
   const { fix, db, count } = useLiveTracker()
+  const mode = useStore((st) => st.mode); const { trackers, load: loadInfra } = useInfra(); const orgs = useAuth((st) => st.orgs)
+  useEffect(() => { void loadInfra() }, [loadInfra])
   const [counts, setCounts] = useState<Record<string, number | string>>({})
   useEffect(() => { TABLES.forEach(async (t) => { const r = await supabase.from(t).select('*', { count: 'exact', head: true }); setCounts((c) => ({ ...c, [t]: r.error ? 'err' : r.count ?? 0 })) }) }, [])
   const readers = [...PLANS.H.readers.map((r) => ({ ...r, site: 'Royal Meridian Hospital' })), ...PLANS.D.readers.map((r) => ({ ...r, site: 'Decon Plant' }))]
@@ -44,7 +49,7 @@ export default function Devices() {
         </div>
       </div>
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <Card><CardHead title="Fleet trackers" /><table className="w-full text-left text-[13px]"><tbody className="divide-y divide-slate-100">{VEHICLES.map((v) => <tr key={v.id}><td className="px-4 py-2.5 font-medium text-slate-900">{v.reg}</td><td className="mono text-xs text-slate-600">{v.imei}</td><td className="text-slate-500">{v.driver}</td><td><Chip tone={v.simulated ? 'slate' : 'green'}>{v.simulated ? 'simulated' : 'hardware'}</Chip></td></tr>)}</tbody></table></Card>
+        {mode === 'live' ? <Card><CardHead title="Fleet trackers" sub="Registered in Super Admin → Trackers. Edit, assign a client or delete them there." right={<button onClick={() => go('admin')} className="text-[12.5px] font-semibold text-cyan-700 hover:underline">Manage trackers</button>} /><table className="w-full text-left text-[13px]"><tbody className="divide-y divide-slate-100">{trackers.filter((t) => t.kind === 'tracker').map((t) => <tr key={t.imei}><td className="px-4 py-2.5 font-medium text-slate-900">{t.name || 'Unnamed'}</td><td className="mono text-xs text-slate-600">{t.imei}</td><td className="text-slate-500">{orgs.find((o) => o.id === t.org_id)?.name ?? 'Not assigned'}</td><td><Chip tone={t.active ? 'green' : 'slate'}>{t.active ? 'active' : 'off'}</Chip></td></tr>)}</tbody></table></Card> : <Card><CardHead title="Fleet trackers" sub="Demo data" /><table className="w-full text-left text-[13px]"><tbody className="divide-y divide-slate-100">{VEHICLES.map((v) => <tr key={v.id}><td className="px-4 py-2.5 font-medium text-slate-900">{v.reg}</td><td className="mono text-xs text-slate-600">{v.imei}</td><td className="text-slate-500">{v.driver}</td><td><Chip tone={v.simulated ? 'slate' : 'green'}>{v.simulated ? 'simulated' : 'hardware'}</Chip></td></tr>)}</tbody></table></Card>}
         <Card><CardHead title={`RFID reader estate (${readers.length})`} sub="Fixed ceiling readers · UHF Gen2" /><div className="scroll-thin grid max-h-[260px] gap-1.5 overflow-y-auto p-3 sm:grid-cols-2">{readers.map((r) => <div key={r.id} className="flex items-center gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs"><CheckCircle2 size={13} className="text-emerald-500" /><span className="mono font-medium text-slate-800">{r.id}</span><span className="truncate text-slate-500">{r.label}</span></div>)}</div></Card>
       </div>
     </Page>
