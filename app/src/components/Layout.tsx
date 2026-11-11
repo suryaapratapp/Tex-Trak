@@ -37,7 +37,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const open = alertsFor(role).filter((a) => a.t <= t && a.sev !== 'info' && a.sev !== 'low').length
   useEffect(() => { let last = performance.now(); const id = setInterval(() => { const n = performance.now(); tick(n - last); last = n }, 100); return () => clearInterval(id) }, [tick])
   useEffect(() => { const f = () => set({ page: location.hash.slice(1) || 'command' }); addEventListener('hashchange', f); return () => removeEventListener('hashchange', f) }, [set])
-  useEffect(() => { set({ live: fix }) }, [fix, set])
+  useEffect(() => { set({ live: fix && fix.fix_valid !== false && !(fix.lat === 0 && fix.lng === 0) ? fix : null }) }, [fix, set])
   useEffect(() => { if (!allowedPages(role).includes(page)) go('command') }, [role, page])
   const liveAge = fix ? (Date.now() - new Date(fix.ts).getTime()) / 60000 : null
   const active = page === 'item' ? 'inventory' : page

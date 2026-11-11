@@ -29,8 +29,8 @@ export default function LiveDevices() {
   const [devs, setDevs] = useState<Dev[]>([]); const [pos, setPos] = useState<Pos[]>([]); const [hours, setHours] = useState(16); const [sel, setSel] = useState<string | null>(null); const [loaded, setLoaded] = useState(false)
   const load = useCallback(async () => {
     const since = new Date(Date.now() - hours * 3600e3).toISOString()
-    const [d, p] = await Promise.all([supabase.from('trackers').select('imei,name,kind,model,org_id,active,battery_pct,last_seen').order('name'), supabase.from('tracker_positions').select('imei,ts,lat,lng,speed_kmh,heading').gte('ts', since).order('ts', { ascending: true }).limit(8000)])
-    setDevs(((d.data ?? []) as Dev[]).filter((x) => x.active && (role === 'superadmin' || x.org_id === role))); setPos((p.data ?? []) as Pos[]); setLoaded(true)
+    const [d, p] = await Promise.all([supabase.from('trackers').select('imei,name,kind,model,org_id,active,battery_pct,last_seen').order('name'), supabase.from('tracker_positions').select('imei,ts,lat,lng,speed_kmh,heading').gte('ts', since).or('fix_valid.is.null,fix_valid.eq.true').order('ts', { ascending: true }).limit(8000)])
+    setDevs(((d.data ?? []) as Dev[]).filter((x) => x.active && (role === 'superadmin' || x.org_id === role))); setPos(((p.data ?? []) as Pos[]).filter((x) => !(x.lat === 0 && x.lng === 0))); setLoaded(true)
   }, [hours, role])
   useEffect(() => { void load(); const id = setInterval(() => void load(), 10000); return () => clearInterval(id) }, [load])
   const trails = useMemo(() => { const m: Record<string, Pos[]> = {}; for (const x of pos) (m[x.imei] ??= []).push(x); return m }, [pos])
@@ -51,7 +51,7 @@ export default function LiveDevices() {
           {rows.map((r) => (
             <li key={r.d.imei}><button onClick={() => setSel(sel === r.d.imei ? null : r.d.imei)} className={`flex w-full items-center gap-3 px-5 py-3.5 text-left ${sel === r.d.imei ? 'bg-cyan-50' : 'hover:bg-stone-50'}`}>
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white" style={{ background: r.c }}>{r.d.kind === 'phone' ? <Smartphone size={16} /> : <Truck size={16} />}</span>
-              <span className="min-w-0 flex-1"><span className="block truncate text-[14.5px] font-medium text-stone-900">{r.d.name || r.d.imei}{role === 'superadmin' && r.d.org_id ? <span className="font-normal text-stone-400"> · {orgs.find((o) => o.id === r.d.org_id)?.name}</span> : null}</span><span className="block truncate text-[12.5px] text-stone-500">{r.last ? `${ago(r.last.ts)}${r.last.speed_kmh ? ` · ${Math.round(r.last.speed_kmh)} km/h` : ''}` : r.d.last_seen ? `Seen ${ago(r.d.last_seen)}, no position in this period` : 'Never seen'}</span></span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-[14.5px] font-medium text-stone-900">{r.d.name || r.d.imei}{role === 'superadmin' && r.d.org_id ? <span className="font-normal text-stone-400"> · {orgs.find((o) => o.id === r.d.org_id)?.name}</span> : null}</span><span className="block truncate text-[12.5px] text-stone-500">{r.last ? `${ago(r.last.ts)}${r.last.speed_kmh ? ` · ${Math.round(r.last.speed_kmh)} km/h` : ''}` : r.d.last_seen ? `Seen ${ago(r.d.last_seen)}, waiting for a GPS fix (take it outside)` : 'Never seen'}</span></span>
               <span className="flex flex-col items-end text-[12px] text-stone-400"><i className="mb-1 h-2.5 w-2.5 rounded-full" style={{ background: colour(r.age) }} />{r.d.battery_pct != null ? `${r.d.battery_pct}%` : ''}</span></button></li>))}</ul></Card>
     </div>)
 }
