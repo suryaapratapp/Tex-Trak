@@ -50,7 +50,7 @@ What each feature does, what has been checked, and what still needs a real devic
 |---|---|---|
 | Codec 8 / 8 Extended decoding, acknowledgements, CRC | Verified | Gateway self-test and end-to-end test against a mock server |
 | Only registered, active IMEIs accepted | Verified (design) | Test refuses an unknown IMEI at the gateway; server also checks |
-| Gateway hosted on Fly.io | **Needs your action** | App `textrak-gateway` created; needs the shared secret set and `fly deploy` |
+| Gateway hosted on Fly.io | Running (London). **Redeploy needed** for the latest hardening (timeout, ordered acknowledgements, size limits) | `cd gateway && fly deploy` |
 | Positions stored and shown on Live map | Built, needs device test | Phone positions verified in the database; real tracker not seen |
 | Real device configuration (server, port 5027, TCP, 360 s) | Needs your action | See the training guide |
 
@@ -64,6 +64,14 @@ What each feature does, what has been checked, and what still needs a real devic
 | Saved on phone when offline, sent later | Built, needs device test | |
 | Browser tracking while page is open | Built, needs your test | |
 | Live map of phones and trackers | Built, needs your test | |
+
+| Route history by day (30 days), distance, moving time, CSV | Built, needs your test | Database function tested with sample points (rolled back); screens compiled |
+| 30 days full detail, then coordinates only; no-fix readings removed; nightly job | **Verified (database)** | Test rows 40 days old were reduced to time and coordinates, no-fix rows removed, duplicates blocked, job scheduled |
+| Same reading sent twice stored once | Verified (database) | Unique on device and time; the ingest function ignores duplicates |
+| Device status page (trackers, phones, readers online / quiet / offline) | Built, needs your test | Compiled; rules in `app/src/lib/status.ts` |
+| Alerts from real devices, items and shipments | Built, needs your test | Compiled |
+| Edit clients, sites, zones, readers, trackers, vehicles | Built, needs your test | Compiled; permissions are Super Admin only in the database |
+| Live and Demo kept apart | Built, needs your test | Demo-only pages hidden in Live; Home, Alerts, Scan, Admin switch by mode |
 
 ## F. Shipments
 

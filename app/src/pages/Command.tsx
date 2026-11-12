@@ -10,6 +10,7 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { useQr, useQrLoad, isOverdue } from '../qr/store'
 import { go, useStore } from '../store'
+import HomeLive from './HomeLive'
 
 const DOT: Record<string, string> = { info: '#a3abc2', warn: '#e0a030', bad: '#e5586b', good: '#3fb68b' }
 
@@ -23,7 +24,7 @@ function Card({ icon, color, title, headline, label, status, bad, page }: { icon
     </button>)
 }
 
-export default function Command() {
+function CommandDemo() {
   const snap = useSnap(); const t = snap.t; const w = getWorld(); const role = useStore((s) => s.role); const user = useAuth((s) => s.user)
   useQrLoad(60000); const prods = Object.values(useQr((s) => s.products)); const [open, setOpen] = useState(0)
   const mods = (m: Parameters<typeof hasModule>[1]) => hasModule(role, m)
@@ -57,3 +58,5 @@ export default function Command() {
         <div className="card divide-y divide-stone-100">{attention.map((i, k) => <button key={k} onClick={() => i.page && go(i.page)} className="flex w-full items-start gap-3 px-5 py-4 text-left hover:bg-stone-50"><i className="mt-2 h-2 w-2 shrink-0 rounded-full" style={{ background: DOT[i.tone] }} /><span><span className="block text-[14.5px] font-medium text-stone-800">{i.title}</span><span className="mt-0.5 block text-[13.5px] leading-snug text-stone-500">{i.body}</span></span></button>)}</div></section>}
     </div>)
 }
+
+export default function Command() { return useStore((s) => s.mode) === 'demo' ? <CommandDemo /> : <HomeLive /> }

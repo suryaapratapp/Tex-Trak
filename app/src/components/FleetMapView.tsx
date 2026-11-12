@@ -46,7 +46,7 @@ function Fit({ bounds }: { bounds: L.LatLngBoundsExpression | null }) {
 }
 
 export function FleetMapView({ vehIds, height = 480, selected, onSelect, follow = false, scanners = false, sites, bounds, network }: { vehIds: string[]; height?: number | string; selected?: string; onSelect?: (id: string) => void; follow?: boolean; scanners?: boolean; sites?: string[]; bounds?: L.LatLngBoundsExpression; network?: NetSite[] }) {
-  const snap = useSnap(); const t = snap.t; const w = getWorld(); const live = useStore((s) => s.live)
+  const snap = useSnap(); const t = snap.t; const w = getWorld();
   const siteList = sites ?? Object.keys(SITES)
   const autoBounds = useMemo(() => {
     if (bounds) return bounds
@@ -103,7 +103,6 @@ export function FleetMapView({ vehIds, height = 480, selected, onSelect, follow 
       {scanners && SCANNERS.map((sc) => { const s = scannerAt(w.legs, sc, t); if (s.veh) return null
         return <span key={sc.id}><Circle center={sc.id === 'SC-004' && s.mode !== 'at_hub' ? SITES.COMM.pos : sc.pos} radius={sc.geofence} pathOptions={{ color: '#7c3aed', weight: 1, fillOpacity: 0.06 }} />
           <Marker position={s.pos} icon={scIcon(s.outside ? '#e11d48' : '#7c3aed', sc.id)}><Tooltip>{sc.name}<br />{sc.holder}</Tooltip></Marker></span> })}
-      {live && <Marker position={[live.lat, live.lng]} icon={scIcon('#16a34a', 'TAT240 LIVE')} zIndexOffset={2000}><Tooltip>Physical TAT240 · {new Date(live.ts).toLocaleString('en-GB')}</Tooltip></Marker>}
     </MapContainer>
   )
 }

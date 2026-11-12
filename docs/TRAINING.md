@@ -184,7 +184,14 @@ Super Admin → Trackers → **Add**. Enter the 15-digit **IMEI** (printed on th
 Use 360 seconds. Shorter intervals drain the battery quickly. Take the device outside with open sky: the first fix can take a few minutes.
 
 ### See it
-Set the top bar to **Live data** and open **Live map**. Vehicles appear with their name, last seen, battery and trail.
+Set the top bar to **Live data** and open **Live map**. Vehicles and phones appear with their name, last seen and battery.
+
+**Route history.** Click a vehicle or person on the Live map (or press *Route* on **Device status**). Choose a day with the date box, the arrows, or *Today / Yesterday / 2 days ago*. The map draws that day's route with a green start and a red end, and shows the distance, time moving, first and last point and top speed. *Download day (CSV)* saves the points.
+
+**How long it is kept.** Full detail (speed, battery, signal, GPS status) is kept for **30 days**. After 30 days only the coordinates (time, latitude, longitude) are kept, and readings that never had a GPS fix are removed. This runs by itself every night.
+
+### Is it working? Device status
+Super Admin → **Device status** lists every tracker, phone and RFID reader with *Online*, *Quiet*, *Offline* or *Never seen*, when it was last heard, GPS state, battery and signal. A vehicle tracker is online if it reported in the last 15 minutes (it reports every 6). A phone is online if it reported in the last 10. A reader is online if it read something in the last 15 minutes, *Quiet* if not for a while (normal for a quiet doorway) and *Offline* after a day. **Alerts** raises these automatically.
 
 ### One-time gateway set-up (administrator)
 The gateway receives raw TCP from trackers. It runs on Fly.io. Run once:
@@ -233,6 +240,14 @@ Every step is kept in the shipment's history. **Laundry arrivals** shows what is
 Demonstration pages are labelled **Demo data** until they are connected to live readers and trackers.
 
 ---
+
+## 10a. Editing what you have added (Super Admin)
+
+Every list in Super Admin has a pencil to **edit** and a bin to **remove**: clients (*Edit details*, features, switch off), sites (name, type, owner, address, coordinates, radius, floors), zones, RFID readers, trackers (name, model, serial, client) and vehicles (registration, driver, role, the tracker fitted, client). Press **Add** to open the form and **Close** to shut it. Removing a tracker keeps its route history.
+
+## 10b. Demo data and Live data
+
+Super Admin can switch the top bar between **Live data** (your real clients, devices and scans) and **Demo data** (a built-in example day for showing the product). They are completely separate: Demo never shows real records and Live never shows example ones. Demo pages carry an amber **Demo data** label. Pages that only exist as an example (Intelligence, Daily flow, Community assets, Recycling proof, Impact) appear in Demo only until they are fed by live data. Clients always see Live data.
 
 ## 11. If something does not work
 

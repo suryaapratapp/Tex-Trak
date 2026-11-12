@@ -19,7 +19,7 @@ import Assets from './pages/Assets'
 import Provenance from './pages/Provenance'
 import Alerts from './pages/Alerts'
 import Esg from './pages/Esg'
-import Devices from './pages/Devices'
+import DeviceStatus from './pages/DeviceStatus'
 import Inventory from './pages/Inventory'
 import ItemJourney from './pages/ItemJourney'
 import Admin from './pages/Admin'
@@ -37,7 +37,7 @@ import Reports from './qr/Reports'
 import Account from './qr/Account'
 import { QrShell } from './qr/Shell'
 
-const PAGES: Record<string, () => React.ReactElement> = { help: Help, team: Team, qrdash: QrDashboard, qrproducts: Products, qrinstall: Install, qrtakedown: Takedown, qrregister: Register, qrlabels: Labels, qrlocations: Locations, qrreports: Reports, account: Account, admin: Admin, scan: Scan, insights: Insights, command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, devices: Devices, inventory: Inventory,  item: ItemJourney }
+const PAGES: Record<string, () => React.ReactElement> = { help: Help, team: Team, qrdash: QrDashboard, qrproducts: Products, qrinstall: Install, qrtakedown: Takedown, qrregister: Register, qrlabels: Labels, qrlocations: Locations, qrreports: Reports, account: Account, admin: Admin, scan: Scan, insights: Insights, command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, status: DeviceStatus, inventory: Inventory,  item: ItemJourney }
 export default function App() {
   const page = useStore((s) => s.page); const { ready, user, init } = useAuth()
   useEffect(() => { initNetwork(); startQrSync(); void init() }, [init])

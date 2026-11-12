@@ -7,8 +7,9 @@ import { SEV_ORDER, type Sev } from '../sim/world'
 import { useStore } from '../store'
 import { useSnap } from '../sim/snap'
 import { alertsFor } from '../lib/scope'
+import AlertsLive from './AlertsLive'
 
-export default function Alerts() {
+function AlertsDemo() {
   const snap = useSnap(); const t = snap.t; const w = getWorld(); const { states, setAlert, selIncident, set, role } = useStore()
   const [sev, setSev] = useState<'all' | Sev>('all'); const [tab, setTab] = useState<'alerts' | 'rules'>('alerts'); const [selA, setSelA] = useState<string | null>(null)
   const list = alertsFor(role).filter((a) => a.t <= t && (sev === 'all' || a.sev === sev)).reverse()
@@ -45,3 +46,5 @@ export default function Alerts() {
     </Page>
   )
 }
+
+export default function Alerts() { return useStore((s) => s.mode) === 'demo' ? <AlertsDemo /> : <AlertsLive /> }

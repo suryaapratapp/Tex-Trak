@@ -10,16 +10,19 @@ const ALLOWED = process.env.ALLOWED_IMEIS ? process.env.ALLOWED_IMEIS.split(',')
 if (!INGEST_URL || !INGEST_TOKEN) { console.error('Set INGEST_URL and INGEST_TOKEN'); process.exit(1) }
 
 async function forward(imei, records) {
-  const r = await fetch(INGEST_URL, { method: 'POST', headers: { 'content-type': 'application/json', 'x-ingest-token': INGEST_TOKEN }, body: JSON.stringify({ imei, records }) })
+  const r = await fetch(INGEST_URL, { method: 'POST', headers: { 'content-type': 'application/json', 'x-ingest-token': INGEST_TOKEN }, body: JSON.stringify({ imei, records }), signal: AbortSignal.timeout(15000) })
   if (!r.ok) throw new Error(`ingest ${r.status}: ${await r.text()}`)
 }
 
 net.createServer((sock) => {
-  let imei = null, buf = Buffer.alloc(0)
+  let imei = null, buf = Buffer.alloc(0), queue = Promise.resolve() // chunks are handled one after another, so acknowledgements go out in order
   sock.setTimeout(15 * 60 * 1000, () => sock.destroy())
   sock.on('error', () => {})
-  sock.on('data', async (chunk) => {
+  sock.on('data', (chunk) => { queue = queue.then(() => handle(chunk)) })
+  async function handle(chunk) {
+    if (sock.destroyed) return
     buf = Buffer.concat([buf, chunk])
+    if (buf.length > 256 * 1024) { console.warn('oversized buffer, closing', imei); return sock.destroy() } // a real packet is far smaller
     try {
       if (!imei) {
         const p = parseImei(buf); if (!p) return
@@ -34,6 +37,6 @@ net.createServer((sock) => {
         const ack = Buffer.alloc(4); ack.writeUInt32BE(pkt.count); sock.write(ack) // device re-sends until ACKed
         console.log(`${imei}: ${pkt.count} record(s) stored`)
       }
-    } catch (e) { console.error('error', e.message); sock.destroy() }
-  })
+    } catch (e) { console.error('error', imei ?? '-', e.message); sock.destroy() }
+  }
 }).listen(PORT, () => console.log(`Teltonika gateway listening on :${PORT}`))

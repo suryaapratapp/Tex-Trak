@@ -24,8 +24,8 @@ type LiveItem = { id: string; product: string; qr: string | null; epc: string | 
 type Found = { type: 'litem'; li: LiveItem } | { type: 'item'; it: Item } | { type: 'asset'; id: string } | { type: 'load'; sh: Ship } | { type: 'curtain'; c: { code: string; status: string; type: string; due_at: string | null; ward: string | null; bay: string | null } } | null
 
 export default function Scan() {
-  const role = useStore((s) => s.role); const t = useStore((s) => s.t); const w = getWorld()
-  const tasks = TASKS.filter((x) => x.id === 'smart' || hasModule(role, x.module) || (x.id === 'load' && hasModule(role, 'recycling')))
+  const role = useStore((s) => s.role); const t = useStore((s) => s.t); const w = getWorld(); const demo = useStore((s) => s.mode) === 'demo'
+  const tasks = TASKS.filter((x) => (x.id !== 'asset' || demo) && (x.id === 'smart' || hasModule(role, x.module) || (x.id === 'load' && hasModule(role, 'recycling'))))
   const [task, setTask] = useState<Task>('smart'); const [manual, setManual] = useState(''); const [found, setFound] = useState<Found>(null); const [msg, setMsg] = useState<{ level: 'ok' | 'warn' | 'error'; title: string; detail: string } | null>(null)
   const user = useAuth((x) => x.user); const orgId = role === 'superadmin' ? null : role
   const [list, setList] = useState<Entry[]>([]); const [open, setOpen] = useState<Ship[]>([]); const [count, setCount] = useState('')
@@ -49,11 +49,11 @@ export default function Scan() {
     if (task === 'load') return setMsg({ level: 'error', title: 'Shipment not found', detail: `${raw} does not match any shipment you can see.` })
     if (task === 'smart' || task === 'textile') {
       const li = await findItem(code); if (li) { setFound({ type: 'litem', li }); return setMsg(null) }
-      const it = w.items.find((i) => i.qr === code || i.epc === code); if (it) { setFound({ type: 'item', it }); return setMsg(null) }
+      const it = demo ? w.items.find((i) => i.qr === code || i.epc === code) : undefined; if (it) { setFound({ type: 'item', it }); return setMsg(null) }
       if (task === 'textile') return none('a textile tag')
     }
     if (task === 'smart') { const c = await findCurtain(code); if (c) { setFound({ type: 'curtain', c }); return setMsg(null) } }
-    if (task === 'smart' || task === 'asset') { const sc = SCANNERS.find((x) => x.id === code); if (sc) { setFound({ type: 'asset', id: sc.id }); return setMsg(null) } if (task === 'asset') return none('an equipment tag') }
+    if (task === 'smart' || task === 'asset') { const sc = demo ? SCANNERS.find((x) => x.id === code) : undefined; if (sc) { setFound({ type: 'asset', id: sc.id }); return setMsg(null) } if (task === 'asset') return none('an equipment tag') }
     none('a known item, curtain, shipment or equipment tag')
   }
   const log = async (kind: string, code: string, text: string, level: 'ok' | 'warn' = 'ok') => {
@@ -62,7 +62,7 @@ export default function Scan() {
   }
   const done = (kind: string, text: string, level: 'ok' | 'warn' = 'ok') => void log(kind, text.split(' ')[0], text, level)
   const step = async (sh: Ship, action: string, items: number | null, text: string) => { const { error } = await supabase.rpc('shipment_step', { p_id: sh.id, p_action: action, p_detail: 'Scanned in the field', p_items: items }); if (error) { setFound(null); return setMsg({ level: 'error', title: error.message, detail: `${sh.ref} was not changed.` }) } void log('load', sh.ref, text, items != null && items !== sh.items ? 'warn' : 'ok') }
-  const chips: { label: string; raw: string }[] = task === 'textile' ? [0, 9, 20, 41].map((i) => ({ label: `${w.items[i].type.name} · ${w.items[i].qr}`, raw: w.items[i].qr })) : task === 'asset' ? SCANNERS.slice(0, 4).map((s) => ({ label: `${s.id} · ${s.name.split('·')[0].trim()}`, raw: s.id })) : open.map((c) => ({ label: `${c.ref} · ${c.to_name}`, raw: c.ref }))
+  const chips: { label: string; raw: string }[] = !demo && (task === 'textile' || task === 'asset') ? [] : task === 'textile' ? [0, 9, 20, 41].map((i) => ({ label: `${w.items[i].type.name} · ${w.items[i].qr}`, raw: w.items[i].qr })) : task === 'asset' ? SCANNERS.slice(0, 4).map((s) => ({ label: `${s.id} · ${s.name.split('·')[0].trim()}`, raw: s.id })) : open.map((c) => ({ label: `${c.ref} · ${c.to_name}`, raw: c.ref }))
   const tone = msg && { ok: ['border-emerald-300 bg-emerald-50 text-emerald-900', <CheckCircle2 key="i" className="text-emerald-600" size={28} />], warn: ['border-amber-300 bg-amber-50 text-amber-900', <TriangleAlert key="i" className="text-amber-600" size={28} />], error: ['border-rose-300 bg-rose-50 text-rose-900', <XCircle key="i" className="text-rose-600" size={28} />] }[msg.level]
   const btn = 'rounded-full px-4 py-2.5 text-sm font-extrabold transition'
   return (

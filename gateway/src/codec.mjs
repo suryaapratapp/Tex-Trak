@@ -9,6 +9,7 @@ export function crc16ibm(buf) {
 export function parseImei(buf) {
   if (buf.length < 2) return null
   const len = buf.readUInt16BE(0)
+  if (len < 1 || len > 32) throw new Error('bad login length')
   if (buf.length < 2 + len) return null
   return { imei: buf.subarray(2, 2 + len).toString('ascii'), used: 2 + len }
 }
@@ -18,6 +19,7 @@ export function parsePacket(buf) {
   if (buf.length < 12) return null
   if (buf.readUInt32BE(0) !== 0) throw new Error('bad preamble')
   const dataLen = buf.readUInt32BE(4)
+  if (dataLen < 3 || dataLen > 64 * 1024) throw new Error('bad packet length')
   const total = 8 + dataLen + 4
   if (buf.length < total) return null
   const data = buf.subarray(8, 8 + dataLen)
