@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound, BookOpen } from 'lucide-react'
+import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound, BookOpen, ArrowLeftRight, ClipboardCheck, History, MapPinned, Package, PackageMinus, PackageOpen, PackagePlus, ScanBarcode, Sparkles, Warehouse, Wrench } from 'lucide-react'
 import { go, jump, SPEEDS, useStore } from '../store'
 import { fmtClock, T0, T1 } from '../sim/engine'
 import { hasFeature, type Role } from '../sim/registry'
@@ -19,6 +19,12 @@ const GROUPS: Group[] = [
   { title: 'Curtains · QR', items: [
     { id: 'qrdash', label: 'Dashboard', icon: <BarChart3 size={I} /> }, { id: 'qrproducts', label: 'Products', icon: <Tag size={I} /> }, { id: 'qrinstall', label: 'Install', icon: <ArrowDownToLine size={I} /> }, { id: 'qrtakedown', label: 'Take down', icon: <Repeat2 size={I} /> },
     { id: 'qrregister', label: 'Register labels', icon: <QrCode size={I} /> }, { id: 'qrlocations', label: 'Locations', icon: <MapPin size={I} /> }, { id: 'qrreports', label: 'Reports', icon: <FileText size={I} /> }] },
+  { title: 'Warehouse · Stock', items: [
+    { id: 'whdash', label: 'Dashboard', icon: <Warehouse size={I} /> }, { id: 'whscan', label: 'Smart scan', icon: <ScanBarcode size={I} /> }, { id: 'whinsights', label: 'Insights', icon: <Sparkles size={I} /> }, { id: 'whitems', label: 'Items', icon: <Tag size={I} /> },
+    { id: 'whlocations', label: 'Locations', icon: <MapPinned size={I} /> }, { id: 'whledger', label: 'Ledger', icon: <History size={I} /> }, { id: 'whlabels', label: 'Print labels', icon: <QrCode size={I} /> }] },
+  { title: 'Warehouse · Work', items: [
+    { id: 'whreceive', label: 'Goods in', icon: <PackagePlus size={I} /> }, { id: 'whissue', label: 'Goods out', icon: <PackageMinus size={I} /> }, { id: 'whpack', label: 'Pack order', icon: <Package size={I} /> }, { id: 'whorders', label: 'Orders', icon: <FileText size={I} /> },
+    { id: 'whunpack', label: 'Unpack', icon: <PackageOpen size={I} /> }, { id: 'whmove', label: 'Move', icon: <ArrowLeftRight size={I} /> }, { id: 'whstock', label: 'Damage and repair', icon: <Wrench size={I} /> }, { id: 'whcount', label: 'Cycle count', icon: <ClipboardCheck size={I} /> }] },
   { title: 'Laundry · RFID', items: [{ id: 'planner', label: 'Laundry arrivals', icon: <Activity size={I} /> }, { id: 'inventory', label: 'Inventory', icon: <Boxes size={I} /> }, { id: 'twin', label: 'Facilities and floors', icon: <Building2 size={I} /> }, { id: 'lifecycle', label: 'Daily flow', icon: <Workflow size={I} />, demoOnly: true }] },
   { title: 'Equipment and loads', items: [{ id: 'assets', label: 'Community assets', icon: <Radar size={I} />, demoOnly: true }, { id: 'shipments', label: 'Shipments', icon: <Truck size={I} /> }] },
   { title: 'Reporting', items: [{ id: 'provenance', label: 'Recycling proof', icon: <Recycle size={I} />, demoOnly: true }, { id: 'esg', label: 'Impact', icon: <Leaf size={I} />, demoOnly: true }] },

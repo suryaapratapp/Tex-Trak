@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { initNetwork } from './lib/offline'
 import { startQrSync } from './qr/store'
+import { startWhSync } from './wh/store'
 import { PinGate } from './components/PinGate'
 import { NativeSetup } from './components/NativeSetup'
 import { WebLocationPrompt } from './components/WebLocationPrompt'
@@ -36,13 +37,28 @@ import Locations from './qr/Locations'
 import Reports from './qr/Reports'
 import Account from './qr/Account'
 import { QrShell } from './qr/Shell'
+import { WhShell } from './wh/ui'
+import WhDash from './wh/Dashboard'
+import WhScan from './wh/Scan'
+import WhInsights from './wh/Insights'
+import WhReceive from './wh/Receive'
+import WhIssue from './wh/Issue'
+import WhPack from './wh/Pack'
+import WhOrders, { Unpack as WhUnpack } from './wh/Orders'
+import WhMove from './wh/Move'
+import WhActions from './wh/Actions'
+import WhCount from './wh/Count'
+import WhItems from './wh/Items'
+import WhLocations from './wh/Locations'
+import WhLedger from './wh/Ledger'
+import WhLabels from './wh/Labels'
 
-const PAGES: Record<string, () => React.ReactElement> = { help: Help, team: Team, qrdash: QrDashboard, qrproducts: Products, qrinstall: Install, qrtakedown: Takedown, qrregister: Register, qrlabels: Labels, qrlocations: Locations, qrreports: Reports, account: Account, admin: Admin, scan: Scan, insights: Insights, command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, status: DeviceStatus, inventory: Inventory,  item: ItemJourney }
+const PAGES: Record<string, () => React.ReactElement> = { whdash: WhDash, whscan: WhScan, whinsights: WhInsights, whreceive: WhReceive, whissue: WhIssue, whpack: WhPack, whorders: WhOrders, whunpack: WhUnpack, whmove: WhMove, whstock: WhActions, whcount: WhCount, whitems: WhItems, whlocations: WhLocations, whledger: WhLedger, whlabels: WhLabels, help: Help, team: Team, qrdash: QrDashboard, qrproducts: Products, qrinstall: Install, qrtakedown: Takedown, qrregister: Register, qrlabels: Labels, qrlocations: Locations, qrreports: Reports, account: Account, admin: Admin, scan: Scan, insights: Insights, command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, status: DeviceStatus, inventory: Inventory,  item: ItemJourney }
 export default function App() {
   const page = useStore((s) => s.page); const { ready, user, init } = useAuth()
-  useEffect(() => { initNetwork(); startQrSync(); void init() }, [init])
+  useEffect(() => { initNetwork(); startQrSync(); startWhSync(); void init() }, [init])
   if (!ready) return <div className="grid h-full place-items-center bg-stone-900 text-[14px] font-semibold text-stone-400">Loading…</div>
   if (!user) return <Login />
   const P = PAGES[page] ?? Command
-  return <><PinGate /><NativeSetup /><WebLocationPrompt /><Layout>{page.startsWith('qr') ? <QrShell><P /></QrShell> : <P />}</Layout></>
+  return <><PinGate /><NativeSetup /><WebLocationPrompt /><Layout>{page.startsWith('qr') ? <QrShell><P /></QrShell> : page.startsWith('wh') ? <WhShell><P /></WhShell> : <P />}</Layout></>
 }

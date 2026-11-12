@@ -96,6 +96,20 @@ What each feature does, what has been checked, and what still needs a real devic
 | Reader keys hidden from everyone except Super Admin | Verified | |
 | Backups, uptime monitoring | **Needs your action** | Enable daily backups in Supabase; turn on leaked-password protection (Authentication → Password security) |
 
+## K. Warehouse module (generic QR / barcode / RFID stock)
+
+| Feature | Status | How it was checked |
+|---|---|---|
+| Items, codes, locations, stock, orders, ledger tables with per-client access | **Verified (database)** | Features `wh*`; only reads are open; all stock changes go through checked functions |
+| Goods in, Goods out, Pack, Dispatch, Unpack, Move, Damage / repair / quarantine, Count | **Verified (database)** | Full run in a rolled-back test: soonest-expiry picking across lots, expired stock refused, over-picking refused, retry with the same id ignored, unpack after dispatch refused, count variance corrected, reason required for write-off and adjustments |
+| Insights (reorder, expiry, ABC, dead stock, space, variance, anomalies, suggested counts) | Verified (database) on a tiny data set | Needs a real month of movement to judge usefulness |
+| Screens: all 15 | Verified in a browser with sample data | Rendered, scanned, packed, unpacked, received, counted, edited and moved; phone width checked. **Not yet used with your real client, camera or handheld** |
+| Scanning with camera, Bluetooth / USB scanner, RFID handheld | Built, needs device test | |
+| Packing slip and label printing | Built, needs your test | Print preview not seen |
+| CSV import (items, opening stock, locations) | Built, needs your test | |
+| Offline for Goods in/out, Pack, Move, Damage/repair, Count | Built; logic checked in a browser | Saved on the device, shown at once, sent in order later, refused items can be retried or discarded. **Needs a real phone test.** Unpack, dispatch, orders, ledger, imports and edits still need a connection |
+| Purchase orders, expected deliveries, multi-step picking waves, serial numbers | Not built | Candidates for the next phase |
+
 ## I. Acceptance test (about one hour)
 
 Do these in order on real equipment. Each should pass before you rely on that area.

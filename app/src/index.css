@@ -17,7 +17,7 @@
 }
 html, body, #root { height: 100%; }
 body { font-family: var(--font-sans); background: #f7f8fc; color: #1c2236; -webkit-font-smoothing: antialiased; line-height: 1.55; letter-spacing: -0.003em; }
-.leaflet-container { font-family: var(--font-sans); background: #e8ebf4; }
+.leaflet-container { font-family: var(--font-sans); background: #e8ebf4; position: relative; z-index: 0; isolation: isolate; } /* keeps the map's own layers (z-index up to 1000) below menus and dialogs */
 .veh-icon { transition: transform .1s linear; }
 .pulse-ring { animation: pr 1.6s ease-out infinite; transform-origin: center; transform-box: fill-box; }
 @keyframes pr { 0% { transform: scale(.6); opacity: .9 } 100% { transform: scale(2.6); opacity: 0 } }

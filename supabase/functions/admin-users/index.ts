@@ -9,7 +9,8 @@ const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { sta
 const fail = (m: string, status = 400) => json({ error: m }, status)
 
 const FEATURES = ['command', 'map', 'alerts', 'insights', 'esg', 'scan', 'planner', 'inventory', 'twin', 'lifecycle', 'assets', 'shipments', 'provenance',
-  'qrdash', 'qrproducts', 'qrinstall', 'qrtakedown', 'qrregister', 'qrlabels', 'qrlocations', 'qrreports', 'qrusers']
+  'qrdash', 'qrproducts', 'qrinstall', 'qrtakedown', 'qrregister', 'qrlabels', 'qrlocations', 'qrreports', 'qrusers',
+  'whdash', 'whscan', 'whinsights', 'whreceive', 'whissue', 'whpack', 'whorders', 'whunpack', 'whmove', 'whstock', 'whcount', 'whitems', 'whlocations', 'whledger', 'whlabels']
 const clean = (f: unknown) => (Array.isArray(f) ? [...new Set(f.filter((x): x is string => typeof x === 'string' && FEATURES.includes(x)))] : [])
 const email = (u: string) => `${u}@textrak.local`
 const USERNAME = /^[a-z0-9._-]{3,24}$/

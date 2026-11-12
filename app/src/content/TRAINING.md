@@ -166,6 +166,37 @@ Every scan is saved to a shared scan log.
 
 ---
 
+## 6b. Warehouse: stock for any product (QR, barcode, RFID)
+
+A general stock system, separate from Synergy's curtains. Super Admin switches it on per client (Super Admin, Clients, features, **Warehouse**). Staff then get the screens their role allows.
+
+**Set up once** (Items and Locations screens)
+1. **Locations**: add shelves, bins and zones, or import a CSV. Each has a short code, such as `A-01-03`. Optional capacity warns when a shelf is nearly full.
+2. **Items**: add products with a SKU, name and, if they have one, a barcode. Set the reorder level, usual order size, supplier lead time, cost, and whether it has an expiry date. Import a CSV for many items, then **Import stock** to load opening quantities.
+3. **Labels**: print QR labels for shelves and items. Existing barcodes need no new label.
+
+**Every day**
+| Screen | What it does |
+|---|---|
+| Smart scan | Scan anything. Items show stock by shelf, lot and expiry, with advice. Shelves show their contents. Order slips open the order. |
+| Goods in | Scan items, choose the shelf, lot, expiry and condition (good, hold, to repair, beyond repair). One receipt can hold many lines. |
+| Goods out | Take stock out for a sale, production, sample, disposal or return to supplier. Picks soonest expiry first. |
+| Pack order | Pick items for a customer. Stock leaves the shelf and is kept against the order. |
+| Orders | Print the packing slip, dispatch, or unpack. |
+| Unpack | Take items back out of a packed order. Each returns to its original shelf, or goes on hold or to repair. A dispatched order cannot be unpacked. |
+| Move | Shelf to shelf, keeping lot and expiry. |
+| Damage and repair | Damaged (repairable or not), hold and release, repaired, write off, correct a quantity. Write-offs and corrections need a reason. |
+| Cycle count | Count a shelf. Differences are corrected and recorded. |
+| Ledger | Every movement, who and when. Cannot be edited. Export to CSV. |
+| Insights | Reorder suggestions, expiry watch, what moves and what sits, space, count accuracy and unusual adjustments. |
+
+**Good to know**
+- Expired, held and damaged stock is never picked.
+- Saving the same screen twice (for example after a poor signal) cannot double-count.
+- Codes: our own QR labels start `WH:`. Barcodes work with or without leading zeros. Extra codes (case barcodes, RFID tags) can be added to an item and scanning any of them finds it.
+- An RFID handheld that types into a field works like a keyboard scanner.
+- **Offline:** Goods in, Goods out, Pack order, Move, Damage and repair, and Cycle count keep working with no signal. They are saved on the device, the screen shows the result straight away, and they are sent in order when the connection returns. A banner shows what is waiting. If the server refuses one (for example, someone else took the stock first) it is shown with *Try again* and *Discard*. Orders, the ledger, unpacking, dispatch, imports and item or location edits need a connection. The shelf and item list is saved on the device each time it loads, so connect once first.
+
 ## 7. Vehicle tracking with the Teltonika TAT240
 
 ### Register the tracker
