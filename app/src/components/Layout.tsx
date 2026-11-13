@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound, BookOpen, ArrowLeftRight, ClipboardCheck, History, MapPinned, Package, PackageMinus, PackageOpen, PackagePlus, ScanBarcode, Sparkles, Warehouse, Wrench } from 'lucide-react'
+import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound, BookOpen, ArrowLeftRight, ClipboardCheck, ChevronDown, History, MapPinned, Package, PackageMinus, PackageOpen, PackagePlus, ScanBarcode, Sparkles, Warehouse, Wrench } from 'lucide-react'
 import { go, jump, SPEEDS, useStore } from '../store'
 import { fmtClock, T0, T1 } from '../sim/engine'
 import { hasFeature, type Role } from '../sim/registry'
@@ -10,25 +10,23 @@ import { GuidedTour } from './Tour'
 import { SyncBar } from './SyncBar'
 import { useQr } from '../qr/store'
 
-interface NavItem { id: string; label: string; icon: ReactNode; adminOnly?: boolean; teamOnly?: boolean; always?: boolean; demoOnly?: boolean }
-interface Group { title: string; items: NavItem[] }
+interface NavItem { sub?: string; id: string; label: string; icon: ReactNode; adminOnly?: boolean; teamOnly?: boolean; always?: boolean; demoOnly?: boolean }
+interface Group { title: string; icon: ReactNode; items: NavItem[] }
 const I = 17
 const GROUPS: Group[] = [
-  { title: 'Overview', items: [{ id: 'command', label: 'Home', icon: <Home size={I} /> }, { id: 'map', label: 'Live map', icon: <Map size={I} /> }, { id: 'alerts', label: 'Alerts', icon: <AlertTriangle size={I} /> }, { id: 'insights', label: 'Intelligence', icon: <Brain size={I} />, demoOnly: true }] },
-  { title: 'Field work', items: [{ id: 'scan', label: 'Scan station', icon: <ScanLine size={I} /> }] },
-  { title: 'Curtains · QR', items: [
+  { title: 'Overview', icon: <Home size={I} />, items: [{ id: 'command', label: 'Home', icon: <Home size={I} /> }, { id: 'map', label: 'Live map', icon: <Map size={I} /> }, { id: 'scan', label: 'Scan station', icon: <ScanLine size={I} /> }, { id: 'alerts', label: 'Alerts', icon: <AlertTriangle size={I} /> }, { id: 'insights', label: 'Intelligence', icon: <Brain size={I} />, demoOnly: true }] },
+  { title: 'Curtains · QR', icon: <QrCode size={I} />, items: [
     { id: 'qrdash', label: 'Dashboard', icon: <BarChart3 size={I} /> }, { id: 'qrproducts', label: 'Products', icon: <Tag size={I} /> }, { id: 'qrinstall', label: 'Install', icon: <ArrowDownToLine size={I} /> }, { id: 'qrtakedown', label: 'Take down', icon: <Repeat2 size={I} /> },
     { id: 'qrregister', label: 'Register labels', icon: <QrCode size={I} /> }, { id: 'qrlocations', label: 'Locations', icon: <MapPin size={I} /> }, { id: 'qrreports', label: 'Reports', icon: <FileText size={I} /> }] },
-  { title: 'Warehouse · Stock', items: [
-    { id: 'whdash', label: 'Dashboard', icon: <Warehouse size={I} /> }, { id: 'whscan', label: 'Smart scan', icon: <ScanBarcode size={I} /> }, { id: 'whinsights', label: 'Insights', icon: <Sparkles size={I} /> }, { id: 'whitems', label: 'Items', icon: <Tag size={I} /> },
-    { id: 'whlocations', label: 'Locations', icon: <MapPinned size={I} /> }, { id: 'whledger', label: 'Ledger', icon: <History size={I} /> }, { id: 'whlabels', label: 'Print labels', icon: <QrCode size={I} /> }] },
-  { title: 'Warehouse · Work', items: [
-    { id: 'whreceive', label: 'Goods in', icon: <PackagePlus size={I} /> }, { id: 'whissue', label: 'Goods out', icon: <PackageMinus size={I} /> }, { id: 'whpack', label: 'Pack order', icon: <Package size={I} /> }, { id: 'whorders', label: 'Orders', icon: <FileText size={I} /> },
+  { title: 'Warehouse', icon: <Warehouse size={I} />, items: [
+    { sub: 'Stock', id: 'whdash', label: 'Dashboard', icon: <Warehouse size={I} /> }, { id: 'whscan', label: 'Smart scan', icon: <ScanBarcode size={I} /> }, { id: 'whinsights', label: 'Insights', icon: <Sparkles size={I} /> }, { id: 'whitems', label: 'Items', icon: <Tag size={I} /> },
+    { id: 'whlocations', label: 'Locations', icon: <MapPinned size={I} /> }, { id: 'whledger', label: 'Ledger', icon: <History size={I} /> }, { id: 'whlabels', label: 'Print labels', icon: <QrCode size={I} /> },
+    { sub: 'Work', id: 'whreceive', label: 'Goods in', icon: <PackagePlus size={I} /> }, { id: 'whissue', label: 'Goods out', icon: <PackageMinus size={I} /> }, { id: 'whpack', label: 'Pack order', icon: <Package size={I} /> }, { id: 'whorders', label: 'Orders', icon: <FileText size={I} /> },
     { id: 'whunpack', label: 'Unpack', icon: <PackageOpen size={I} /> }, { id: 'whmove', label: 'Move', icon: <ArrowLeftRight size={I} /> }, { id: 'whstock', label: 'Damage and repair', icon: <Wrench size={I} /> }, { id: 'whcount', label: 'Cycle count', icon: <ClipboardCheck size={I} /> }] },
-  { title: 'Laundry · RFID', items: [{ id: 'planner', label: 'Laundry arrivals', icon: <Activity size={I} /> }, { id: 'inventory', label: 'Inventory', icon: <Boxes size={I} /> }, { id: 'twin', label: 'Facilities and floors', icon: <Building2 size={I} /> }, { id: 'lifecycle', label: 'Daily flow', icon: <Workflow size={I} />, demoOnly: true }] },
-  { title: 'Equipment and loads', items: [{ id: 'assets', label: 'Community assets', icon: <Radar size={I} />, demoOnly: true }, { id: 'shipments', label: 'Shipments', icon: <Truck size={I} /> }] },
-  { title: 'Reporting', items: [{ id: 'provenance', label: 'Recycling proof', icon: <Recycle size={I} />, demoOnly: true }, { id: 'esg', label: 'Impact', icon: <Leaf size={I} />, demoOnly: true }] },
-  { title: 'Administration', items: [{ id: 'admin', label: 'Super Admin', icon: <Shield size={I} />, adminOnly: true }, { id: 'status', label: 'Device status', icon: <Cpu size={I} />, adminOnly: true }, { id: 'team', label: 'Team', icon: <UsersRound size={I} />, teamOnly: true }, { id: 'help', label: 'Help and training', icon: <BookOpen size={I} />, always: true }, { id: 'account', label: 'My account', icon: <UserCircle size={I} />, always: true }] },
+  { title: 'Laundry · RFID', icon: <Boxes size={I} />, items: [{ id: 'planner', label: 'Laundry arrivals', icon: <Activity size={I} /> }, { id: 'inventory', label: 'Inventory', icon: <Boxes size={I} /> }, { id: 'twin', label: 'Facilities and floors', icon: <Building2 size={I} /> }, { id: 'lifecycle', label: 'Daily flow', icon: <Workflow size={I} />, demoOnly: true }] },
+  { title: 'Equipment', icon: <Truck size={I} />, items: [{ id: 'assets', label: 'Community assets', icon: <Radar size={I} />, demoOnly: true }, { id: 'shipments', label: 'Shipments', icon: <Truck size={I} /> }] },
+  { title: 'Reporting', icon: <FileText size={I} />, items: [{ id: 'provenance', label: 'Recycling proof', icon: <Recycle size={I} />, demoOnly: true }, { id: 'esg', label: 'Impact', icon: <Leaf size={I} />, demoOnly: true }] },
+  { title: 'Administration', icon: <Settings2 size={I} />, items: [{ id: 'admin', label: 'Super Admin', icon: <Shield size={I} />, adminOnly: true }, { id: 'status', label: 'Device status', icon: <Cpu size={I} />, adminOnly: true }, { id: 'team', label: 'Team', icon: <UsersRound size={I} />, teamOnly: true }, { id: 'help', label: 'Help and training', icon: <BookOpen size={I} />, always: true }, { id: 'account', label: 'My account', icon: <UserCircle size={I} />, always: true }] },
 ]
 const JUMPS: [string, number][] = [['Morning delivery', 335], ['Recycling runs', 612], ['Day operations', 600], ['Evening collection', 1045], ['Decon processing', 1230], ['Next morning', 1760]]
 const visible = (i: NavItem, role: Role) => { const u = useAuth.getState().user; if (i.demoOnly && useStore.getState().mode === 'live') return false; if (i.always) return !!u; if (i.adminOnly) return u?.role === 'superadmin'; if (i.teamOnly) return u?.role === 'org_admin'; return hasFeature(role, i.id) }
@@ -37,6 +35,8 @@ export const allowedPages = (role: Role) => GROUPS.flatMap((g) => g.items).filte
 export function Layout({ children }: { children: ReactNode }) {
   const { t, playing, speed, page, role, mode, set, setRole, tick } = useStore()
   const { user, orgs, signOut } = useAuth(); const isSuper = user?.role === 'superadmin'; const org = orgs.find((o) => o.id === role)
+  const [shut, setShut] = useState<string[]>(() => { try { const v = localStorage.getItem('nav-shut'); return v ? JSON.parse(v) : GROUPS.map((g) => g.title) } catch { return GROUPS.map((g) => g.title) } })
+  const flip = (t: string) => setShut((c) => { const n = c.includes(t) ? c.filter((x) => x !== t) : [...c, t]; try { localStorage.setItem('nav-shut', JSON.stringify(n)) } catch { /* ignore */ } return n })
   const [menu, setMenu] = useState(false); const mainRef = useRef<HTMLElement>(null)
   useEffect(() => { mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior }) }, [page])
   const open = alertsFor(role).filter((a) => a.t <= t && a.sev !== 'info' && a.sev !== 'low').length
@@ -49,15 +49,25 @@ export function Layout({ children }: { children: ReactNode }) {
   const Side = (
     <div className="flex h-full flex-col border-r border-stone-200 bg-white text-stone-600">
       <button onClick={() => nav('command')} className="flex items-center gap-3 px-6 pb-5 pt-6"><Logo size={42} /><span className="text-left"><span className="block text-[20px] font-semibold leading-none tracking-tight text-stone-900">Tex-Trak</span><span className="mt-1 block text-[11.5px] font-semibold text-stone-400">Track · Trace · Prove</span></span></button>
-      <nav className="scroll-thin min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-4 pt-2">
-        {GROUPS.map((g) => { const items = g.items.filter((i) => visible(i, role)); if (!items.length) return null; return (
-          <div key={g.title}><div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-400">{g.title}</div>
-            {items.map((i) => (
-              <button key={i.id} onClick={() => nav(i.id)} className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[14.5px] font-medium transition ${active === i.id ? 'bg-cyan-50 text-cyan-700' : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'}`}>
-                {active === i.id && <i className="absolute -left-4 top-2 h-6 w-1 rounded-r bg-cyan-600" />}
-                <span className={active === i.id ? 'text-cyan-600' : 'text-stone-400'}>{i.icon}</span><span className="flex-1">{i.label}</span>
-                {i.id === 'alerts' && open > 0 && <span className="rounded-full bg-rose-500 px-1.5 text-[10.5px] font-bold leading-4 text-white">{open}</span>}
-              </button>))}</div>) })}
+      <nav className="scroll-thin min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4 pt-1">
+        {GROUPS.map((g) => { const items = g.items.filter((i) => visible(i, role)); if (!items.length) return null
+          const has = items.some((i) => i.id === active); const closed = shut.includes(g.title) && !has; const flat = g.title === 'Overview'
+          const badge = g.title === 'Overview' ? 0 : items.length
+          return (
+          <div key={g.title}>
+            {!flat && <button onClick={() => flip(g.title)} aria-expanded={!closed} className={`group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-semibold transition ${has ? 'text-cyan-700' : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'}`}>
+              <span className={has ? 'text-cyan-600' : 'text-stone-400'}>{g.icon}</span><span className="flex-1 uppercase tracking-[0.08em]">{g.title}</span>
+              {closed && badge > 0 && <span className="rounded-full bg-stone-100 px-1.5 text-[10.5px] font-bold leading-4 text-stone-500">{badge}</span>}
+              {closed && has && <i className="h-1.5 w-1.5 rounded-full bg-cyan-600" />}
+              <ChevronDown size={15} className={`text-stone-400 transition-transform ${closed ? '-rotate-90' : ''}`} /></button>}
+            {!closed && <div className={flat ? '' : 'ml-[19px] border-l border-stone-200 pl-2'}>
+              {items.map((i, n) => (<div key={i.id}>
+                {i.sub && <div className={`px-3 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-stone-400 ${n ? 'pt-3' : 'pt-1'}`}>{i.sub}</div>}
+                <button onClick={() => nav(i.id)} className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${active === i.id ? 'bg-cyan-50 text-cyan-700' : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'}`}>
+                  <span className={active === i.id ? 'text-cyan-600' : 'text-stone-400'}>{i.icon}</span><span className="flex-1">{i.label}</span>
+                  {i.id === 'alerts' && open > 0 && <span className="rounded-full bg-rose-500 px-1.5 text-[10.5px] font-bold leading-4 text-white">{open}</span>}
+                </button></div>))}</div>}
+          </div>) })}
       </nav>
       <div className="border-t border-stone-200 p-4">
         <div className="flex items-center gap-1"><button onClick={() => nav('account')} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-stone-50"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-100 text-[14px] font-semibold text-cyan-700">{(user?.full_name ?? '?')[0]}</span><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-semibold text-stone-900">{user?.full_name}</span><span className="block truncate text-[12px] text-stone-400">{user ? (isSuper ? ROLE_LABEL.superadmin : `${ROLE_LABEL[user.role]} · ${orgs.find((o) => o.id === user.org_id)?.name ?? ''}`) : ''}</span></span></button>
