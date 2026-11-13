@@ -47,8 +47,8 @@ export function Layout({ children }: { children: ReactNode }) {
   const nav = (id: string) => { go(id); setMenu(false) }
 
   const Side = (
-    <div className="flex h-full flex-col border-r border-stone-200 bg-white text-stone-600">
-      <button onClick={() => nav('command')} className="flex items-center gap-3 px-6 pb-5 pt-6"><Logo size={42} /><span className="text-left"><span className="block text-[20px] font-semibold leading-none tracking-tight text-stone-900">Tex-Trak</span><span className="mt-1 block text-[11.5px] font-semibold text-stone-400">Track · Trace · Prove</span></span></button>
+    <div className="nav-glass flex h-full flex-col border-r border-stone-200/80 text-stone-600">
+      <button onClick={() => nav('command')} className="flex items-center gap-3 px-6 pb-5 pt-6"><span className="logo-glow"><Logo size={42} /></span><span className="text-left"><span className="block text-[20px] font-semibold leading-none tracking-tight text-stone-900">Tex-Trak</span><span className="mt-1 block text-[11.5px] font-semibold text-stone-400">Track · Trace · Prove</span></span></button>
       <nav className="scroll-thin min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4 pt-1">
         {GROUPS.map((g) => { const items = g.items.filter((i) => visible(i, role)); if (!items.length) return null
           const has = items.some((i) => i.id === active); const closed = shut.includes(g.title) && !has; const flat = g.title === 'Overview'
@@ -63,7 +63,7 @@ export function Layout({ children }: { children: ReactNode }) {
             {!closed && <div className={flat ? '' : 'ml-[19px] border-l border-stone-200 pl-2'}>
               {items.map((i, n) => (<div key={i.id}>
                 {i.sub && <div className={`px-3 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-stone-400 ${n ? 'pt-3' : 'pt-1'}`}>{i.sub}</div>}
-                <button onClick={() => nav(i.id)} className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${active === i.id ? 'bg-cyan-50 text-cyan-700' : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'}`}>
+                <button onClick={() => nav(i.id)} className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${active === i.id ? 'nav-active text-cyan-700' : 'text-stone-600 hover:bg-white/70 hover:text-stone-900'}`}>
                   <span className={active === i.id ? 'text-cyan-600' : 'text-stone-400'}>{i.icon}</span><span className="flex-1">{i.label}</span>
                   {i.id === 'alerts' && open > 0 && <span className="rounded-full bg-rose-500 px-1.5 text-[10.5px] font-bold leading-4 text-white">{open}</span>}
                 </button></div>))}</div>}
@@ -83,9 +83,9 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         {isSuper && role !== 'superadmin' && <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-100 px-4 py-2 text-[14px] font-semibold text-amber-900"><Eye size={16} /> Previewing as {org?.name ?? role}. This is exactly what their users can see.<button onClick={() => setRole('superadmin')} className="rounded-full bg-amber-900 px-3.5 py-1 text-[13px] font-bold text-white">Exit preview</button></div>}
         <SyncBar />
-        <header className="flex items-center gap-3 border-b border-stone-200/70 bg-white px-4 py-3.5 xl:px-8">
+        <header className="top-glass relative z-10 flex items-center gap-3 border-b border-stone-200/70 px-4 py-3.5 xl:px-8">
           <button onClick={() => setMenu(true)} className="grid h-10 w-10 place-items-center rounded-full border border-stone-200 xl:hidden" aria-label="Menu"><Menu size={18} /></button>
-          <div className="flex min-w-0 items-center gap-2 text-[14px] font-semibold"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: role === 'superadmin' ? '#131a2e' : org?.color ?? '#5a46e0' }} /><span className="truncate text-stone-800">{role === 'superadmin' ? 'All clients' : org?.name}</span>{role !== 'superadmin' && org?.tagline && <span className="hidden truncate text-stone-500 sm:inline">· {org.tagline}</span>}</div>
+          <div className="flex min-w-0 items-center gap-2 text-[14px] font-semibold"><span className="live-dot shrink-0" style={{ background: role === 'superadmin' ? '#131a2e' : org?.color ?? '#5a46e0' }} /><span className="truncate text-stone-800">{role === 'superadmin' ? 'All clients' : org?.name}</span>{role !== 'superadmin' && org?.tagline && <span className="hidden truncate text-stone-500 sm:inline">· {org.tagline}</span>}</div>
           <div className="ml-auto flex items-center gap-2">
             {mode === 'demo' && <span className="rounded-full bg-amber-100 px-3 py-1 text-[12.5px] font-bold uppercase tracking-wide text-amber-900" title="Everything you see is an example day. Nothing here is real.">Demo data</span>}
             {isSuper && <div className="hidden rounded-lg bg-stone-100 p-0.5 sm:flex" title="Choose between your real data and the built-in example day">{(['live', 'demo'] as const).map((m) => <button key={m} onClick={() => set({ mode: m })} className={`rounded-md px-3 py-1.5 text-[13px] font-medium ${mode === m ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800'}`}>{m === 'live' ? 'Live data' : 'Demo data'}</button>)}</div>}
