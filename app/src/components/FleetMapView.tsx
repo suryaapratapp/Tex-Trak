@@ -38,9 +38,10 @@ function Follow({ pos, on }: { pos: LL | null; on: boolean }) {
   useEffect(() => { if (on && pos) map.panTo(pos, { animate: true, duration: 0.25 }) }, [pos?.[0], pos?.[1], on])
   return null
 }
+const UK_BOUNDS = L.latLngBounds([49.9, -8.2], [60.9, 1.8])
 function Fit({ bounds }: { bounds: L.LatLngBoundsExpression | null }) {
   const map = useMap()
-  useEffect(() => { if (bounds) map.fitBounds(bounds, { padding: [40, 40] }) }, [JSON.stringify(bounds)])
+  useEffect(() => { if (!bounds) return; const b = L.latLngBounds(bounds as L.LatLngBoundsLiteral); map.fitBounds(b.isValid() ? b : UK_BOUNDS, { padding: [40, 40], maxZoom: 12 }) }, [JSON.stringify(bounds)])
   useEffect(() => { setTimeout(() => map.invalidateSize(), 50) }, [])
   return null
 }
