@@ -14,6 +14,7 @@ import { useQr } from '../qr/store'
 interface NavItem { sub?: string; id: string; label: string; icon: ReactNode; adminOnly?: boolean; teamOnly?: boolean; always?: boolean; demoOnly?: boolean }
 interface Group { title: string; icon: ReactNode; items: NavItem[] }
 const I = 17
+const ACCENT: Record<string, string> = { Overview: '#6a57e6', 'Curtains · QR': '#8b5cf6', Warehouse: '#0e8f7e', 'Laundry · RFID': '#3b82f6', Equipment: '#e0a030', Reporting: '#ec4899', Administration: '#64748b' }
 const GROUPS: Group[] = [
   { title: 'Overview', icon: <Home size={I} />, items: [{ id: 'command', label: 'Home', icon: <Home size={I} /> }, { id: 'map', label: 'Live map', icon: <Map size={I} /> }, { id: 'scan', label: 'Scan station', icon: <ScanLine size={I} /> }, { id: 'alerts', label: 'Alerts', icon: <AlertTriangle size={I} /> }, { id: 'insights', label: 'Intelligence', icon: <Brain size={I} />, demoOnly: true }] },
   { title: 'Curtains · QR', icon: <QrCode size={I} />, items: [
@@ -52,29 +53,31 @@ export function Layout({ children }: { children: ReactNode }) {
       <button onClick={() => nav('command')} className="flex items-center gap-3 px-6 pb-5 pt-6"><span className="logo-glow"><Logo size={42} /></span><span className="text-left"><span className="block text-[20px] font-semibold leading-none tracking-tight text-stone-900">Tex-Trak</span><span className="mt-1 block text-[11.5px] font-semibold text-stone-400">Track · Trace · Prove</span></span></button>
       <nav className="scroll-thin min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4 pt-1">
         {GROUPS.map((g) => { const items = g.items.filter((i) => visible(i, role)); if (!items.length) return null
-          const has = items.some((i) => i.id === active); const closed = shut.includes(g.title) && !has; const flat = g.title === 'Overview'
+          const has = items.some((i) => i.id === active); const flat = g.title === 'Overview'; const closed = !flat && shut.includes(g.title) && !has; const ac = ACCENT[g.title] ?? '#6a57e6'
           const badge = g.title === 'Overview' ? 0 : items.length
           return (
-          <div key={g.title}>
-            {!flat && <button onClick={() => flip(g.title)} aria-expanded={!closed} className={`group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-semibold transition ${has ? 'text-cyan-700' : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'}`}>
-              <span className={has ? 'text-cyan-600' : 'text-stone-400'}>{g.icon}</span><span className="flex-1 uppercase tracking-[0.08em]">{g.title}</span>
+          <div key={g.title} style={{ '--ac': ac } as React.CSSProperties} className={flat ? 'pb-2' : ''}>
+            {flat && <div className="px-3 pb-1.5 pt-1 text-[10.5px] font-bold uppercase tracking-[0.16em] text-stone-400">Main</div>}
+            {!flat && <button onClick={() => flip(g.title)} aria-expanded={!closed} className={`group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left text-[12.5px] font-bold transition ${has ? 'text-stone-900' : 'text-stone-500 hover:bg-white/80 hover:text-stone-800'}`}>
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg transition group-hover:scale-105" style={{ background: `${ac}${has ? '26' : '14'}`, color: ac }}>{g.icon}</span><span className="flex-1 uppercase tracking-[0.08em]">{g.title}</span>
               {closed && badge > 0 && <span className="rounded-full bg-stone-100 px-1.5 text-[10.5px] font-bold leading-4 text-stone-500">{badge}</span>}
-              {closed && has && <i className="h-1.5 w-1.5 rounded-full bg-cyan-600" />}
+              {closed && has && <i className="h-1.5 w-1.5 rounded-full" style={{ background: ac }} />}
               <ChevronDown size={15} className={`text-stone-400 transition-transform ${closed ? '-rotate-90' : ''}`} /></button>}
-            {!closed && <div className={flat ? '' : 'ml-[19px] border-l border-stone-200 pl-2'}>
+            {!closed && <div className={flat ? '' : 'ml-[22px] mt-0.5 mb-1.5 border-l-2 pl-2'} style={flat ? undefined : { borderColor: `${ac}33` }}>
               {items.map((i, n) => (<div key={i.id}>
                 {i.sub && <div className={`px-3 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-stone-400 ${n ? 'pt-3' : 'pt-1'}`}>{i.sub}</div>}
-                <button onClick={() => nav(i.id)} className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${active === i.id ? 'nav-active text-cyan-700' : 'text-stone-600 hover:bg-white/70 hover:text-stone-900'}`}>
-                  <span className={active === i.id ? 'text-cyan-600' : 'text-stone-400'}>{i.icon}</span><span className="flex-1">{i.label}</span>
+                <button onClick={() => nav(i.id)} className={`nav-item relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${active === i.id ? 'nav-active font-semibold text-stone-900' : 'text-stone-600 hover:translate-x-0.5 hover:bg-white/80 hover:text-stone-900'}`}>
+                  {active === i.id && <i className="nav-bar absolute -left-[11px] top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full" style={{ background: ac }} />}
+                  <span style={{ color: active === i.id ? ac : undefined }} className={active === i.id ? '' : 'text-stone-400'}>{i.icon}</span><span className="flex-1">{i.label}</span>
                   {i.id === 'alerts' && open > 0 && <span className="rounded-full bg-rose-500 px-1.5 text-[10.5px] font-bold leading-4 text-white">{open}</span>}
                 </button></div>))}</div>}
           </div>) })}
       </nav>
-      <div className="border-t border-stone-200 p-4">
-        <div className="flex items-center gap-1"><button onClick={() => nav('account')} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-stone-50"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-100 text-[14px] font-semibold text-cyan-700">{(user?.full_name ?? '?')[0]}</span><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-semibold text-stone-900">{user?.full_name}</span><span className="block truncate text-[12px] text-stone-400">{user ? (isSuper ? ROLE_LABEL.superadmin : `${ROLE_LABEL[user.role]} · ${orgs.find((o) => o.id === user.org_id)?.name ?? ''}`) : ''}</span></span></button>
+      <div className="border-t border-stone-200/80 bg-white/60 p-3">
+        <div className="flex items-center gap-1"><button onClick={() => nav('account')} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-stone-50"><span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-[14px] font-semibold text-white shadow-sm">{(user?.full_name ?? '?')[0]}<i className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" /></span><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-semibold text-stone-900">{user?.full_name}</span><span className="block truncate text-[12px] text-stone-400">{user ? (isSuper ? ROLE_LABEL.superadmin : `${ROLE_LABEL[user.role]} · ${orgs.find((o) => o.id === user.org_id)?.name ?? ''}`) : ''}</span></span></button>
           <button onClick={() => { const n = useQr.getState().ops.filter((o) => o.state === 'pending').length; if (n && !confirm(`${n} saved scan${n === 1 ? ' has' : 's have'} not been sent yet. If you sign out now they stay on this phone until you sign in again and have a connection. Sign out anyway?`)) return; void signOut() }} title="Sign out" aria-label="Sign out" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700"><LogOut size={17} /></button></div>
         <DownloadApp variant="link" />
-        <div className="mt-3 px-2 text-[11.5px] font-medium text-stone-400">Developed by CIRCAI LTD</div>
+        <div className="mt-1 px-2 text-[11px] font-medium text-stone-400">Developed by CIRCAI LTD</div>
       </div>
     </div>)
 

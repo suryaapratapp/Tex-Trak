@@ -54,7 +54,7 @@ export function DownloadApp({ variant }: { variant: 'card' | 'link' }) {
   const iosHref = IOS_URL || undefined
   if (variant === 'link') return (<>
     <a href={onIos ? iosHref : APK_URL} download={onIos ? undefined : 'Tex-Trak.apk'} onClick={onIos && !iosHref ? (e) => { e.preventDefault(); setGuide(true) } : undefined}
-      className="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] font-medium text-cyan-700 transition hover:bg-cyan-50">
+      className="mt-2 flex items-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50/70 px-2.5 py-1.5 text-[12.5px] font-semibold text-cyan-700 transition hover:bg-cyan-100">
       {onIos ? <AppleLogo size={15} /> : <AndroidLogo size={15} />}Download the mobile app<span className="ml-auto text-[11px] text-stone-400">{onIos ? 'iPhone' : 'Android'}</span></a>
     {guide && <Guide onClose={() => setGuide(false)} />}</>)
   return (
