@@ -1,22 +1,27 @@
-# iPhone and iPad app
+# iPhone and iPad
 
-The iOS app is the same Tex-Trak web app packaged with Capacitor (project in `app/ios`), with the same camera scanning, offline queue and background location as Android. Bundle id: `uk.co.circai.textrak`.
+**Free route (in use):** Tex-Trak installs on iPhone and iPad as a web app, with no Apple account, no App Store and no cost.
 
-**Status:** the project is set up and the permission texts (camera, location, background location) are in place. It has **not yet been built or tested on a device**, because that needs a Mac with full Xcode and an Apple Developer account (paid, about £79 a year). Until then the website shows the iPhone button as "Coming soon".
+1. Open the Tex-Trak website in **Safari** on the iPhone or iPad.
+2. Tap **Share**, then **Add to Home Screen**, then **Add**.
+3. Open Tex-Trak from the Home Screen. It runs full screen with its own icon.
 
-## Build and publish
+The sign-in page, Home page and side menu all have a **Download the mobile app** card with separate **Android** and **iPhone and iPad** entries. The iPhone entry opens these steps.
 
-1. Install Xcode from the App Store, then `sudo xcode-select -s /Applications/Xcode.app`.
-2. `cd app && npm run build && npx cap sync ios && npx cap open ios`.
-3. In Xcode: select the **App** target, **Signing and Capabilities**, choose your Apple team. Under **Background Modes** tick *Location updates*.
-4. Choose **Any iOS Device**, then **Product, Archive, Distribute App, App Store Connect**.
-5. In App Store Connect, add the build to **TestFlight** (quickest, no review for internal testers) or submit it for the App Store.
-6. Put the public TestFlight or App Store link in `IOS_URL` in `app/src/components/DownloadApp.tsx`. The website button then becomes active.
+How it works: `app/public/manifest.webmanifest`, the icons in `app/public` (`icon-192.png`, `icon-512.png`, `apple-touch-icon.png`) and the meta tags in `app/index.html` make the site installable. The card is hidden once the app is already running from the Home Screen.
 
-Raise the version and build number in Xcode for every upload.
+## What works and what does not on iPhone
 
-## Notes
+| Feature | Home Screen web app |
+|---|---|
+| Sign in, all pages, maps, Warehouse | Yes |
+| QR and barcode scanning with the camera | Yes (iOS 16.4 or newer) |
+| Saved scans sent later when signal returns | Yes, while the app is open |
+| Location | Only while the app is open on screen |
+| Tracking with the screen off | No. Use an Android phone or a hardware tracker |
 
-- Android and iPhone downloads are separate entries on the sign-in page, Home page and side menu. Phones show their own platform in the side-menu link.
-- iOS can pause background location if the user chooses "While using the app". Ask users to choose **Always**.
-- Support: surya@circai.co.uk
+## Optional later: a store app
+
+A native App Store app is not needed for the above. If one is wanted later (for background location or store listing), the Capacitor project is already prepared in `app/ios` (bundle id `uk.co.circai.textrak`, with camera and location texts). It would need a Mac with Xcode and an Apple Developer account, which is a paid programme. When a TestFlight or App Store link exists, set `IOS_URL` in `app/src/components/DownloadApp.tsx` and the iPhone button opens it instead of the steps.
+
+Support: surya@circai.co.uk
