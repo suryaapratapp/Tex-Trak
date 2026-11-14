@@ -5,6 +5,7 @@ import { startWhSync } from './wh/store'
 import { PinGate } from './components/PinGate'
 import { NativeSetup } from './components/NativeSetup'
 import { WebLocationPrompt } from './components/WebLocationPrompt'
+import { ConfirmHost } from './components/Confirm'
 import { Layout } from './components/Layout'
 import { useAuth } from './lib/auth'
 import Login from './pages/Login'
@@ -60,5 +61,5 @@ export default function App() {
   if (!ready) return <div className="grid h-full place-items-center bg-stone-900 text-[14px] font-semibold text-stone-400">Loading…</div>
   if (!user) return <Login />
   const P = PAGES[page] ?? Command
-  return <><PinGate /><NativeSetup /><WebLocationPrompt /><Layout>{page.startsWith('qr') ? <QrShell><P /></QrShell> : page.startsWith('wh') ? <WhShell><P /></WhShell> : <P />}</Layout></>
+  return <><ConfirmHost /><PinGate /><NativeSetup /><WebLocationPrompt /><Layout>{page.startsWith('qr') ? <QrShell><P /></QrShell> : page.startsWith('wh') ? <WhShell><P /></WhShell> : <P />}</Layout></>
 }

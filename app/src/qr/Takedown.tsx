@@ -1,3 +1,4 @@
+import { ArrangeShipment } from '../components/ArrangeShipment'
 import { useState } from 'react'
 import { Page } from '../components/ui'
 import { btnPrimary, EMPTY, inputCls, LocationPicker, Notice, ScanField, Section, toPlace, useFlash, Field, type Pick } from './ui'
@@ -37,6 +38,7 @@ export default function Takedown() {
           <ScanField label="Scan the new curtain" onScan={scanNew} /><button onClick={() => setPending([])} className="mt-4 text-[14px] font-bold text-stone-500 underline underline-offset-4">Skip replacements</button></Section>}
         {flash && <Notice kind={flash.kind} onClose={clear}>{flash.text}</Notice>}
         <ScanLog kinds={['takedown', 'install']} />
+        <ArrangeShipment start={{ tab: 'qr', status: 'removed' }} text="Finished taking curtains down? Arrange a shipment to send them for cleaning, recycling or back to the warehouse." />
 
       </div>
     </Page>)

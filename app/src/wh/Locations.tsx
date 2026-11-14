@@ -1,3 +1,4 @@
+import { ask } from '../components/Confirm'
 import { useRef, useState } from 'react'
 import { Download, MapPinned, Pencil, Plus, Tags, Upload, X } from 'lucide-react'
 import { Page } from '../components/ui'
@@ -21,7 +22,7 @@ export default function Locations() {
     setBusy(true); const r = await whWrite(edit ? supabase.from('wh_locations').update(row).eq('id', edit.id).eq('org_id', org) : supabase.from('wh_locations').insert({ ...row, org_id: org })); setBusy(false)
     if (!r.ok) return err(r.message); ok(edit ? 'Location saved.' : 'Location added.'); setShow(false); setEdit(null)
   }
-  const del = async () => { if (!edit) return; setBusy(true); const r = await whWrite(supabase.from('wh_locations').delete().eq('id', edit.id).eq('org_id', org)); setBusy(false); if (!r.ok) return err(r.message); ok('Location deleted.'); setShow(false); setEdit(null) }
+  const del = async () => { if (!edit) return; if (!(await ask(`Delete this location? This cannot be undone.`))) return; setBusy(true); const r = await whWrite(supabase.from('wh_locations').delete().eq('id', edit.id).eq('org_id', org)); setBusy(false); if (!r.ok) return err(r.message); ok('Location deleted.'); setShow(false); setEdit(null) }
   const run = async (fl: File) => {
     const data = parseCsv(await fl.text()); if (!data.length) return err('The file is empty or has no header row.')
     const seen = new Set<string>(); const good: Record<string, unknown>[] = []; const bad: string[] = []

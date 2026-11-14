@@ -1,3 +1,4 @@
+import { ask } from '../components/Confirm'
 import { useMemo, useRef, useState } from 'react'
 import { Download, Pencil, Plus, Tags, Upload, X } from 'lucide-react'
 import { Page } from '../components/ui'
@@ -67,7 +68,7 @@ export default function Items() {
     setBusy(true); const r = await whWrite(edit ? supabase.from('wh_items').update(row).eq('id', edit.id).eq('org_id', org) : supabase.from('wh_items').insert({ ...row, org_id: org })); setBusy(false)
     if (!r.ok) return err(r.message); ok(edit ? 'Item saved.' : 'Item added.'); setShow('none'); setEdit(null)
   }
-  const del = async () => { if (!edit) return; setBusy(true); const r = await whWrite(supabase.from('wh_items').delete().eq('id', edit.id).eq('org_id', org)); setBusy(false); if (!r.ok) return err(r.message); ok('Item deleted.'); setShow('none'); setEdit(null) }
+  const del = async () => { if (!edit) return; if (!(await ask(`Delete this item? This cannot be undone.`))) return; setBusy(true); const r = await whWrite(supabase.from('wh_items').delete().eq('id', edit.id).eq('org_id', org)); setBusy(false); if (!r.ok) return err(r.message); ok('Item deleted.'); setShow('none'); setEdit(null) }
   const addAlias = async () => { if (!edit || !alias.code.trim()) return; const r = await whWrite(supabase.from('wh_codes').insert({ org_id: org, item_id: edit.id, code: alias.code, kind: alias.kind, pack_qty: num(alias.pack) || 1 })); if (!r.ok) return err(r.message); setAlias({ code: '', kind: 'barcode', pack: '1' }); clear() }
   const mine = edit ? codes.filter((c) => c.itemId === edit.id && c.kind !== 'sku' && c.code !== norm(edit.barcode)) : []
 

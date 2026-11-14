@@ -1,3 +1,4 @@
+import { ArrangeShipment } from '../components/ArrangeShipment'
 import { useState } from 'react'
 import { Package } from 'lucide-react'
 import { Page } from '../components/ui'
@@ -22,6 +23,7 @@ export default function Pack() {
           <Field label="Customer reference" hint="Their PO or order number"><input value={ref} onChange={(e) => setRef(e.target.value)} className={inputCls} /></Field>
           <Field label="Notes"><input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls} placeholder="Optional" /></Field>
           {flash && <Notice kind={flash.kind} onClose={clear}>{flash.text}</Notice>}
+          {done && <ArrangeShipment start={{ tab: 'wh_order', match: done }} text={`${done} is packed. Ready to send it? Arrange a shipment.`} />}
           {done && <button onClick={() => { useWh.setState({ orderFocus: done }); go('whorders') }} className="text-[14px] font-bold text-cyan-700">Open {done} to print the packing slip →</button>}</div></Section>
         <Section title="Items to pack" sub={lines.length ? `${lines.length} line${lines.length === 1 ? '' : 's'} · ${fmtQty(lines.reduce((a, l) => a + l.qty, 0))} units` : undefined}>
           <PickLines lines={lines} setLines={setLines} initialItem={pre ? ix.itemById.get(pre.itemId ?? '') : null} />

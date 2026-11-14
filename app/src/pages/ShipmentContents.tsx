@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Boxes, PackageCheck, PackageMinus, Search, Tag, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { inputCls } from '../qr/ui'
+import type { ShipStart } from '../lib/shipDraft'
 
 export type Source = 'wh_order' | 'wh_goods_out' | 'qr' | 'rfid' | 'typed'
 export interface Line { source: Source; ref: string; label: string; qty: number; sub?: string }
@@ -58,14 +59,16 @@ async function loadSource(org: string, src: Exclude<Source, 'typed'>, status: st
 }
 
 /** Pick exactly what is on a shipment from Warehouse, curtains or laundry items. */
-export function ShipmentContents({ org, lines, setLines }: { org: string; lines: Line[]; setLines: (l: Line[]) => void }) {
-  const [tab, setTab] = useState<Exclude<Source, 'typed'>>('wh_order'); const [status, setStatus] = useState('all'); const [q, setQ] = useState('')
+export function ShipmentContents({ org, lines, setLines, start }: { org: string; lines: Line[]; setLines: (l: Line[]) => void; start?: ShipStart | null }) {
+  const [tab, setTab] = useState<Exclude<Source, 'typed'>>(start?.tab ?? 'wh_order'); const [status, setStatus] = useState(start?.status ?? 'all'); const [auto, setAuto] = useState(!!start?.match); const [q, setQ] = useState('')
   const [rows, setRows] = useState<Cand[]>([]); const [note, setNote] = useState(''); const [busy, setBusy] = useState(true); const [used, setUsed] = useState<Used>(new Map())
   useEffect(() => { let off = false; void loadUsed(org).then((u) => { if (!off) setUsed(u) }); return () => { off = true } }, [org])
   useEffect(() => {
     let off = false; setBusy(true); setNote('')
-    void loadSource(org, tab, status).then((r) => { if (off) return; setRows(r.rows); setNote(r.note ?? ''); setBusy(false) })
+    void loadSource(org, tab, status).then((r) => { if (off) return; setRows(r.rows); setNote(r.note ?? ''); setBusy(false)
+      if (auto && start?.match) { setAuto(false); const m = start.match; const hit = m === 'newest' ? r.rows.slice(0, 1) : m === 'all' ? r.rows : r.rows.filter((x) => x.label.startsWith(m)); if (hit.length) setLines(hit.map((x) => ({ source: x.source, ref: x.ref, label: x.label, qty: x.qty, sub: x.sub }))) } })
     return () => { off = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [org, tab, status])
   const key = (l: { source: string; ref: string }) => `${l.source}:${l.ref}`
   const picked = useMemo(() => new Set(lines.map(key)), [lines])

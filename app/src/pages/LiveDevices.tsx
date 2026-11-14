@@ -1,3 +1,4 @@
+import { ZoomHint } from '../components/ZoomHint'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
@@ -67,6 +68,7 @@ export default function LiveDevices() {
         <Card className="overflow-hidden"><div className="flex flex-wrap items-center gap-2 border-b border-stone-100 px-5 py-3"><span className="text-[15px] font-semibold text-stone-900">{cur ? `${cur.d.name || cur.d.imei}: route for ${startOf(day).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}` : 'Where everyone is'}</span>
           {cur && <button onClick={() => setSel(null)} className="ml-auto rounded-full border border-stone-200 px-3 py-1.5 text-[13px] font-semibold text-stone-600 hover:bg-stone-50">Show everyone</button>}</div>
           <MapContainer center={[54.5, -3]} zoom={6} style={{ height: 560, width: '100%' }} scrollWheelZoom={false}>
+      <ZoomHint />
             <TileLayer attribution="&copy; OpenStreetMap contributors" url={import.meta.env.VITE_TILE_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} /><ClickToActivate /><Fit pts={sel ? trail : all} sel={sel && !trail.length ? selPos : null} key={sel ?? 'all'} />
             {sel && trail.length > 1 && <Polyline positions={trail} pathOptions={{ color: cur?.c ?? '#6759e4', weight: 5, opacity: 0.85 }} />}
             {sel && trail.length > 0 && <Marker position={trail[0]} icon={startIcon} zIndexOffset={900}><Tooltip direction="top">Start · {hm(data!.first_ts)}</Tooltip></Marker>}

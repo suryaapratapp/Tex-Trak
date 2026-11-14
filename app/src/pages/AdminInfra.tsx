@@ -1,3 +1,4 @@
+import { ask } from '../components/Confirm'
 import { Fragment, useEffect, useState } from 'react'
 import { Pencil, Plus, Trash2, X } from 'lucide-react'
 import { Card, Chip } from '../components/ui'
@@ -31,7 +32,7 @@ export function SitesAdmin() {
     const { error } = await supabase.from('sites').insert({ code: slug(f.name) + '-' + Math.random().toString(36).slice(2, 5).toUpperCase(), name: f.name.trim(), kind: f.kind, lat: +f.lat, lng: +f.lng, radius_m: +f.radius || 200, org_id: f.org || null, region: f.region.trim(), floors: +f.floors || 0, status: f.status, address: f.address.trim(), source: 'admin' })
     setBusy(false); if (error) return setMsg({ k: 'error', t: error.message }); setMsg({ k: 'ok', t: `${f.name} added.` }); setOpen(false); setF({ ...f, name: '', address: '', lat: '', lng: '' }); await load()
   }
-  const del = async (s: DbSite) => { if (!confirm(`Remove ${s.name}? Its readers are removed too.`)) return; const { error } = await supabase.from('sites').delete().eq('id', s.id); if (error) setMsg({ k: 'error', t: error.message }); else await load() }
+  const del = async (s: DbSite) => { if (!(await ask(`Remove ${s.name}? Its readers are removed too.`))) return; const { error } = await supabase.from('sites').delete().eq('id', s.id); if (error) setMsg({ k: 'error', t: error.message }); else await load() }
   type SEd = { id: string; name: string; kind: string; org: string; region: string; address: string; lat: string; lng: string; radius: string; floors: string; status: string }
   const [ed, setEd] = useState<SEd | null>(null)
   const edit = (x: DbSite) => { setMsg(null); setEd({ id: x.id, name: x.name, kind: x.kind, org: x.org_id ?? '', region: x.region ?? '', address: x.address ?? '', lat: String(x.lat), lng: String(x.lng), radius: String(x.radius_m), floors: String(x.floors), status: x.status }) }
@@ -72,14 +73,14 @@ export function ReadersAdmin() {
     if (error) return setMsg({ k: 'error', t: error.code === '23505' ? 'That reader code is already used at this site.' : error.message }); setMsg({ k: 'ok', t: `${f.code.toUpperCase()} added.` }); setF({ ...f, code: '', label: '' }); await load() }
   const urlFor = (code: string, key: string) => `${SUPABASE_URL}/functions/v1/ingest-rfid?reader=${encodeURIComponent(code)}&key=${key}`
   const showConn = async (r: { id: string; code: string }) => { if (conn?.id === r.id) return setConn(null); const { data, error } = await supabase.rpc('reader_key', { p_reader: r.id }); if (error) return setMsg({ k: 'error', t: error.message }); setConn({ id: r.id, url: urlFor(r.code, data as string) }); setCopied(false) }
-  const rotate = async (r: { id: string; code: string }) => { if (!confirm('Replace this reader’s key? The reader stops working until its config page is updated with the new address.')) return; const { data, error } = await supabase.rpc('reader_rotate_key', { p_reader: r.id }); if (error) return setMsg({ k: 'error', t: error.message }); setConn({ id: r.id, url: urlFor(r.code, data as string) }); setCopied(false) }
+  const rotate = async (r: { id: string; code: string }) => { if (!(await ask('Replace this reader’s key? The reader stops working until its config page is updated with the new address.', 'Replace key'))) return; const { data, error } = await supabase.rpc('reader_rotate_key', { p_reader: r.id }); if (error) return setMsg({ k: 'error', t: error.message }); setConn({ id: r.id, url: urlFor(r.code, data as string) }); setCopied(false) }
   type REd = { id: string; code: string; label: string; floor: string; position: string; zone: string; site_id: string }
   const [ed, setEd] = useState<REd | null>(null)
   const edit = (r: (typeof readers)[number]) => { setMsg(null); setEd({ id: r.id, code: r.code, label: r.label ?? '', floor: r.floor ?? 'Ground', position: r.position, zone: r.zone_id ?? '', site_id: r.site_id }) }
   const saveEdit = async () => { if (!ed) return; if (ed.code.trim().length < 2) return setMsg({ k: 'error', t: 'Enter a reader code of at least 2 characters.' })
     setBusy(true); const { error } = await supabase.from('readers').update({ code: ed.code.trim().toUpperCase(), label: ed.label.trim(), floor: ed.floor.trim() || 'Ground', position: ed.position, zone_id: ed.zone || null }).eq('id', ed.id); setBusy(false)
     if (error) return setMsg({ k: 'error', t: error.code === '23505' ? 'That reader code is already used at this site.' : error.message }); setMsg({ k: 'ok', t: `${ed.code.trim().toUpperCase()} updated. If you changed the code, press Connect and update the reader's address.` }); setEd(null); await load() }
-  const del = async (id: string) => { if (!confirm('Remove this reader? Its past reads stay in the item journeys.')) return; const { error } = await supabase.from('readers').delete().eq('id', id); if (error) setMsg({ k: 'error', t: error.message }); else await load() }
+  const del = async (id: string) => { if (!(await ask('Remove this reader? Its past reads stay in the item journeys.'))) return; const { error } = await supabase.from('readers').delete().eq('id', id); if (error) setMsg({ k: 'error', t: error.message }); else await load() }
   return (
     <Card className="mb-6"><Head title="RFID readers you have added" sub="Ceiling, doorway and weighbridge readers. Each belongs to one of your sites." open={open} onAdd={() => setOpen(!open)} />
       {msg && <div className="px-6 pt-4"><Notice kind={msg.k} onClose={() => setMsg(null)}>{msg.t}</Notice></div>}
@@ -112,7 +113,7 @@ export function TrackersAdmin() {
   const saveEdit = async () => { if (!ed) return; setBusy(true); const { error } = await supabase.from('trackers').update({ name: ed.name.trim(), model: ed.model.trim() || 'TAT240', serial_no: ed.serial.trim() || null, org_id: ed.org || null }).eq('imei', ed.imei); setBusy(false)
     if (error) return setMsg({ k: 'error', t: error.message }); setMsg({ k: 'ok', t: `Tracker ${ed.imei} updated.` }); setEd(null); await load() }
   const toggle = async (imei: string, active: boolean) => { await supabase.from('trackers').update({ active: !active }).eq('imei', imei); await load() }
-  const del = async (imei: string) => { if (!confirm(`Remove tracker ${imei}? Its stored positions stay.`)) return; const { error } = await supabase.from('trackers').delete().eq('imei', imei); if (error) setMsg({ k: 'error', t: error.message }); else await load() }
+  const del = async (imei: string) => { if (!(await ask(`Remove tracker ${imei}? Its stored positions stay.`))) return; const { error } = await supabase.from('trackers').delete().eq('imei', imei); if (error) setMsg({ k: 'error', t: error.message }); else await load() }
   return (
     <Card className="mb-6"><Head title="Trackers" sub="A tracker can only send data once its IMEI is registered here." open={open} onAdd={() => setOpen(!open)} />
       {msg && <div className="px-6 pt-4"><Notice kind={msg.k} onClose={() => setMsg(null)}>{msg.t}</Notice></div>}
@@ -139,7 +140,7 @@ export function ZonesAdmin() {
   const saveEdit = async () => { if (!ed) return; if (!ed.name.trim()) return setMsg({ k: 'error', t: 'Enter a zone name.' })
     setBusy(true); const { error } = await supabase.from('zones').update({ name: ed.name.trim(), kind: ed.kind, floor: +ed.floor || 0 }).eq('id', ed.id); setBusy(false)
     if (error) return setMsg({ k: 'error', t: error.message }); setMsg({ k: 'ok', t: `${ed.name.trim()} updated. Reads from now on use the new kind.` }); setEd(null); await load() }
-  const del = async (id: string) => { if (!confirm('Remove this zone? Readers pointing at it are left without a zone.')) return; await supabase.from('zones').delete().eq('id', id); await load() }
+  const del = async (id: string) => { if (!(await ask('Remove this zone? Readers pointing at it are left without a zone.'))) return; await supabase.from('zones').delete().eq('id', id); await load() }
   const mine = zones.filter((z) => sites.some((s) => s.id === z.site_id))
   return (
     <Card className="mb-6"><Head title="Zones" sub="The rooms and areas of a site. A reader on a door tells Tex-Trak which zone an item has entered." open={open} onAdd={() => setOpen(!open)} />
@@ -191,7 +192,7 @@ export function VehiclesAdmin() {
     setBusy(true); const { error } = await supabase.from('vehicles').update({ reg: ed.reg.trim().toUpperCase(), driver: ed.driver.trim(), role: ed.role.trim(), tracker_imei: ed.imei || null, tracker_model: ed.model.trim(), org_id: ed.org || null }).eq('id', ed.id); setBusy(false)
     if (error) return setMsg({ k: 'error', t: err(error) }); setMsg({ k: 'ok', t: `${ed.reg.trim().toUpperCase()} updated.` }); setEd(null); await load() }
   const toggle = async (v: Veh) => { await supabase.from('vehicles').update({ active: !v.active }).eq('id', v.id); await load() }
-  const del = async (v: Veh) => { if (!confirm(`Remove vehicle ${v.reg}? The tracker and its route history stay.`)) return; const { error } = await supabase.from('vehicles').delete().eq('id', v.id); if (error) setMsg({ k: 'error', t: error.message }); else await load() }
+  const del = async (v: Veh) => { if (!(await ask(`Remove vehicle ${v.reg}? The tracker and its route history stay.`))) return; const { error } = await supabase.from('vehicles').delete().eq('id', v.id); if (error) setMsg({ k: 'error', t: error.message }); else await load() }
   const fields = (x: typeof blank, set: (v: typeof blank) => void) => <>
     <Field label="Registration" required><input value={x.reg} onChange={(e) => set({ ...x, reg: e.target.value })} placeholder="e.g. AB12 CDE" className={inputCls} /></Field>
     <Field label="Driver"><input value={x.driver} onChange={(e) => set({ ...x, driver: e.target.value })} className={inputCls} /></Field>

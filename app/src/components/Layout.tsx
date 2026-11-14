@@ -14,7 +14,7 @@ import { useQr } from '../qr/store'
 interface NavItem { sub?: string; id: string; label: string; icon: ReactNode; adminOnly?: boolean; teamOnly?: boolean; always?: boolean; demoOnly?: boolean }
 interface Group { title: string; icon: ReactNode; items: NavItem[] }
 const I = 17
-const ACCENT: Record<string, string> = { Overview: '#6a57e6', 'Curtains · QR': '#8b5cf6', Warehouse: '#0e8f7e', 'Laundry · RFID': '#3b82f6', Equipment: '#e0a030', Reporting: '#ec4899', Administration: '#64748b' }
+const ACCENT: Record<string, string> = { Overview: '#6a57e6', 'Curtains · QR': '#8b5cf6', Warehouse: '#0e8f7e', 'Laundry · RFID': '#3b82f6', Transport: '#e0a030', Reporting: '#ec4899', Administration: '#64748b' }
 const GROUPS: Group[] = [
   { title: 'Overview', icon: <Home size={I} />, items: [{ id: 'command', label: 'Home', icon: <Home size={I} /> }, { id: 'map', label: 'Live map', icon: <Map size={I} /> }, { id: 'scan', label: 'Scan station', icon: <ScanLine size={I} /> }, { id: 'alerts', label: 'Alerts', icon: <AlertTriangle size={I} /> }, { id: 'insights', label: 'Intelligence', icon: <Brain size={I} />, demoOnly: true }] },
   { title: 'Curtains · QR', icon: <QrCode size={I} />, items: [
@@ -26,7 +26,7 @@ const GROUPS: Group[] = [
     { sub: 'Work', id: 'whreceive', label: 'Goods in', icon: <PackagePlus size={I} /> }, { id: 'whissue', label: 'Goods out', icon: <PackageMinus size={I} /> }, { id: 'whpack', label: 'Pack order', icon: <Package size={I} /> }, { id: 'whorders', label: 'Orders', icon: <FileText size={I} /> },
     { id: 'whunpack', label: 'Unpack', icon: <PackageOpen size={I} /> }, { id: 'whmove', label: 'Move', icon: <ArrowLeftRight size={I} /> }, { id: 'whstock', label: 'Damage and repair', icon: <Wrench size={I} /> }, { id: 'whcount', label: 'Cycle count', icon: <ClipboardCheck size={I} /> }] },
   { title: 'Laundry · RFID', icon: <Boxes size={I} />, items: [{ id: 'planner', label: 'Laundry arrivals', icon: <Activity size={I} /> }, { id: 'inventory', label: 'Inventory', icon: <Boxes size={I} /> }, { id: 'twin', label: 'Facilities and floors', icon: <Building2 size={I} /> }, { id: 'lifecycle', label: 'Daily flow', icon: <Workflow size={I} />, demoOnly: true }] },
-  { title: 'Equipment', icon: <Truck size={I} />, items: [{ id: 'assets', label: 'Community assets', icon: <Radar size={I} />, demoOnly: true }, { id: 'shipments', label: 'Shipments', icon: <Truck size={I} /> }] },
+  { title: 'Transport', icon: <Truck size={I} />, items: [{ id: 'shipments', label: 'Shipments', icon: <Truck size={I} /> }, { id: 'assets', label: 'Community assets', icon: <Radar size={I} />, demoOnly: true }] },
   { title: 'Reporting', icon: <FileText size={I} />, items: [{ id: 'provenance', label: 'Recycling proof', icon: <Recycle size={I} />, demoOnly: true }, { id: 'esg', label: 'Impact', icon: <Leaf size={I} />, demoOnly: true }] },
   { title: 'Administration', icon: <Settings2 size={I} />, items: [{ id: 'admin', label: 'Super Admin', icon: <Shield size={I} />, adminOnly: true }, { id: 'status', label: 'Device status', icon: <Cpu size={I} />, adminOnly: true }, { id: 'team', label: 'Team', icon: <UsersRound size={I} />, teamOnly: true }, { id: 'help', label: 'Help and training', icon: <BookOpen size={I} />, always: true }, { id: 'account', label: 'My account', icon: <UserCircle size={I} />, always: true }] },
 ]

@@ -1,3 +1,4 @@
+import { ZoomHint } from './ZoomHint'
 import { useEffect, useMemo } from 'react'
 import { Circle, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
@@ -70,6 +71,7 @@ export function FleetMapView({ vehIds, height = 480, selected, onSelect, follow 
   const fol = follow && selected ? snap.veh[selected] : null
   return (
     <MapContainer center={[51.53, -0.1]} zoom={11} style={{ height, width: '100%' }} zoomControl={true} scrollWheelZoom={false}>
+      <ZoomHint />
       <ClickToActivate />
       <TileLayer attribution='&copy; OpenStreetMap contributors' url={import.meta.env.VITE_TILE_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} />
       <Fit bounds={follow ? null : autoBounds} />

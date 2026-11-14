@@ -1,3 +1,4 @@
+import { ask } from '../components/Confirm'
 import { CheckCircle2, Clock3, XCircle } from 'lucide-react'
 import { useQr, fmtDateTime, type OpKind } from './store'
 
@@ -17,6 +18,6 @@ export function ScanLog({ kinds, title = 'Recorded scans', limit = 8 }: { kinds?
           <div className="min-w-0 flex-1"><div className="text-[14.5px] font-medium text-stone-900">{l.text}</div>
             {l.message && <div className="mt-0.5 text-[13.5px] font-medium text-rose-600">{l.message}</div>}
             <div className="mt-0.5 text-[12.5px] text-stone-400">{fmtDateTime(l.ts)}</div>
-            {l.state === 'failed' && <div className="mt-2 flex gap-3 text-[13px] font-medium"><button onClick={() => retryOp(l.id)} className="text-cyan-700 hover:underline">Try again</button><button onClick={() => void discardOp(l.id)} className="text-stone-500 hover:underline">Remove</button></div>}</div>
+            {l.state === 'failed' && <div className="mt-2 flex gap-3 text-[13px] font-medium"><button onClick={() => retryOp(l.id)} className="text-cyan-700 hover:underline">Try again</button><button onClick={async () => { if (await ask('Remove this saved scan? It will not be sent.', 'Remove')) void discardOp(l.id) }} className="text-stone-500 hover:underline">Remove</button></div>}</div>
           <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-medium ${STATE[l.state].cls}`}>{STATE[l.state].label}</span></li>))}</ul></section>)
 }

@@ -1,3 +1,4 @@
+import { ask } from '../components/Confirm'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Camera, Search, WifiOff, X as XIcon } from 'lucide-react'
 import { Scanner } from '../components/Scanner'
@@ -93,7 +94,7 @@ export function OfflineBar() {
     <div className="mx-auto max-w-[1500px] space-y-2 px-6 pt-4 sm:px-10">
       {(!online || offline) && <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] font-semibold text-amber-900"><WifiOff size={18} className="mt-0.5 shrink-0" /><span>You are offline. Scanning, goods in and out, packing, moves, stock changes and counts still work and are saved on this device. Orders, the ledger, imports and item edits need a connection.</span></div>}
       {pending.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-[14px] font-semibold text-sky-900"><span>{pending.length} saved change{pending.length === 1 ? '' : 's'} waiting to send: {pending.slice(0, 3).map((o) => o.text).join(', ')}{pending.length > 3 ? '…' : ''}</span>{online && <button disabled={flushing} onClick={() => void flush()} className="rounded-xl bg-sky-700 px-3.5 py-1.5 text-[13px] font-bold text-white disabled:opacity-60">{flushing ? 'Sending…' : 'Send now'}</button>}</div>}
-      {failed.map((o) => <div key={o.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-[14px] text-rose-900"><span><b>{o.text}</b> was not accepted: {o.error}</span><span className="flex gap-2"><button onClick={() => retryOp(o.id)} className="rounded-xl border border-rose-300 bg-white px-3 py-1.5 text-[13px] font-bold">Try again</button><button onClick={() => discardOp(o.id)} className="rounded-xl bg-rose-700 px-3 py-1.5 text-[13px] font-bold text-white">Discard</button></span></div>)}
+      {failed.map((o) => <div key={o.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-[14px] text-rose-900"><span><b>{o.text}</b> was not accepted: {o.error}</span><span className="flex gap-2"><button onClick={() => retryOp(o.id)} className="rounded-xl border border-rose-300 bg-white px-3 py-1.5 text-[13px] font-bold">Try again</button><button onClick={async () => { if (await ask('Remove this saved action? It will not be sent.', 'Remove')) discardOp(o.id) }} className="rounded-xl bg-rose-700 px-3 py-1.5 text-[13px] font-bold text-white">Discard</button></span></div>)}
     </div>)
 }
 
