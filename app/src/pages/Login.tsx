@@ -4,6 +4,7 @@ import { Logo } from '../components/Logo'
 import { PasswordInput } from '../components/PasswordInput'
 import { useAuth } from '../lib/auth'
 import { SUPABASE_URL } from '../lib/supabase'
+import { DownloadApp } from '../components/DownloadApp'
 import { Field, inputCls, Notice } from '../qr/ui'
 
 const POINTS: [React.ReactNode, string, string][] = [
@@ -49,6 +50,7 @@ export default function Login() {
           </form>
           <button type="button" onClick={() => { setSetup(!setup); setErr(''); setDone(false) }} className="mt-5 w-full text-center text-[13.5px] font-medium text-stone-400 hover:text-stone-700">{setup ? 'Back to sign in' : 'First time? Set up the Super Admin'}</button>
           <div className="mt-8 flex items-start gap-3 rounded-lg border border-stone-200 bg-white p-4 text-[14px] text-stone-600"><Mail size={18} className="mt-0.5 shrink-0 text-cyan-600" /><span>Having trouble signing in? Contact <a href="mailto:surya@circai.co.uk" className="font-medium text-cyan-700 hover:underline">surya@circai.co.uk</a> and we will help.</span></div>
+          <DownloadApp variant="card" />
         </div>
         <div className="text-center text-[12.5px] text-stone-400 lg:text-left">Developed by CIRCAI LTD</div>
       </main>

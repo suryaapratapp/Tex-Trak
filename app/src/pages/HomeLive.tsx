@@ -4,6 +4,7 @@ import { hasFeature, hasModule } from '../sim/registry'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { useQr, useQrLoad, isOverdue } from '../qr/store'
+import { DownloadApp } from '../components/DownloadApp'
 import { go, useStore } from '../store'
 import { loadAttention, type Attn } from '../lib/liveAttention'
 import { readerHealth, trackerHealth } from '../lib/status'
@@ -50,5 +51,6 @@ export default function HomeLive() {
       {loaded && !prods.length && !n.items && !n.ship && !isSuper ? <div className="card p-8 text-center text-[14.5px] text-stone-500">Nothing here yet. Your first scans and imports will appear as soon as they are saved.</div> : null}
       {attn.length > 0 && <section><div className="mb-3 flex items-center justify-between"><h2 className="text-[16px] font-semibold text-stone-800">Needs attention</h2><button onClick={() => go('alerts')} className="text-[14px] font-medium text-cyan-700 hover:underline">All alerts</button></div>
         <div className="card divide-y divide-stone-100">{attn.slice(0, 4).map((a) => <button key={a.id} onClick={() => a.page && go(a.page)} className="flex w-full items-start gap-3 px-5 py-4 text-left hover:bg-stone-50"><i className="mt-2 h-2 w-2 shrink-0 rounded-full" style={{ background: DOT[a.tone] }} /><span><span className="block text-[14.5px] font-medium text-stone-900">{a.title}</span><span className="block text-[13.5px] text-stone-500">{a.body}</span></span></button>)}</div></section>}
+      <div className="max-w-[520px]"><DownloadApp variant="card" /></div>
     </div>)
 }

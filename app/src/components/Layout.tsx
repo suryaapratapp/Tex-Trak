@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound, BookOpen, ArrowLeftRight, ClipboardCheck, ChevronDown, History, MapPinned, Package, PackageMinus, PackageOpen, PackagePlus, ScanBarcode, Sparkles, Warehouse, Wrench } from 'lucide-react'
+import { DownloadApp } from './DownloadApp'
 import { go, jump, SPEEDS, useStore } from '../store'
 import { fmtClock, T0, T1 } from '../sim/engine'
 import { hasFeature, type Role } from '../sim/registry'
@@ -72,6 +73,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="border-t border-stone-200 p-4">
         <div className="flex items-center gap-1"><button onClick={() => nav('account')} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-stone-50"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-100 text-[14px] font-semibold text-cyan-700">{(user?.full_name ?? '?')[0]}</span><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-semibold text-stone-900">{user?.full_name}</span><span className="block truncate text-[12px] text-stone-400">{user ? (isSuper ? ROLE_LABEL.superadmin : `${ROLE_LABEL[user.role]} · ${orgs.find((o) => o.id === user.org_id)?.name ?? ''}`) : ''}</span></span></button>
           <button onClick={() => { const n = useQr.getState().ops.filter((o) => o.state === 'pending').length; if (n && !confirm(`${n} saved scan${n === 1 ? ' has' : 's have'} not been sent yet. If you sign out now they stay on this phone until you sign in again and have a connection. Sign out anyway?`)) return; void signOut() }} title="Sign out" aria-label="Sign out" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700"><LogOut size={17} /></button></div>
+        <DownloadApp variant="link" />
         <div className="mt-3 px-2 text-[11.5px] font-medium text-stone-400">Developed by CIRCAI LTD</div>
       </div>
     </div>)
