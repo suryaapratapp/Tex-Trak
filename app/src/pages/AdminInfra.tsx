@@ -9,7 +9,7 @@ import { KIND_LABEL } from '../sim/registry'
 import { btnGhost, btnPrimary, Field, inputCls, Notice } from '../qr/ui'
 import { ago, HEALTH_LABEL, HEALTH_TONE, readerHealth, trackerHealth } from '../lib/status'
 
-const KINDS = ['hospital', 'decon', 'recycler', 'facility', 'hub', 'community', 'port', 'incinerator'] as const
+const KINDS = ['hospital', 'decon', 'recycler', 'facility', 'hub', 'community', 'port', 'incinerator', 'customer'] as const
 const POSITIONS = ['ceiling', 'doorway', 'portal', 'weighbridge', 'handheld']
 const slug = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 6) || 'SITE'
 const when = (s: string | null) => (s ? new Date(s).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'never')

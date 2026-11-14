@@ -66,9 +66,9 @@ export const NETWORK: NetSite[] = [
   mk('I-MAN', 'Greater Manchester Energy Recovery', 'incinerator', 'shared', [53.4742, -2.4067], 'North West', 0, 0, 'live', 350, 'Energy-from-waste · restricted'),
 ]
 
-export const KIND_LABEL: Record<string, string> = { facility: 'Facility', hospital: 'Hospital', decon: 'Decon plant', recycler: 'Recycling plant', port: 'Port (export)', incinerator: 'Incinerator', hub: 'Logistics hub', community: 'Community site' }
-export const KIND_COLOR: Record<string, string> = { facility: '#0f766e', hospital: '#0e7490', decon: '#1d4ed8', recycler: '#15803d', port: '#be123c', incinerator: '#c2410c', hub: '#6d28d9', community: '#b45309' }
-export const KIND_GLYPH: Record<string, string> = { facility: '▣', hospital: '✚', decon: '◈', recycler: '♻', port: '⚓', incinerator: '♨', hub: '⬢', community: '●' }
+export const KIND_LABEL: Record<string, string> = { facility: 'Facility', hospital: 'Hospital', decon: 'Decon plant', recycler: 'Recycling plant', port: 'Port (export)', incinerator: 'Incinerator', hub: 'Logistics hub', community: 'Community site', customer: 'Customer' }
+export const KIND_COLOR: Record<string, string> = { facility: '#0f766e', hospital: '#0e7490', decon: '#1d4ed8', recycler: '#15803d', port: '#be123c', incinerator: '#c2410c', hub: '#6d28d9', community: '#b45309', customer: '#0369a1' }
+export const KIND_GLYPH: Record<string, string> = { facility: '▣', hospital: '✚', decon: '◈', recycler: '♻', port: '⚓', incinerator: '♨', hub: '⬢', community: '●', customer: '◆' }
 export const isRestricted = (k: string) => k === 'port' || k === 'incinerator'
 
 export const clientNet = (role: Role) => (role === 'superadmin' ? NETWORK : NETWORK.filter((n) => n.client === role || n.client === 'shared'))
