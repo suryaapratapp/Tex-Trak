@@ -5,6 +5,10 @@ import { startWhSync } from './wh/store'
 import { PinGate } from './components/PinGate'
 import { NativeSetup } from './components/NativeSetup'
 import { WebLocationPrompt } from './components/WebLocationPrompt'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { toast } from './lib/toast'
+import { isNetworkError } from './lib/offline'
+import { Toasts } from './components/Toasts'
 import { ConfirmHost } from './components/Confirm'
 import { Layout } from './components/Layout'
 import { useAuth } from './lib/auth'
@@ -57,9 +61,18 @@ import WhLabels from './wh/Labels'
 const PAGES: Record<string, () => React.ReactElement> = { whdash: WhDash, whscan: WhScan, whinsights: WhInsights, whreceive: WhReceive, whissue: WhIssue, whpack: WhPack, whorders: WhOrders, whunpack: WhUnpack, whmove: WhMove, whstock: WhActions, whcount: WhCount, whitems: WhItems, whlocations: WhLocations, whledger: WhLedger, whlabels: WhLabels, help: Help, team: Team, qrdash: QrDashboard, qrproducts: Products, qrinstall: Install, qrtakedown: Takedown, qrregister: Register, qrlabels: Labels, qrlocations: Locations, qrreports: Reports, account: Account, admin: Admin, scan: Scan, insights: Insights, command: Command, map: FleetMap, twin: Twin, lifecycle: Lifecycle, planner: Planner, shipments: Shipments, assets: Assets, provenance: Provenance, alerts: Alerts, esg: Esg, status: DeviceStatus, inventory: Inventory,  item: ItemJourney }
 export default function App() {
   const page = useStore((s) => s.page); const { ready, user, init } = useAuth()
+  useEffect(() => { // a failed request nobody handled is reported rather than ignored
+    const h = (e: PromiseRejectionEvent) => { const r = e.reason as { message?: string } | undefined; if (isNetworkError(r)) toast.error('No connection. Check your internet and try again.'); else if (r?.message) toast.error(`Something went wrong. ${r.message}`) }
+    window.addEventListener('unhandledrejection', h); return () => window.removeEventListener('unhandledrejection', h)
+  }, [])
+  const checkAccess = useAuth((s) => s.checkAccess)
+  useEffect(() => { // people whose client or account is switched off while signed in are signed out with the reason
+    const id = setInterval(() => void checkAccess(), 120000); const vis = () => { if (document.visibilityState === 'visible') void checkAccess() }
+    document.addEventListener('visibilitychange', vis); return () => { clearInterval(id); document.removeEventListener('visibilitychange', vis) }
+  }, [checkAccess])
   useEffect(() => { initNetwork(); startQrSync(); startWhSync(); void init() }, [init])
   if (!ready) return <div className="grid h-full place-items-center bg-stone-900 text-[14px] font-semibold text-stone-400">Loading…</div>
-  if (!user) return <Login />
+  if (!user) return <><Toasts /><Login /></>
   const P = PAGES[page] ?? Command
-  return <><ConfirmHost /><PinGate /><NativeSetup /><WebLocationPrompt /><Layout>{page.startsWith('qr') ? <QrShell><P /></QrShell> : page.startsWith('wh') ? <WhShell><P /></WhShell> : <P />}</Layout></>
+  return <><Toasts /><ConfirmHost /><PinGate /><NativeSetup /><WebLocationPrompt /><Layout><ErrorBoundary resetKey={page}>{page.startsWith('qr') ? <QrShell><P /></QrShell> : page.startsWith('wh') ? <WhShell><P /></WhShell> : <P />}</ErrorBoundary></Layout></>
 }

@@ -1,3 +1,4 @@
+import { toast } from '../lib/toast'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Camera, CheckCircle2, CircleAlert, X } from 'lucide-react'
 import { Scanner } from '../components/Scanner'
@@ -15,6 +16,8 @@ export const Section = ({ title, sub, right, children, className = '' }: { title
   <section className={`card p-6 ${className}`}>{(title || right) && <div className="mb-4 flex items-start justify-between gap-3"><div>{title && <h2 className="text-[17px] font-extrabold text-stone-900">{title}</h2>}{sub && <p className="mt-1 text-[14px] text-stone-500">{sub}</p>}</div>{right}</div>}{children}</section>)
 
 export function Notice({ kind, children, onClose }: { kind: 'ok' | 'error' | 'info'; children: ReactNode; onClose?: () => void }) {
+  const said = typeof children === 'string' ? children : Array.isArray(children) && children.every((c) => typeof c === 'string' || typeof c === 'number') ? children.join('') : ''
+  useEffect(() => { if (said && kind !== 'info') toast[kind](said) }, [said, kind]) // main results also appear top right
   const t = { ok: 'border-emerald-200 bg-emerald-50 text-emerald-900', error: 'border-rose-200 bg-rose-50 text-rose-900', info: 'border-sky-200 bg-sky-50 text-sky-900' }[kind]
   return <div className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-[14.5px] font-semibold ${t}`}>{kind === 'error' ? <CircleAlert size={19} className="mt-0.5 shrink-0" /> : <CheckCircle2 size={19} className="mt-0.5 shrink-0" />}<span className="flex-1">{children}</span>{onClose && <button onClick={onClose} aria-label="Dismiss"><X size={16} /></button>}</div>
 }

@@ -3,7 +3,7 @@ import { Download, Plus, Share, Smartphone, X } from 'lucide-react'
 import { isNative } from '../lib/offline'
 
 export const APK_URL = '/downloads/Tex-Trak.apk'
-export const APK_VERSION = '1.4'
+export const APK_VERSION = '1.5'
 /** Optional: once a TestFlight or App Store link exists, set it here and the iPhone button opens it instead of the install guide. */
 export const IOS_URL = ''
 

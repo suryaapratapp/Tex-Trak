@@ -21,7 +21,7 @@ export function ZoomHint() {
     return () => { clearTimeout(t); el.removeEventListener('mouseenter', enter); el.removeEventListener('wheel', wheel); el.removeEventListener('mousedown', click); el.removeEventListener('mouseleave', leave) }
   }, [map])
   return createPortal(
-    <div aria-live="polite" className={`pointer-events-none absolute inset-x-0 top-3 z-[1000] flex justify-center px-3 transition-opacity duration-300 ${hint ? 'opacity-100' : active ? 'opacity-50' : 'opacity-90'}`}>
-      <span className="flex items-center gap-2 rounded-full bg-stone-900/85 px-4 py-2 text-[13px] font-semibold text-white shadow-lg backdrop-blur"><MousePointerClick size={15} /> Click the map and scroll to zoom in or out</span>
+    <div aria-live="polite" className={`pointer-events-none absolute inset-x-0 top-3 z-[1000] flex justify-center px-14 transition-opacity duration-300 ${hint ? 'opacity-100' : active ? 'opacity-50' : 'opacity-90'}`}>
+      <span className="flex items-center gap-2 rounded-full text-center leading-tight bg-stone-900/85 px-4 py-2 text-[13px] font-semibold text-white shadow-lg backdrop-blur"><MousePointerClick size={15} /> Click the map and scroll to zoom in or out</span>
     </div>, map.getContainer())
 }

@@ -5,20 +5,30 @@ import { isNetworkError, isNative, kvDel, kvGet, kvSet } from './offline'
 import { startTracking, stopTracking } from '../native/tracking'
 
 export type AccountRole = 'superadmin' | 'org_admin' | 'staff'
-export interface Org { id: string; name: string; tagline: string; color: string; features: string[]; active: boolean }
+export interface Org { id: string; name: string; tagline: string; color: string; features: string[]; active: boolean; off_reason?: string }
 export interface Profile { id: string; username: string; full_name: string; org_id: string | null; role: AccountRole; features: string[]; active: boolean }
 export const ROLE_LABEL: Record<AccountRole, string> = { superadmin: 'Super Admin', org_admin: 'Client admin', staff: 'Staff' }
+export const orgOffMessage = (o: { name?: string; off_reason?: string } | undefined) => `Access for ${o?.name ?? 'your organisation'} has been switched off by Tex-Trak${o?.off_reason?.trim() ? `. Reason: ${o.off_reason.trim()}` : ''}. Please contact your administrator, or surya@circai.co.uk.`
+export const ACCOUNT_OFF = 'Your account has been switched off by your administrator. Please contact them, or surya@circai.co.uk.'
 const emailOf = (u: string) => `${u.trim().toLowerCase()}@textrak.local`
 
 interface A {
-  ready: boolean; user: Profile | null; orgs: Org[]; people: Profile[]
+  ready: boolean; user: Profile | null; orgs: Org[]; people: Profile[]; notice: string
+  checkAccess: () => Promise<void>
   init: () => Promise<void>; signIn: (u: string, p: string) => Promise<string | null>; signOut: () => Promise<void>; refresh: () => Promise<void>
   api: (action: string, body: Record<string, unknown>) => Promise<{ error?: string; [k: string]: unknown }>
   changePassword: (current: string, next: string) => Promise<string | null>
 }
 function applyRole(user: Profile) { const st = useStore.getState(); if (user.role !== 'superadmin') st.set({ role: user.org_id as string }); else if (!st.role) st.set({ role: 'superadmin' }) }
 export const useAuth = create<A>((set, get) => ({
-  ready: false, user: null, orgs: [], people: [],
+  ready: false, user: null, orgs: [], people: [], notice: '',
+  checkAccess: async () => {
+    const u = get().user; if (!u || u.role === 'superadmin') return
+    const [{ data: me, error: e1 }, { data: org, error: e2 }] = await Promise.all([supabase.from('profiles').select('active').eq('id', u.id).maybeSingle(), supabase.from('orgs').select('name,active,off_reason').eq('id', u.org_id ?? '').maybeSingle()])
+    if (e1 || e2) return // offline or a hiccup: keep working, check again later
+    const msg = !me || !me.active ? ACCOUNT_OFF : org && !org.active ? orgOffMessage(org) : ''
+    if (msg) { await get().signOut(); set({ notice: msg }) }
+  },
   refresh: async () => {
     const hasToken = !!Object.keys(localStorage).find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
     const { data: s, error: se } = await supabase.auth.getSession(); const uid = s.session?.user.id
@@ -28,8 +38,10 @@ export const useAuth = create<A>((set, get) => ({
     if (!uid) { set({ user: null, orgs: [], people: [], ready: true }); return }
     const { data: me, error: me_e } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
     if (me_e && isNetworkError(me_e) && cached?.user.id === uid) { set({ user: cached.user, orgs: cached.orgs, people: [], ready: true }); applyRole(cached.user); return }
-    if (!me || !me.active) { await supabase.auth.signOut(); await kvDel('auth-cache'); set({ user: null, orgs: [], people: [], ready: true }); return }
+    if (!me || !me.active) { await supabase.auth.signOut(); await kvDel('auth-cache'); set({ user: null, orgs: [], people: [], ready: true, notice: ACCOUNT_OFF }); return }
     const [{ data: orgs }, { data: people }] = await Promise.all([supabase.from('orgs').select('*').order('name'), supabase.from('profiles').select('*').order('full_name')])
+    const myOrg = (orgs ?? []).find((o) => o.id === me.org_id) as Org | undefined
+    if (me.role !== 'superadmin' && !myOrg?.active) { await stopTracking(); await supabase.auth.signOut(); await kvDel('auth-cache'); set({ user: null, orgs: [], people: [], ready: true, notice: orgOffMessage(myOrg) }); return }
     const user = me as Profile; set({ user, orgs: (orgs ?? []) as Org[], people: (people ?? []) as Profile[], ready: true })
     void kvSet('auth-cache', { user, orgs: orgs ?? [] }); applyRole(user)
     void startTracking(user)
@@ -37,10 +49,15 @@ export const useAuth = create<A>((set, get) => ({
   init: async () => { await get().refresh(); supabase.auth.onAuthStateChange((e) => { if (e === 'SIGNED_OUT') set({ user: null, orgs: [], people: [], ready: true }) }) },
   signIn: async (u, p) => {
     const { error } = await supabase.auth.signInWithPassword({ email: emailOf(u), password: p })
-    if (error) return /banned|disabled/i.test(error.message) ? 'This account has been switched off. Ask your administrator.' : 'Incorrect username or password.'
-    await get().refresh(); const user = get().user
-    if (!user) return 'This account has been switched off. Ask your administrator.'
-    const org = get().orgs.find((o) => o.id === user.org_id); if (user.role !== 'superadmin' && !org?.active) { await get().signOut(); return 'Your organisation’s access is switched off.' }
+    if (error) {
+      if (/banned|disabled/i.test(error.message)) return ACCOUNT_OFF
+      if (isNetworkError(error)) return 'Could not reach Tex-Trak. Check your internet connection and try again.'
+      if (error.status === 429 || /rate limit|too many/i.test(error.message)) return 'Too many attempts. Wait a minute, then try again.'
+      if (error.status && error.status >= 500) return 'Tex-Trak is having a problem right now. Please try again in a moment.'
+      return 'Incorrect username or password.'
+    }
+    set({ notice: '' }); await get().refresh(); const user = get().user
+    if (!user) { const n = get().notice; set({ notice: '' }); return n || ACCOUNT_OFF } // refresh explains why it refused
     useStore.getState().set({ page: 'command' }); location.hash = 'command'; return null
   },
   signOut: async () => { await stopTracking(); await supabase.auth.signOut(); await kvDel('auth-cache'); set({ user: null, orgs: [], people: [] }); useStore.getState().set({ role: 'superadmin' }) },

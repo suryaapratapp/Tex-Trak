@@ -1,5 +1,6 @@
+import { ask } from '../components/Confirm'
 import { useState } from 'react'
-import { Copy, KeyRound, Pencil, Power } from 'lucide-react'
+import { AtSign, Copy, KeyRound, Pencil, Power } from 'lucide-react'
 import { Page } from '../components/ui'
 import { ROLE_LABEL, useAuth, type Profile } from '../lib/auth'
 import { FEATURES, MODULES, PRESETS, type ModuleId } from '../sim/features'
@@ -23,7 +24,7 @@ export function FeaturePicker({ allowed, value, onChange }: { allowed: string[];
 export function TeamManager({ orgId, superView = false }: { orgId: string; superView?: boolean }) {
   const { orgs, people, api, user } = useAuth(); const org = orgs.find((o) => o.id === orgId); const mine = people.filter((p) => p.org_id === orgId)
   const [add, setAdd] = useState(false); const [f, setF] = useState({ full_name: '', username: '', password: genPassword(), role: 'staff', features: PRESETS[0].features }); const [edit, setEdit] = useState<{ id: string; features: string[] } | null>(null)
-  const [msg, setMsg] = useState<{ k: 'ok' | 'error'; t: string } | null>(null); const [formErr, setFormErr] = useState(''); const [reset, setReset] = useState<{ id: string; pw: string } | null>(null); const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ k: 'ok' | 'error'; t: string } | null>(null); const [formErr, setFormErr] = useState(''); const [reset, setReset] = useState<{ id: string; pw: string } | null>(null); const [rename, setRename] = useState<{ id: string; name: string } | null>(null); const [busy, setBusy] = useState(false)
   if (!org) return null
   const run = async (action: string, body: Record<string, unknown>, okText: string) => { setBusy(true); setMsg(null); const r = await api(action, body); setBusy(false); if (r.error) { setMsg({ k: 'error', t: r.error }); return false } setMsg({ k: 'ok', t: okText }); return true }
   const create = async () => {
@@ -55,10 +56,12 @@ export function TeamManager({ orgId, superView = false }: { orgId: string; super
           {!p.active && <span className="rounded-full bg-rose-50 px-3 py-1 text-[12.5px] font-bold text-rose-700">Switched off</span>}
           {canManage(p) && <div className="flex gap-1">
             {p.role === 'staff' && <button title="Change access" onClick={() => setEdit(edit?.id === p.id ? null : { id: p.id, features: p.features })} className="grid h-9 w-9 place-items-center rounded-full text-stone-500 hover:bg-stone-100"><Pencil size={16} /></button>}
+            {superView && <button title="Change username" onClick={() => setRename(rename?.id === p.id ? null : { id: p.id, name: p.username })} className="grid h-9 w-9 place-items-center rounded-full text-stone-500 hover:bg-stone-100"><AtSign size={16} /></button>}
             <button title="Reset password" onClick={() => setReset(reset?.id === p.id ? null : { id: p.id, pw: genPassword() })} className="grid h-9 w-9 place-items-center rounded-full text-stone-500 hover:bg-stone-100"><KeyRound size={16} /></button>
-            <button title={p.active ? 'Switch off' : 'Switch on'} onClick={() => run('update_user', { id: p.id, active: !p.active }, p.active ? 'Account switched off.' : 'Account switched on.')} className={`grid h-9 w-9 place-items-center rounded-full hover:bg-stone-100 ${p.active ? 'text-stone-500' : 'text-rose-600'}`}><Power size={16} /></button></div>}
+            <button title={p.active ? 'Switch off' : 'Switch on'} onClick={async () => { if (p.active && !(await ask(`Switch off ${p.full_name}? They are signed out and cannot sign in until you switch them back on.`, 'Switch off'))) return; await run('update_user', { id: p.id, active: !p.active }, p.active ? 'Account switched off.' : 'Account switched on.') }} className={`grid h-9 w-9 place-items-center rounded-full hover:bg-stone-100 ${p.active ? 'text-stone-500' : 'text-rose-600'}`}><Power size={16} /></button></div>}
         </div>
         {edit?.id === p.id && <div className="mt-4 space-y-3"><FeaturePicker allowed={org.features} value={edit.features} onChange={(v) => setEdit({ id: p.id, features: v })} /><button disabled={busy} onClick={async () => { if (await run('update_user', { id: p.id, features: edit.features }, 'Access updated.')) setEdit(null) }} className={btnPrimary}>Save access</button></div>}
+        {rename?.id === p.id && <div className="mt-4 flex flex-wrap items-end gap-2"><div className="min-w-[240px] flex-1"><Field label="New username" hint="3 to 24 lowercase letters, digits, dots, dashes or underscores. They sign in with this from now on; their password stays the same."><input value={rename.name} onChange={(e) => setRename({ id: p.id, name: e.target.value.toLowerCase() })} className={`${inputCls} mono`} autoCapitalize="none" /></Field></div><button disabled={busy || rename.name === p.username || !/^[a-z0-9._-]{3,24}$/.test(rename.name)} onClick={async () => { if (await ask(`Change ${p.full_name}’s username from ${p.username} to ${rename.name}? They must use the new username to sign in.`, 'Change username') && await run('update_user', { id: p.id, username: rename.name }, `Username changed to ${rename.name}. Tell ${p.full_name} to sign in with it.`)) setRename(null) }} className={btnPrimary}>Change username</button></div>}
         {reset?.id === p.id && <div className="mt-4 flex flex-wrap items-end gap-2"><div className="min-w-[240px] flex-1"><Field label="New password"><input value={reset.pw} onChange={(e) => setReset({ id: p.id, pw: e.target.value })} className={`${inputCls} mono`} /></Field></div><button disabled={busy || reset.pw.length < 8} onClick={async () => { if (await run('reset_password', { id: p.id, password: reset.pw }, `Password changed to ${reset.pw}. Copy it now: it is not shown again.`)) setReset(null) }} className={btnPrimary}>Set password</button><button onClick={() => navigator.clipboard?.writeText(reset.pw)} className={`${btnGhost} flex items-center gap-2`}><Copy size={15} /> Copy</button></div>}
         </li>))}</ul>
     </div>)

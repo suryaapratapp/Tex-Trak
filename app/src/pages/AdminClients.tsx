@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ask, askReason } from '../components/Confirm'
 import { CheckCircle2, Eye, Pencil, Plus, X } from 'lucide-react'
 import { Card } from '../components/ui'
 import { useAuth, type Org } from '../lib/auth'
@@ -16,13 +17,22 @@ function OrgCard({ o }: { o: Org }) {
   const [more, setMore] = useState<'features' | 'team' | 'details' | null>(null); const [det, setDet] = useState({ name: o.name, tagline: o.tagline ?? '' }); const [dbusy, setDbusy] = useState(false); const [draft, setDraft] = useState(o.features); const [msg, setMsg] = useState<{ k: 'ok' | 'error'; t: string } | null>(null)
   const t = totals(NETWORK.filter((n) => n.client === o.id)); const users = people.filter((p) => p.org_id === o.id)
   const save = async (features: string[]) => { setMsg(null); const r = await api('update_org', { id: o.id, features }); setMsg(r.error ? { k: 'error', t: r.error } : { k: 'ok', t: 'Access updated. People in this client keep only what the client still has.' }) }
+  const toggle = async () => {
+    if (o.active) {
+      const why = await askReason({ title: `Switch off ${o.name}?`, body: 'Everyone in this client is signed out and cannot sign in. They see the reason below when they try. You can switch it back on at any time.', confirm: 'Switch off', placeholder: 'Reason shown to them (optional), e.g. Subscription ended' }); if (why === null) return
+      const r = await api('update_org', { id: o.id, active: false, off_reason: why }); setMsg(r.error ? { k: 'error', t: r.error } : { k: 'ok', t: `${o.name} is switched off.` })
+    } else {
+      if (!(await ask(`Switch ${o.name} back on? Its people can sign in again.`, 'Switch on'))) return
+      const r = await api('update_org', { id: o.id, active: true, off_reason: '' }); setMsg(r.error ? { k: 'error', t: r.error } : { k: 'ok', t: `${o.name} is switched on.` })
+    }
+  }
   const moduleOn = (m: ModuleId) => featuresOf(m).some((f) => o.features.includes(f))
   const flip = (m: ModuleId) => save(moduleOn(m) ? o.features.filter((f) => !featuresOf(m).includes(f)) : [...new Set([...o.features, ...featuresOf(m)])])
   return (
     <Card className={o.active ? '' : 'opacity-70'}>
       <div className="flex items-start gap-4 p-5"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-lg font-extrabold text-white" style={{ background: o.color }}>{o.name[0]}</span>
         <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-extrabold text-stone-900">{o.name}</h3>{!o.active && <span className="rounded-full bg-rose-50 px-3 py-0.5 text-[12.5px] font-bold text-rose-700">Switched off</span>}</div><p className="text-[14px] text-stone-500">{o.tagline}</p></div>
-        <button onClick={() => api('update_org', { id: o.id, active: !o.active })} className="rounded-full border border-stone-200 bg-white px-4 py-1.5 text-[13px] font-bold text-stone-600 hover:bg-stone-50">{o.active ? 'Switch off' : 'Switch on'}</button></div>
+        <button onClick={() => void toggle()} className="rounded-full border border-stone-200 bg-white px-4 py-1.5 text-[13px] font-bold text-stone-600 hover:bg-stone-50">{o.active ? 'Switch off' : 'Switch on'}</button></div>
       <div className="grid grid-cols-3 gap-2 px-5 pb-4">{[[users.length, 'accounts'], [t.sites, 'sites'], [o.features.length, 'features']].map(([v, l]) => <div key={l as string} className="rounded-2xl bg-stone-50 p-3"><div className="text-2xl font-extrabold text-stone-900">{v}</div><div className="text-[12px] font-semibold text-stone-500">{l}</div></div>)}</div>
       <div className="border-t border-stone-100 px-5 py-4"><div className="mb-3 text-[12px] font-bold uppercase tracking-wider text-stone-400">Modules this client can use</div>
         <div className="flex flex-wrap gap-2">{(Object.keys(MODULES) as ModuleId[]).map((m) => { const on = moduleOn(m); return <button key={m} onClick={() => flip(m)} title={MODULES[m].blurb} className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13.5px] font-bold transition ${on ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-stone-100 text-stone-400 hover:bg-stone-200'}`}>{on ? <CheckCircle2 size={14} /> : <i className="h-3.5 w-3.5 rounded-full border-2 border-stone-300" />}{MODULES[m].label}</button> })}</div>

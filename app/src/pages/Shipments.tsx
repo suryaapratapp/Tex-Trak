@@ -1,27 +1,28 @@
 import { clearShipDraft, peekShipDraft, type ShipStart } from '../lib/shipDraft'
 import { ask } from '../components/Confirm'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, ArrowRight, Check, CircleCheck, PackagePlus, Send, Truck, X } from 'lucide-react'
 import { Card, Page } from '../components/ui'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { NETWORK } from '../sim/registry'
+import { useInfra } from '../lib/infra'
+import { toast } from '../lib/toast'
 import { useStore } from '../store'
 import { btnGhost, btnPrimary, Field, inputCls, Notice } from '../qr/ui'
 import ShipmentsLive from './ShipmentsLive'
 import { ShipmentContents, summarise, type Line } from './ShipmentContents'
 
-interface Shipment { id: string; ref: string; org_id: string; kind: string; from_name: string; to_name: string; carrier: string; vehicle_reg: string; description: string; items: number; weight_kg: number | null; planned_dispatch: string | null; planned_arrival: string | null; status: 'booked' | 'in_transit' | 'delivered' | 'exception' | 'cancelled'; dispatched_at: string | null; delivered_at: string | null; items_received: number | null; created_at: string }
+interface Shipment { id: string; ref: string; org_id: string; kind: string; from_name: string; to_name: string; carrier: string; vehicle_reg: string; description: string; items: number; weight_kg: number | null; planned_dispatch: string | null; planned_arrival: string | null; status: 'booked' | 'in_transit' | 'delivered' | 'exception' | 'cancelled'; dispatched_at: string | null; delivered_at: string | null; arrived_at?: string | null; items_received: number | null; created_at: string }
 interface Ev { id: number; shipment_id: string; type: string; detail: string; by_name: string; created_at: string }
 const KINDS: Record<string, string> = { delivery: 'Delivery', collection: 'Collection', recycling: 'Recycling load', equipment: 'Equipment', other: 'Other' }
 const STATUS: Record<string, { label: string; cls: string }> = { booked: { label: 'Booked', cls: 'bg-stone-100 text-stone-700' }, in_transit: { label: 'On the way', cls: 'bg-blue-50 text-blue-700' }, delivered: { label: 'Delivered', cls: 'bg-emerald-50 text-emerald-700' }, exception: { label: 'Problem', cls: 'bg-rose-50 text-rose-700' }, cancelled: { label: 'Cancelled', cls: 'bg-stone-100 text-stone-400' } }
 const EV_LABEL: Record<string, string> = { booked: 'Booked', dispatched: 'Dispatched', update: 'Update', delayed: 'Delay reported', received: 'Received', exception: 'Problem reported', cancelled: 'Cancelled' }
 const dt = (s?: string | null) => (s ? new Date(s).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '–')
-const SITE_NAMES = [...new Set(NETWORK.filter((n) => ['hospital', 'decon', 'recycler', 'facility', 'hub', 'community'].includes(n.kind)).map((n) => n.name))]
 const STEPS: [string, string][] = [['Book', 'Say what is going where'], ['Dispatch', 'Confirm it is loaded and sealed'], ['On the way', 'Add updates or report a delay'], ['Receive', 'Count what arrived']]
 
 function NewShipment({ org, onDone, onCancel, start }: { org: string; onDone: (id: string) => void; onCancel: () => void; start?: ShipStart | null }) {
   const [f, setF] = useState({ kind: 'delivery', from: '', to: '', carrier: '', vehicle: '', desc: '', items: '1', weight: '', pd: '', pa: '' }); const [lines, setLines] = useState<Line[]>([]); const total = Math.max(1, Math.round(lines.reduce((a, l) => a + l.qty, 0))); const count = lines.length ? total : +f.items || 0; const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
+  const infraSites = useInfra((x) => x.sites); const siteNames = useMemo(() => [...new Set(infraSites.filter((x) => x.org_id === org || x.org_id === null).map((x) => x.name))].sort(), [infraSites, org])
   const submit = async () => {
     setBusy(true); setErr('')
     const { data, error } = await supabase.rpc('shipment_book', { p_org: org, p_kind: f.kind, p_from: f.from.trim(), p_to: f.to.trim(), p_carrier: f.carrier.trim(), p_vehicle: f.vehicle.trim().toUpperCase(), p_desc: f.desc.trim() || summarise(lines), p_items: count || 1, p_lines: lines.length ? lines.map((l) => ({ source: l.source, ref: l.ref, label: l.label, qty: l.qty })) : null, p_weight: f.weight ? +f.weight : null, p_planned_dispatch: f.pd ? new Date(f.pd).toISOString() : null, p_planned_arrival: f.pa ? new Date(f.pa).toISOString() : null })
@@ -29,9 +30,9 @@ function NewShipment({ org, onDone, onCancel, start }: { org: string; onDone: (i
   }
   return (
     <Card className="mb-6 space-y-5 p-6"><div className="flex items-center justify-between"><h2 className="text-[18px] font-extrabold text-stone-900">New shipment</h2><button onClick={onCancel} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full bg-stone-100"><X size={16} /></button></div>
-      <datalist id="sites">{SITE_NAMES.map((n) => <option key={n} value={n} />)}</datalist>
+      <datalist id="sites">{siteNames.map((n) => <option key={n} value={n} />)}</datalist>
       <div className="grid gap-4 md:grid-cols-3"><Field label="Type"><select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })} className={inputCls}>{Object.entries(KINDS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></Field>
-        <Field label="From" required hint="Pick a site or type any address"><input list="sites" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} className={inputCls} /></Field><Field label="To" required><input list="sites" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} className={inputCls} /></Field></div>
+        <Field label="From" required hint={siteNames.length ? 'Pick one of your sites so the tracker can dispatch it automatically, or type any address' : 'No sites added yet. Type an address'}><input list="sites" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} className={inputCls} /></Field><Field label="To" required hint={siteNames.length ? 'Pick a site so arrival is recorded automatically' : undefined}><input list="sites" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} className={inputCls} /></Field></div>
       <Field label="What is in it" hint="Pick what is going: packed orders and goods out from Warehouse, curtains or laundry items. Or skip this and type a description below."><ShipmentContents org={org} lines={lines} setLines={setLines} start={start} /></Field>
       <div className="grid gap-4 md:grid-cols-3"><Field label="Description" hint={lines.length ? 'Optional. Filled in from your selection if left empty.' : undefined}><input value={f.desc} onChange={(e) => setF({ ...f, desc: e.target.value })} placeholder={lines.length ? summarise(lines) : 'e.g. 16 clean curtains'} className={inputCls} /></Field><Field label="Number of items" required hint={lines.length ? 'Counted from your selection.' : undefined}><input value={lines.length ? String(total) : f.items} readOnly={lines.length > 0} onChange={(e) => setF({ ...f, items: e.target.value.replace(/\D/g, '') })} inputMode="numeric" className={inputCls} /></Field><Field label="Weight (kg)"><input value={f.weight} onChange={(e) => setF({ ...f, weight: e.target.value.replace(/[^\d.]/g, '') })} inputMode="decimal" className={inputCls} /></Field></div>
       <div className="grid gap-4 md:grid-cols-4"><Field label="Carrier"><input value={f.carrier} onChange={(e) => setF({ ...f, carrier: e.target.value })} className={inputCls} /></Field><Field label="Vehicle registration"><input value={f.vehicle} onChange={(e) => setF({ ...f, vehicle: e.target.value })} className={inputCls} /></Field><Field label="Planned dispatch"><input type="datetime-local" value={f.pd} onChange={(e) => setF({ ...f, pd: e.target.value })} className={inputCls} /></Field><Field label="Planned arrival"><input type="datetime-local" value={f.pa} onChange={(e) => setF({ ...f, pa: e.target.value })} className={inputCls} /></Field></div>
@@ -41,6 +42,11 @@ function NewShipment({ org, onDone, onCancel, start }: { org: string; onDone: (i
 function Detail({ s, events, org, onChange }: { s: Shipment; events: Ev[]; org: string; onChange: () => void }) {
   const [mode, setMode] = useState<'update' | 'delay' | 'receive' | 'exception' | null>(null); const [text, setText] = useState(''); const [count, setCount] = useState(String(s.items)); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [lines, setLines] = useState<Line[]>([])
   useEffect(() => { let off = false; void supabase.from('shipment_lines').select('source,ref_id,label,qty').eq('shipment_id', s.id).order('id').limit(3000).then(({ data }) => { if (!off) setLines(((data ?? []) as { source: Line['source']; ref_id: string; label: string; qty: number }[]).map((r) => ({ source: r.source, ref: r.ref_id, label: r.label, qty: Number(r.qty) }))) }); return () => { off = true } }, [s.id])
+  const synced = useRef(false) // a shipment the tracker dispatched still needs its packed Warehouse orders marked as dispatched
+  useEffect(() => {
+    if (s.status !== 'in_transit' || synced.current) return; const orders = lines.filter((x) => x.source === 'wh_order'); if (!orders.length) return; synced.current = true
+    void (async () => { for (const l of orders) { const { error: e2 } = await supabase.rpc('wh_dispatch', { p_org: s.org_id, p_order: l.ref }); if (e2 && !/already been dispatched|not packed|cannot be dispatched/i.test(e2.message)) toast.error(`${l.label.split(' · ')[0]} could not be marked dispatched in Warehouse. ${e2.message}`) } })()
+  }, [s.status, s.org_id, lines])
   const step = async (action: string, detail = '', items: number | null = null) => {
     setBusy(true); setErr(''); const { error } = await supabase.rpc('shipment_step', { p_id: s.id, p_action: action, p_detail: detail, p_items: items })
     if (error) { setBusy(false); return setErr(error.message) }
@@ -60,6 +66,7 @@ function Detail({ s, events, org, onChange }: { s: Shipment; events: Ev[]; org: 
       <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 text-[14px] md:grid-cols-4">{[['Items', s.items_received != null ? `${s.items_received} of ${s.items}` : String(s.items)], ['Weight', s.weight_kg != null ? `${s.weight_kg} kg` : '–'], ['Carrier', s.carrier || '–'], ['Vehicle', s.vehicle_reg || '–'], ['Planned dispatch', dt(s.planned_dispatch)], ['Dispatched', dt(s.dispatched_at)], ['Planned arrival', dt(s.planned_arrival)], ['Delivered', dt(s.delivered_at)]].map(([k, v]) => <div key={k}><dt className="text-[12px] font-bold uppercase tracking-wider text-stone-400">{k}</dt><dd className="mt-0.5 font-semibold text-stone-900">{v}</dd></div>)}</dl>
       {lines.length > 0 && <div className="mt-5"><h3 className="mb-2 text-[12px] font-bold uppercase tracking-wider text-stone-400">What is in it</h3>
         <ul className="scroll-thin max-h-[220px] divide-y divide-stone-100 overflow-y-auto rounded-xl border border-stone-100">{lines.map((l) => <li key={l.source + l.ref} className="flex items-center justify-between gap-3 px-3 py-2 text-[13.5px]"><span className="min-w-0 truncate"><span className="font-semibold text-stone-900">{l.label}</span><span className="ml-2 text-[12px] text-stone-400">{{ wh_order: 'Packed order', wh_goods_out: 'Goods out', qr: 'Curtain', rfid: 'Laundry item', typed: '' }[l.source]}</span></span>{(l.source === 'wh_order' || l.source === 'wh_goods_out' || l.qty !== 1) && <span className="shrink-0 font-semibold text-stone-700">{l.qty} items</span>}</li>)}</ul></div>}
+      {s.status === 'in_transit' && s.arrived_at && <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-[14px] font-semibold text-emerald-900">The vehicle arrived at {s.to_name} at {dt(s.arrived_at)}. Press Receive and count what arrived to close this shipment.</div>}
       {err && <div className="mt-4"><Notice kind="error" onClose={() => setErr('')}>{err}</Notice></div>}
       <div className="mt-5 flex flex-wrap gap-2">
         {s.status === 'booked' && <><button disabled={busy} onClick={() => step('dispatch', 'Loaded and sealed')} className={`${btnPrimary} flex items-center gap-2`}><Send size={16} /> Dispatch</button><button disabled={busy} onClick={async () => { if (await ask('Cancel this shipment? Its items become free to put on another shipment.', 'Cancel shipment')) void step('cancel', 'Cancelled before dispatch') }} className={btnGhost}>Cancel shipment</button></>}
@@ -80,8 +87,18 @@ function Workflow() {
   const role = useStore((s) => s.role); const user = useAuth((s) => s.user); const orgs = useAuth((s) => s.orgs)
   const [rows, setRows] = useState<Shipment[]>([]); const [events, setEvents] = useState<Ev[]>([]); const [sel, setSel] = useState<string | null>(null); useEffect(() => () => clearShipDraft(), []); const [start] = useState(() => peekShipDraft()); const [adding, setAdding] = useState(!!start); const [f, setF] = useState('all'); const [q, setQ] = useState(''); const [pick, setPick] = useState(''); const [loaded, setLoaded] = useState(false)
   const org = role !== 'superadmin' ? role : pick || orgs[0]?.id || ''
+  useEffect(() => { void useInfra.getState().load() }, [])
+  const seen = useRef<Map<string, string>>(new Map())
   const load = useCallback(async () => {
-    const { data } = await supabase.from('shipments').select('*').order('created_at', { ascending: false }).limit(300); setRows((data ?? []) as Shipment[]); setLoaded(true)
+    const { data, error } = await supabase.from('shipments').select('*').order('created_at', { ascending: false }).limit(300)
+    if (error) { setLoaded(true); if (!seen.current.size) toast.error(`Could not load shipments. ${error.message}`); return }
+    const list = (data ?? []) as Shipment[]
+    for (const r of list) { // tell the user when the tracker moved a shipment on
+      const key = `${r.status}|${r.arrived_at ?? ''}`; const was = seen.current.get(r.id)
+      if (was !== undefined && was !== key) toast.info(r.status === 'in_transit' && !was.startsWith('in_transit') ? `${r.ref} has left ${r.from_name} and is on the way.` : r.arrived_at && !was.split('|')[1] ? `${r.ref} has arrived at ${r.to_name}. Count what arrived.` : `${r.ref} is now ${STATUS[r.status]?.label.toLowerCase() ?? r.status}.`)
+      seen.current.set(r.id, key)
+    }
+    setRows(list); setLoaded(true)
     const { data: ev } = await supabase.from('shipment_events').select('*').order('created_at', { ascending: false }).limit(1500); setEvents((ev ?? []) as Ev[])
   }, [])
   useEffect(() => { void load(); const id = setInterval(() => void load(), 20000); return () => clearInterval(id) }, [load])

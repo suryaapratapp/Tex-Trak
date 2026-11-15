@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     const patch: Record<string, unknown> = {}
     if (typeof body.name === 'string' && body.name.trim()) patch.name = body.name.trim()
     if (typeof body.tagline === 'string') patch.tagline = body.tagline
-    if (typeof body.active === 'boolean') patch.active = body.active
+    if (typeof body.active === 'boolean') { patch.active = body.active; patch.off_reason = body.active ? '' : String(body.off_reason ?? '').trim().slice(0, 200) }
     if (body.features !== undefined) patch.features = clean(body.features)
     const { error } = await admin.from('orgs').update(patch).eq('id', org.id)
     if (error) return fail(error.message)
@@ -119,8 +119,20 @@ Deno.serve(async (req) => {
     if (typeof body.full_name === 'string' && body.full_name.trim()) patch.full_name = body.full_name.trim()
     if (body.features !== undefined && t.role === 'staff') { const org = await orgOf(t.org_id!); patch.features = clean(body.features).filter((f) => org?.features.includes(f)) }
     if (typeof body.active === 'boolean') patch.active = body.active
-    const { error } = await admin.from('profiles').update(patch).eq('id', t.id)
-    if (error) return fail(error.message)
+    if (body.username !== undefined) { // Super Admin only: the sign-in name changes everywhere, the password stays
+      if (!isSuper) return fail('Only the Super Admin can change a username.', 403)
+      const u = String(body.username).trim().toLowerCase()
+      if (!USERNAME.test(u)) return fail('Usernames are 3–24 lowercase letters, digits, dots, dashes or underscores.')
+      if (u !== t.username) {
+        const { data: taken } = await admin.from('profiles').select('id').eq('username', u).neq('id', t.id).maybeSingle()
+        if (taken) return fail('That username is already taken.')
+        const { error: ae } = await admin.auth.admin.updateUserById(t.id, { email: email(u), email_confirm: true })
+        if (ae) return fail(ae.message)
+        patch.username = u
+      }
+    }
+    const { error } = Object.keys(patch).length ? await admin.from('profiles').update(patch).eq('id', t.id) : { error: null }
+    if (error) { if (patch.username) await admin.auth.admin.updateUserById(t.id, { email: email(t.username), email_confirm: true }); return fail(error.message) }
     if (typeof body.active === 'boolean') await admin.auth.admin.updateUserById(t.id, { ban_duration: body.active ? 'none' : '876000h' })
     return json({ ok: true })
   }

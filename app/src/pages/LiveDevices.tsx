@@ -1,6 +1,6 @@
 import { ZoomHint } from '../components/ZoomHint'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from 'react-leaflet'
+import { Circle, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { ChevronLeft, ChevronRight, Download, Smartphone, Truck } from 'lucide-react'
 import { Card, CardHead } from '../components/ui'
@@ -9,6 +9,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { ago, ageMin, trackerHealth, volts } from '../lib/status'
 import { useStore } from '../store'
+import { useInfra } from '../lib/infra'
+import { KIND_COLOR, KIND_GLYPH, KIND_LABEL } from '../sim/registry'
 
 interface Dev { imei: string; name: string; kind: 'tracker' | 'phone'; model: string; org_id: string | null; active: boolean; battery_pct: number | null; last_seen: string | null }
 interface Latest { imei: string; seen_at: string | null; fix_valid: boolean | null; satellites: number | null; battery_mv: number | null; gsm_signal: number | null; lat: number | null; lng: number | null; fix_ts: string | null; speed_kmh: number | null }
@@ -22,6 +24,7 @@ const HISTORY_DAYS = 30
 const COLORS = ['#6759e4', '#0e8f7e', '#e0a030', '#e5586b', '#3b82f6', '#8b5cf6', '#14b8a6', '#f97316']
 const icon = (name: string, c: string, phone: boolean, sel: boolean) => L.divIcon({ className: '', iconSize: [0, 0], html: `<div style="transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center"><div style="width:${sel ? 40 : 32}px;height:${sel ? 40 : 32}px;border-radius:50%;background:${c};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:grid;place-items:center;color:#fff;font:600 ${phone ? 14 : 13}px Inter,sans-serif">${phone ? '●' : '▲'}</div><span style="margin-top:3px;background:#1c2236;color:#fff;font:500 10.5px Inter,sans-serif;padding:1px 7px;border-radius:5px;white-space:nowrap">${name}</span></div>` })
 
+const siteIcon = (kind: string) => L.divIcon({ className: '', iconSize: [0, 0], html: `<div style="transform:translate(-50%,-50%);width:26px;height:26px;border-radius:8px;background:${KIND_COLOR[kind] ?? '#6759e4'};border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);display:grid;place-items:center;color:#fff;font-size:14px;line-height:1">${KIND_GLYPH[kind] ?? '●'}</div>` })
 function Fit({ pts, sel }: { pts: [number, number][]; sel: [number, number] | null }) {
   const map = useMap()
   useEffect(() => { setTimeout(() => map.invalidateSize(), 50) }, [map])
@@ -32,6 +35,8 @@ function Fit({ pts, sel }: { pts: [number, number][]; sel: [number, number] | nu
 
 export default function LiveDevices() {
   const role = useStore((s) => s.role); const orgs = useAuth((s) => s.orgs); const focus = useStore((s) => s.focusDevice)
+  const infra = useInfra(); useEffect(() => { void infra.load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const sites = useMemo(() => infra.sites.filter((x) => role === 'superadmin' || x.org_id === role || x.org_id === null), [infra.sites, role])
   const [devs, setDevs] = useState<Dev[]>([]); const [latest, setLatest] = useState<Record<string, Latest>>({}); const [sel, setSel] = useState<string | null>(focus); const [loaded, setLoaded] = useState(false)
   const today = dayKey(new Date()); const [day, setDay] = useState(today); const [data, setData] = useState<Day | null>(null); const [dayBusy, setDayBusy] = useState(false); const [dayErr, setDayErr] = useState('')
   useEffect(() => { if (focus) useStore.getState().set({ focusDevice: null }) }, [focus])
@@ -53,7 +58,7 @@ export default function LiveDevices() {
   useEffect(() => { void loadDay(); if (day !== today) return; const id = setInterval(() => void loadDay(), 30000); return () => clearInterval(id) }, [loadDay, day, today])
 
   const rows = devs.map((d, i) => { const l = latest[d.imei]; const hasPos = !!l && l.lat != null && l.lng != null; return { d, l, hasPos, c: COLORS[i % COLORS.length], age: ageMin(l?.fix_ts) } })
-  const placed = rows.filter((r) => r.hasPos); const all = placed.map((r) => [r.l!.lat!, r.l!.lng!] as [number, number])
+  const placed = rows.filter((r) => r.hasPos); const all = [...placed.map((r) => [r.l!.lat!, r.l!.lng!] as [number, number]), ...sites.map((x) => [x.lat, x.lng] as [number, number])]
   const cur = rows.find((r) => r.d.imei === sel); const trail = (data?.points ?? []).map((p) => [p[1], p[2]] as [number, number])
   const selPos: [number, number] | null = trail.length ? trail[trail.length - 1] : cur?.hasPos ? [cur.l!.lat!, cur.l!.lng!] : null
   const shift = (n: number) => { const x = startOf(day); x.setDate(x.getDate() + n); const k = dayKey(x); if (k >= oldest && k <= today) setDay(k) }
@@ -70,6 +75,8 @@ export default function LiveDevices() {
           <MapContainer center={[54.5, -3]} zoom={6} style={{ height: 560, width: '100%' }} scrollWheelZoom={false}>
       <ZoomHint />
             <TileLayer attribution="&copy; OpenStreetMap contributors" url={import.meta.env.VITE_TILE_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} /><ClickToActivate /><Fit pts={sel ? trail : all} sel={sel && !trail.length ? selPos : null} key={sel ?? 'all'} />
+            {sites.map((x) => <Circle key={`c${x.id}`} center={[x.lat, x.lng]} radius={x.radius_m} pathOptions={{ color: KIND_COLOR[x.kind] ?? '#6759e4', weight: 1.5, fillOpacity: 0.12 }} />)}
+            {sites.map((x) => <Marker key={`s${x.id}`} position={[x.lat, x.lng]} icon={siteIcon(x.kind)} zIndexOffset={200}><Tooltip direction="top" offset={[0, -10]}><b>{x.name}</b><br />{KIND_LABEL[x.kind] ?? x.kind}{role === 'superadmin' && x.org_id ? ` · ${orgs.find((o) => o.id === x.org_id)?.name ?? x.org_id}` : ''} · {x.radius_m} m zone</Tooltip></Marker>)}
             {sel && trail.length > 1 && <Polyline positions={trail} pathOptions={{ color: cur?.c ?? '#6759e4', weight: 5, opacity: 0.85 }} />}
             {sel && trail.length > 0 && <Marker position={trail[0]} icon={startIcon} zIndexOffset={900}><Tooltip direction="top">Start · {hm(data!.first_ts)}</Tooltip></Marker>}
             {sel && trail.length > 1 && <Marker position={trail[trail.length - 1]} icon={endIcon} zIndexOffset={900}><Tooltip direction="top">End · {hm(data!.last_ts)}</Tooltip></Marker>}
@@ -88,7 +95,7 @@ export default function LiveDevices() {
           <div className="border-t border-stone-100 px-5 py-3 text-[12.5px] text-stone-400">Full detail is kept for {HISTORY_DAYS} days. After that only the coordinates (time, latitude, longitude) are kept. {data && data.count > 0 ? `${data.count.toLocaleString('en-GB')} points this day${data.points.length < data.count ? `, map shows ${data.points.length}` : ''}.` : ''}</div></Card>}
       </div>
 
-      <Card><CardHead title="People and vehicles" sub={`${rows.length} active · ${placed.length} with a position. Click one to see its route.`} />
+      <div className="space-y-6"><Card><CardHead title="People and vehicles" sub={`${rows.length} active · ${placed.length} with a position. Click one to see its route.`} />
         <ul className="divide-y divide-stone-100">{!loaded && <li className="p-6 text-center text-stone-400">Loading…</li>}{loaded && rows.length === 0 && <li className="p-8 text-center text-[14px] text-stone-500">No devices yet. A phone appears here the moment someone signs in on the Android app. Trackers are added under Super Admin.</li>}
           {rows.map((r) => { const h = trackerHealth(r.d.kind, r.d.last_seen); return (
             <li key={r.d.imei}><button onClick={() => pick(r.d.imei)} className={`flex w-full items-center gap-3 px-5 py-3.5 text-left ${sel === r.d.imei ? 'bg-cyan-50' : 'hover:bg-stone-50'}`}>
@@ -96,5 +103,9 @@ export default function LiveDevices() {
               <span className="min-w-0 flex-1"><span className="block truncate text-[14.5px] font-medium text-stone-900">{r.d.name || r.d.imei}{role === 'superadmin' && r.d.org_id ? <span className="font-normal text-stone-400"> · {orgs.find((o) => o.id === r.d.org_id)?.name}</span> : null}</span>
                 <span className="block truncate text-[12.5px] text-stone-500">{r.hasPos ? `Position ${ago(r.l!.fix_ts)}${r.l!.speed_kmh ? ` · ${Math.round(r.l!.speed_kmh)} km/h` : ''}` : r.d.last_seen ? `Heard ${ago(r.d.last_seen)}, waiting for a GPS fix` : 'Never heard from'}</span></span>
               <span className="flex flex-col items-end text-[12px] text-stone-400"><i className="mb-1 h-2.5 w-2.5 rounded-full" style={{ background: h === 'online' ? '#16a34a' : h === 'offline' ? '#e5586b' : '#94a3b8' }} />{r.d.kind === 'phone' ? (r.d.battery_pct != null ? `${r.d.battery_pct}%` : '') : volts(r.l?.battery_mv)}</span></button></li>) })}</ul></Card>
+        <Card><CardHead title="Sites" sub={sites.length ? `${sites.length} on the map. A vehicle or phone entering a site's zone is how arrivals are recorded.` : 'No sites on the map yet.'} />
+          <ul className="divide-y divide-stone-100">{sites.length === 0 && <li className="p-6 text-center text-[14px] text-stone-500">{role === 'superadmin' ? 'Add sites under Super Admin, then Sites.' : 'Your administrator has not added any sites for you yet.'}</li>}
+            {sites.map((x) => <li key={x.id}><button onClick={() => setSel(null)} className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-stone-50"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[15px] text-white" style={{ background: KIND_COLOR[x.kind] ?? '#6759e4' }}>{KIND_GLYPH[x.kind] ?? '●'}</span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-[14.5px] font-medium text-stone-900">{x.name}</span><span className="block truncate text-[12.5px] text-stone-500">{KIND_LABEL[x.kind] ?? x.kind} · {x.radius_m} m zone{role === 'superadmin' && x.org_id ? ` · ${orgs.find((o) => o.id === x.org_id)?.name ?? x.org_id}` : ''}</span></span></button></li>)}</ul></Card></div>
     </div>)
 }

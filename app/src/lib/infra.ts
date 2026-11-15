@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from './supabase'
+import { toast } from './toast'
 import type { NetSite } from '../sim/registry'
 
 export interface DbSite { id: string; code: string; name: string; kind: string; lat: number; lng: number; radius_m: number; org_id: string | null; region: string; floors: number; status: 'live' | 'provisioned' | 'planned'; address: string; source: 'seed' | 'admin' }
@@ -11,6 +12,7 @@ export const useInfra = create<I>((set) => ({
   zones: [], sites: [], readers: [], trackers: [], loaded: false,
   load: async () => {
     const [s, r, t, z] = await Promise.all([supabase.from('sites').select('*').eq('source', 'admin').order('name'), supabase.from('readers').select('id,site_id,zone_id,code,position,online,last_seen,label,floor,source,direction').eq('source', 'admin').order('code'), supabase.from('trackers').select('*').order('created_at', { ascending: false }), supabase.from('zones').select('*').order('floor').order('name')])
+    const bad = [s, r, t, z].find((x) => x.error); if (bad?.error && !/fetch|network/i.test(bad.error.message)) toast.error(`Could not load sites and devices. ${bad.error.message}`)
     set({ zones: (z.data ?? []) as DbZone[], sites: (s.data ?? []) as DbSite[], readers: (r.data ?? []) as DbReader[], trackers: (t.data ?? []) as DbTracker[], loaded: true })
   },
 }))

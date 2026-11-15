@@ -15,7 +15,7 @@ const POINTS: [React.ReactNode, string, string][] = [
 ]
 
 export default function Login() {
-  const signIn = useAuth((s) => s.signIn); const [setup, setSetup] = useState(false); const [f, setF] = useState({ username: '', password: '', name: '', token: '' }); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [done, setDone] = useState(false)
+  const signIn = useAuth((s) => s.signIn); const notice = useAuth((s) => s.notice); const [setup, setSetup] = useState(false); const [f, setF] = useState({ username: '', password: '', name: '', token: '' }); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [done, setDone] = useState(false)
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(''); setBusy(true)
     if (setup) {
@@ -45,7 +45,7 @@ export default function Login() {
             <Field label="Username"><input value={f.username} onChange={(e) => setF({ ...f, username: e.target.value.toLowerCase() })} className={inputCls} autoComplete="username" autoCapitalize="none" autoFocus /></Field>
             <Field label="Password" hint={setup ? 'At least 8 characters.' : undefined}><PasswordInput value={f.password} onChange={(v) => setF({ ...f, password: v })} autoComplete={setup ? 'new-password' : 'current-password'} /></Field>
             {setup && <Field label="Setup token" hint="The BOOTSTRAP_TOKEN secret you set on the server."><PasswordInput value={f.token} onChange={(v) => setF({ ...f, token: v })} /></Field>}
-            {err && <Notice kind="error">{err}</Notice>}
+            {(err || notice) && <Notice kind="error">{err || notice}</Notice>}
             <button disabled={busy || !f.username || !f.password} className="h-12 w-full rounded-lg bg-cyan-600 text-[15px] font-medium text-white shadow-sm transition hover:bg-cyan-700 disabled:bg-stone-200 disabled:text-stone-400 disabled:shadow-none">{busy ? 'Please wait…' : setup ? 'Create Super Admin' : 'Sign in'}</button>
           </form>
           <button type="button" onClick={() => { setSetup(!setup); setErr(''); setDone(false) }} className="mt-5 w-full text-center text-[13.5px] font-medium text-stone-400 hover:text-stone-700">{setup ? 'Back to sign in' : 'First time? Set up the Super Admin'}</button>
