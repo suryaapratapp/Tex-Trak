@@ -4,7 +4,7 @@ import { Download, Pencil, Plus, Tags, Upload, X } from 'lucide-react'
 import { Page } from '../components/ui'
 import { go } from '../store'
 import { supabase } from '../lib/supabase'
-import { csvDownload, fmtMoney, fmtQty, norm, onHand, parseCsv, useIndex, useWh, useWhOrg, whRpc, whWrite, type Item } from './store'
+import { csvDownload, fmtDate, fmtMoney, fmtQty, locName, norm, onHand, parseCsv, useIndex, useWh, useWhOrg, whRpc, whWrite, type Item } from './store'
 import { btnDanger, btnGhost, btnPrimary, btnSmall, Empty, Field, inputCls, Notice, Pill, RemoveBtn, Section, TD, TH, useFlash, useTakePrefill } from './ui'
 
 const blank = { sku: '', name: '', category: '', uom: 'unit', barcode: '', description: '', supplier: '', unitCost: '0', reorderPoint: '0', reorderQty: '0', leadDays: '7', trackExpiry: false, active: true }
@@ -52,6 +52,60 @@ function ImportPanel({ kind, onClose }: { kind: 'items' | 'stock'; onClose: () =
     </Section>)
 }
 
+const STOCK_REASONS = ['Found extra', 'Lost or missing', 'Damaged in handling', 'Expired', 'Theft or shrinkage', 'Data entry mistake', 'Other']
+
+/** Change how many of this item are in stock, or add more, without leaving the item screen. */
+function StockEditor({ item }: { item: Item }) {
+  const ix = useIndex(); const org = useWhOrg(); const { flash, ok, err, clear } = useFlash()
+  const rows = (ix.stockByItem.get(item.id) ?? []).filter((r) => r.status === 'available' && r.qty > 0)
+  const [vals, setVals] = useState<Record<string, string>>({}); const [reason, setReason] = useState(''); const [busy, setBusy] = useState(false)
+  const [add, setAdd] = useState({ loc: '', qty: '', lot: '', expiry: '' }); const locs = ix.locs.filter((l) => l.active)
+  const key = (r: { locId: string; lot: string }) => `${r.locId}|${r.lot}`
+  const total = rows.reduce((n, r) => n + r.qty, 0)
+  const changes = rows.map((r) => ({ r, to: vals[key(r)] === undefined || vals[key(r)] === '' ? r.qty : Number(vals[key(r)]) })).filter((c) => c.to !== c.r.qty)
+  const bump = (r: { locId: string; lot: string; qty: number }, d: number) => { const cur = vals[key(r)] === undefined || vals[key(r)] === '' ? r.qty : Number(vals[key(r)]); setVals((v) => ({ ...v, [key(r)]: String(Math.max(0, cur + d)) })) }
+  const saveChanges = async () => {
+    if (changes.some((c) => !(c.to >= 0) || Number.isNaN(c.to))) return err('Quantities must be zero or more.')
+    setBusy(true)
+    for (const c of changes) {
+      const diff = c.to - c.r.qty
+      const r = await whRpc('wh_stock_action', { p_action: 'adjust', p_item: item.id, p_loc: c.r.locId, p_qty: diff, p_lot: c.r.lot, p_status: 'available', p_reason: reason || (diff > 0 ? 'Found extra' : 'Other'), p_notes: 'Changed from the item screen', p_op: crypto.randomUUID() })
+      if (!r.ok) { setBusy(false); return err(`${locName(ix, c.r.locId)}: ${r.message}`) }
+    }
+    setBusy(false); setVals({}); setReason(''); ok('Stock quantity saved.')
+  }
+  const addStock = async () => {
+    const q = Number(add.qty); if (!add.loc) return err('Choose the shelf it is going on.'); if (!(q > 0)) return err('Enter how many to add.')
+    if (item.trackExpiry && !add.expiry) return err('This item has an expiry date. Enter it.')
+    setBusy(true); const r = await whRpc('wh_receive', { p_po: 'STOCK ADDED', p_supplier: '', p_notes: 'Added from the item screen', p_op: crypto.randomUUID(), p_lines: [{ item: item.id, qty: q, location: add.loc, lot: add.lot.trim().toUpperCase(), expiry: add.expiry || null, qc: 'pass' }] }); setBusy(false)
+    if (!r.ok) return err(r.message); setAdd({ loc: add.loc, qty: '', lot: '', expiry: '' }); ok(`${fmtQty(q)} added.`)
+  }
+  void org
+  return (
+    <div className="mb-5 border-b border-stone-100 pb-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2"><div className="text-[14px] font-bold text-stone-700">Stock quantity</div><div className="text-[14px] text-stone-500">In stock now: <b className="text-[20px] font-extrabold text-stone-900">{fmtQty(total)}</b> {item.uom}</div></div>
+      <p className="text-[13px] text-stone-400">Type the real number, or use − and +. Changes are recorded in the ledger.</p>
+      {flash && <div className="mt-3"><Notice kind={flash.kind} onClose={clear}>{flash.text}</Notice></div>}
+      {rows.length === 0 ? <p className="mt-3 rounded-xl bg-stone-50 px-4 py-3 text-[14px] text-stone-500">None in stock yet. Add some below.</p> : (
+        <ul className="mt-3 space-y-2">{rows.map((r) => { const v = vals[key(r)] ?? ''; const changed = v !== '' && Number(v) !== r.qty
+          return <li key={key(r)} className={`flex flex-wrap items-center gap-3 rounded-xl px-3.5 py-2.5 ${changed ? 'bg-cyan-50 ring-1 ring-cyan-200' : 'bg-stone-50'}`}>
+            <div className="min-w-[8rem] flex-1"><span className="mono text-[14px] font-bold text-stone-800">{locName(ix, r.locId)}</span>{r.lot && <span className="ml-2 text-[13px] text-stone-500">Lot {r.lot}</span>}{r.expiry && <span className="ml-2 text-[13px] text-stone-500">Expires {fmtDate(r.expiry)}</span>}<div className="text-[12.5px] text-stone-400">Now {fmtQty(r.qty)}</div></div>
+            <div className="flex items-center gap-1.5"><button type="button" onClick={() => bump(r, -1)} aria-label="One less" className="grid h-11 w-11 place-items-center rounded-xl border border-stone-200 bg-white text-[20px] font-bold text-stone-600 hover:bg-stone-100">−</button>
+              <input value={v} onChange={(e) => setVals({ ...vals, [key(r)]: e.target.value.replace(/[^0-9.]/g, '') })} placeholder={fmtQty(r.qty)} inputMode="decimal" aria-label="New quantity" className={inputCls + ' !h-11 !w-24 text-center font-bold'} />
+              <button type="button" onClick={() => bump(r, 1)} aria-label="One more" className="grid h-11 w-11 place-items-center rounded-xl border border-stone-200 bg-white text-[20px] font-bold text-stone-600 hover:bg-stone-100">+</button></div></li> })}</ul>)}
+      {changes.length > 0 && <div className="mt-3 flex flex-wrap items-center gap-3"><select value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason" className="h-11 rounded-2xl border border-stone-200 bg-white px-3 text-[14px]"><option value="">Reason (optional)</option>{STOCK_REASONS.map((x) => <option key={x}>{x}</option>)}</select>
+        <button disabled={busy} onClick={() => void saveChanges()} className={btnPrimary}>{busy ? 'Saving…' : `Save ${changes.length} change${changes.length === 1 ? '' : 's'}`}</button><button disabled={busy} onClick={() => setVals({})} className={btnGhost}>Undo</button></div>}
+      <div className="mt-5 rounded-2xl border border-dashed border-stone-300 p-4"><div className="mb-2 text-[14px] font-bold text-stone-700">Add more stock</div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1.2fr_110px_1fr_1fr_auto]">
+          <select value={add.loc} onChange={(e) => setAdd({ ...add, loc: e.target.value })} aria-label="Shelf" className="h-11 rounded-2xl border border-stone-200 bg-white px-3 text-[14px]"><option value="">Which shelf?</option>{locs.map((l) => <option key={l.id} value={l.id}>{l.code}{l.name && l.name !== l.code ? ` · ${l.name}` : ''}</option>)}</select>
+          <input value={add.qty} onChange={(e) => setAdd({ ...add, qty: e.target.value.replace(/[^0-9.]/g, '') })} inputMode="decimal" placeholder="How many" aria-label="How many" className={inputCls + ' !h-11'} />
+          <input value={add.lot} onChange={(e) => setAdd({ ...add, lot: e.target.value })} placeholder="Lot (optional)" aria-label="Lot" className={inputCls + ' !h-11'} />
+          {item.trackExpiry ? <input type="date" value={add.expiry} onChange={(e) => setAdd({ ...add, expiry: e.target.value })} aria-label="Expiry date" className={inputCls + ' !h-11'} /> : <span className="hidden lg:block" />}
+          <button disabled={busy} onClick={() => void addStock()} className={btnPrimary + ' !h-11 !py-0'}>Add</button></div>
+        {locs.length === 0 && <p className="mt-2 text-[13px] text-amber-700">Add a shelf in Locations first.</p>}</div>
+    </div>)
+}
+
 export default function Items() {
   const ix = useIndex(); const org = useWhOrg(); const codes = useWh((s) => s.codes); const pre = useTakePrefill(); const { flash, ok, err, clear } = useFlash()
   const [q, setQ] = useState(''); const [cat, setCat] = useState(''); const [show, setShow] = useState<'none' | 'form' | 'items' | 'stock'>(pre?.itemId || pre?.code ? 'form' : 'none')
@@ -83,18 +137,19 @@ export default function Items() {
         {(show === 'items' || show === 'stock') && <ImportPanel kind={show} onClose={() => setShow('none')} />}
         {show === 'form' && (
           <Section title={edit ? `Edit ${edit.name}` : 'New item'}>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Field label="SKU" required hint="Your own code. Letters and numbers."><input value={f.sku} onChange={(e) => set('sku', e.target.value)} className={inputCls} /></Field>
-              <div className="sm:col-span-1 lg:col-span-2"><Field label="Name" required><input value={f.name} onChange={(e) => set('name', e.target.value)} className={inputCls} /></Field></div>
-              <Field label="Barcode (EAN or UPC)"><input value={f.barcode} onChange={(e) => set('barcode', e.target.value)} className={inputCls} /></Field>
+            {edit && <StockEditor key={edit.id} item={edit} />}
+            <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:gap-4 lg:grid-cols-3"><div className="col-span-2 -mb-1 text-[14px] font-bold text-stone-700 lg:col-span-3">Item details</div>
+              <div className="col-span-2 sm:col-span-1"><Field label="SKU" required hint="Your own code. Letters and numbers."><input value={f.sku} onChange={(e) => set('sku', e.target.value)} className={inputCls} /></Field></div>
+              <div className="col-span-2 lg:col-span-2"><Field label="Name" required><input value={f.name} onChange={(e) => set('name', e.target.value)} className={inputCls} /></Field></div>
+              <div className="col-span-2 sm:col-span-1"><Field label="Barcode (EAN or UPC)"><input value={f.barcode} onChange={(e) => set('barcode', e.target.value)} className={inputCls} /></Field></div>
               <Field label="Category"><input value={f.category} onChange={(e) => set('category', e.target.value)} list="wh-cats" className={inputCls} /><datalist id="wh-cats">{cats.map((c) => <option key={c} value={c} />)}</datalist></Field>
               <Field label="Unit"><input value={f.uom} onChange={(e) => set('uom', e.target.value)} className={inputCls} placeholder="unit, box, kg…" /></Field>
               <Field label="Cost per unit (£)"><input value={f.unitCost} onChange={(e) => set('unitCost', e.target.value)} inputMode="decimal" className={inputCls} /></Field>
               <Field label="Reorder level" hint="Warn me at or below this"><input value={f.reorderPoint} onChange={(e) => set('reorderPoint', e.target.value)} inputMode="decimal" className={inputCls} /></Field>
               <Field label="Usual order size"><input value={f.reorderQty} onChange={(e) => set('reorderQty', e.target.value)} inputMode="decimal" className={inputCls} /></Field>
-              <Field label="Supplier"><input value={f.supplier} onChange={(e) => set('supplier', e.target.value)} className={inputCls} /></Field>
+              <div className="col-span-2 sm:col-span-1"><Field label="Supplier"><input value={f.supplier} onChange={(e) => set('supplier', e.target.value)} className={inputCls} /></Field></div>
               <Field label="Supplier lead time (days)"><input value={f.leadDays} onChange={(e) => set('leadDays', e.target.value)} inputMode="numeric" className={inputCls} /></Field>
-              <div className="sm:col-span-2 lg:col-span-3"><Field label="Description"><input value={f.description} onChange={(e) => set('description', e.target.value)} className={inputCls} /></Field></div>
+              <div className="col-span-2 lg:col-span-3"><Field label="Description"><input value={f.description} onChange={(e) => set('description', e.target.value)} className={inputCls} /></Field></div>
             </div>
             <div className="mt-4 flex flex-wrap gap-6"><label className="flex items-center gap-2.5 text-[14.5px] font-semibold text-stone-700"><input type="checkbox" checked={f.trackExpiry} onChange={(e) => set('trackExpiry', e.target.checked)} className="h-5 w-5 accent-cyan-600" /> Has an expiry date (picked soonest-first)</label>
               {edit && <label className="flex items-center gap-2.5 text-[14.5px] font-semibold text-stone-700"><input type="checkbox" checked={f.active} onChange={(e) => set('active', e.target.checked)} className="h-5 w-5 accent-cyan-600" /> In use</label>}</div>
@@ -106,12 +161,12 @@ export default function Items() {
           </Section>)}
 
         <Section>
-          <div className="mb-4 flex flex-wrap gap-2"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, SKU, barcode…" className={inputCls + ' !h-11 flex-1'} />
+          <div className="mb-4 flex flex-wrap gap-2"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, SKU, barcode…" className={inputCls + ' !h-11 min-w-[12rem] flex-1'} />
             {cats.length > 0 && <select value={cat} onChange={(e) => setCat(e.target.value)} className="h-11 rounded-2xl border border-stone-200 bg-white px-3 text-[14px]"><option value="">All categories</option>{cats.map((c) => <option key={c}>{c}</option>)}</select>}
             <button onClick={() => csvDownload('items.csv', [['sku', 'name', 'category', 'uom', 'barcode', 'supplier', 'unit_cost', 'reorder_point', 'reorder_qty', 'available'], ...rows.map((i) => [i.sku, i.name, i.category, i.uom, i.barcode, i.supplier, i.unitCost, i.reorderPoint, i.reorderQty, onHand(ix, i.id)])])} className={btnGhost + ' flex items-center gap-2 !px-4 !py-2.5 !text-[14px]'}><Download size={16} />Export</button></div>
           {ix.items.length === 0 ? <Empty icon={<Tags size={22} />} title="No items yet" sub="Add them one at a time, or import a spreadsheet." /> : rows.length === 0 ? <p className="py-8 text-center text-[14px] text-stone-400">Nothing matches.</p> : (
-            <div className="-mx-2 overflow-x-auto"><table className="w-full text-[14px]"><thead><tr><th className={TH}>Item</th><th className={TH}>Category</th><th className={TH + ' text-right'}>Available</th><th className={TH + ' text-right'}>Reorder at</th><th className={TH + ' text-right'}>Cost</th><th /></tr></thead>
-              <tbody>{rows.map((i) => { const a = onHand(ix, i.id); const low = i.reorderPoint > 0 && a <= i.reorderPoint; return <tr key={i.id} className={i.active ? '' : 'opacity-50'}><td className={TD}><div className="font-semibold text-stone-800">{i.name} {!i.active && <Pill>Off</Pill>}</div><div className="mono text-[12px] text-stone-400">{i.sku}{i.barcode ? ` · ${i.barcode}` : ''}</div></td><td className={TD + ' text-stone-500'}>{i.category || '–'}</td><td className={TD + ' mono text-right font-semibold'}>{low ? <span className="text-amber-700">{fmtQty(a)}</span> : fmtQty(a)}</td><td className={TD + ' mono text-right text-stone-500'}>{i.reorderPoint ? fmtQty(i.reorderPoint) : '–'}</td><td className={TD + ' mono text-right text-stone-500'}>{i.unitCost ? fmtMoney(i.unitCost) : '–'}</td><td className={TD}><button onClick={() => open(i)} className={btnSmall + ' flex items-center gap-1.5'}><Pencil size={13} />Edit</button></td></tr> })}</tbody></table></div>)}
+            <div className="-mx-2 overflow-x-auto"><table className="w-full text-[14px]"><thead><tr><th className={TH}>Item</th><th className={TH + ' hidden sm:table-cell'}>Category</th><th className={TH + ' text-right'}>Available</th><th className={TH + ' hidden text-right sm:table-cell'}>Reorder at</th><th className={TH + ' hidden text-right sm:table-cell'}>Cost</th><th /></tr></thead>
+              <tbody>{rows.map((i) => { const a = onHand(ix, i.id); const low = i.reorderPoint > 0 && a <= i.reorderPoint; return <tr key={i.id} className={i.active ? '' : 'opacity-50'}><td className={TD}><div className="font-semibold text-stone-800">{i.name} {!i.active && <Pill>Off</Pill>}</div><div className="mono text-[12px] text-stone-400">{i.sku}{i.barcode ? ` · ${i.barcode}` : ''}</div></td><td className={TD + ' hidden text-stone-500 sm:table-cell'}>{i.category || '–'}</td><td className={TD + ' mono text-right font-semibold'}>{low ? <span className="text-amber-700">{fmtQty(a)}</span> : fmtQty(a)}</td><td className={TD + ' mono hidden text-right text-stone-500 sm:table-cell'}>{i.reorderPoint ? fmtQty(i.reorderPoint) : '–'}</td><td className={TD + ' mono hidden text-right text-stone-500 sm:table-cell'}>{i.unitCost ? fmtMoney(i.unitCost) : '–'}</td><td className={TD}><button onClick={() => open(i)} className={btnSmall + ' flex items-center gap-1.5'}><Pencil size={13} />Edit</button></td></tr> })}</tbody></table></div>)}
         </Section>
       </div>
     </Page>)

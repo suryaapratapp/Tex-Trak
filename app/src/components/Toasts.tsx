@@ -7,7 +7,7 @@ const ICON = { ok: <CheckCircle2 size={19} className="text-emerald-600" />, erro
 export function Toasts() {
   const { items, drop } = useToasts()
   return (
-    <div aria-live="polite" className="pointer-events-none fixed right-3 top-3 z-[3500] flex w-[min(380px,calc(100vw-24px))] flex-col gap-2">
+    <div aria-live="polite" className="pointer-events-none fixed right-2 top-2 z-[3500] flex w-[min(380px,calc(100vw-16px))] flex-col gap-2">
       {items.map((t) => (
         <div key={t.id} role={t.kind === 'error' ? 'alert' : 'status'} className={`toast-in pointer-events-auto flex items-start gap-3 rounded-2xl border bg-white px-4 py-3 text-[14px] font-semibold shadow-xl ${STYLE[t.kind]}`}>
           <span className="mt-0.5 shrink-0">{ICON[t.kind]}</span><span className="min-w-0 flex-1 break-words">{t.text}</span>

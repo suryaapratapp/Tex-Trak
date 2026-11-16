@@ -88,7 +88,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         {isSuper && role !== 'superadmin' && <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-100 px-4 py-2 text-[14px] font-semibold text-amber-900"><Eye size={16} /> Previewing as {org?.name ?? role}. This is exactly what their users can see.<button onClick={() => setRole('superadmin')} className="rounded-full bg-amber-900 px-3.5 py-1 text-[13px] font-bold text-white">Exit preview</button></div>}
         <SyncBar />
-        <header className="top-glass relative z-10 flex items-center gap-3 border-b border-stone-200/70 px-4 py-3.5 xl:px-8">
+        <header className="top-glass relative z-10 flex items-center gap-3 border-b border-stone-200/70 px-3 py-2 sm:px-4 sm:py-3.5 xl:px-8">
           <button onClick={() => setMenu(true)} className="grid h-10 w-10 place-items-center rounded-full border border-stone-200 xl:hidden" aria-label="Menu"><Menu size={18} /></button>
           <div className="flex min-w-0 items-center gap-2 text-[14px] font-semibold"><span className="live-dot shrink-0" style={{ background: role === 'superadmin' ? '#131a2e' : org?.color ?? '#5a46e0' }} /><span className="truncate text-stone-800">{role === 'superadmin' ? 'All clients' : org?.name}</span>{role !== 'superadmin' && org?.tagline && <span className="hidden truncate text-stone-500 sm:inline">· {org.tagline}</span>}</div>
           <div className="ml-auto flex items-center gap-2">
@@ -98,7 +98,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         </header>
         <main ref={mainRef} className={`scroll-thin min-h-0 flex-1 overflow-y-auto ${mode === 'demo' ? 'pb-28' : 'pb-8'}`}>{children}
-          <footer className="mx-auto max-w-[1500px] px-8 pb-6 pt-2 text-center text-[13px] font-semibold text-stone-400">Tex-Trak · Developed by CIRCAI LTD</footer></main>
+          <footer className="mx-auto max-w-[1500px] px-4 pb-4 pt-1 text-center text-[13px] font-semibold text-stone-400 sm:px-8 sm:pb-6 sm:pt-2">Tex-Trak · Developed by CIRCAI LTD</footer></main>
         <GuidedTour />
         {mode === 'demo' && <div className="fixed bottom-3 left-3 right-3 z-40 mx-auto flex max-w-[860px] items-center gap-3 rounded-full border border-stone-200 bg-white/95 px-3 py-2 shadow-[0_18px_50px_-18px_rgba(19,26,46,.45)] backdrop-blur xl:left-[288px] sm:gap-4 sm:px-4">
           <button onClick={() => set({ playing: !playing })} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-stone-900 text-white transition hover:bg-stone-700" title={playing ? 'Pause' : 'Play'}>{playing ? <Pause size={15} /> : <Play size={15} />}</button>
