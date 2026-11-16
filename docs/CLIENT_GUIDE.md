@@ -16,7 +16,7 @@ The menu on the left is split into modules. **You only see the modules your comp
 |---|---|
 | **Home** | A summary of what is happening now. |
 | **Live map** | Where your vehicles and people are, on a map. |
-| **Scan station** | Scan any code and see what it is and what you can do with it. |
+| **Scan station** | For field staff: scan any code and see what it is and what you can do with it. Client administrators do not see this module. |
 | **Alerts** | Things that need attention. |
 | **Curtains · QR** | Install, replace and track QR-labelled products such as curtains. |
 | **Warehouse** | Stock control for any product: receive, pick, pack, move and count. |
@@ -84,7 +84,7 @@ Each message says what went wrong and what to do. The most common ones are in se
 
 ## 4. Scan station
 
-**Scan station** reads any code and shows what it is.
+**Scan station** is for field staff who have been given it. It reads any code and shows what it is. Client administrators do not see it, and it can be given to a person under **Team**.
 
 | Code | What you see | What you can do |
 |---|---|---|

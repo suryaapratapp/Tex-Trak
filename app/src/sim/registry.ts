@@ -76,6 +76,7 @@ export const hasFeature = (role: Role, f: string) => {
   if (role === 'superadmin') return true
   const a = useAuth.getState(); const org = a.orgs.find((o) => o.id === role)
   if (!org || !org.active || !org.features.includes(f)) return false
+  if (f === 'scan' && a.user?.role !== 'staff') return false // the Scan station is for field staff; client admins do not get it
   return a.user?.role === 'staff' && a.user.org_id === role ? a.user.features.includes(f) : true
 }
 export const hasModule = (role: Role, m: ModuleId) => FEATURES.some((f) => f.module === m && hasFeature(role, f.id))

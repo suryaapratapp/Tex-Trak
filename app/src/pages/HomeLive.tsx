@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowRight, Boxes, Cpu, Package, ScanLine, Tag } from 'lucide-react'
+import { ArrowRight, Boxes, Cpu, Package, Tag } from 'lucide-react'
 import { hasFeature, hasModule } from '../sim/registry'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -40,7 +40,6 @@ export default function HomeLive() {
     <div className="mx-auto w-full max-w-[1100px] space-y-8 p-6 sm:p-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div><h1 className="text-[28px] font-semibold tracking-tight text-stone-900">{hello}, {user?.full_name.split(' ')[0] ?? ''}</h1><p className="mt-1 text-[15px] text-stone-500">{!loaded ? 'Checking…' : bad ? `${bad} thing${bad === 1 ? '' : 's'} need${bad === 1 ? 's' : ''} a look.` : attn.length ? 'Nothing urgent. A few things to be aware of below.' : 'Everything is running normally.'}</p></div>
-        {hasFeature(role, 'scan') && <button onClick={() => go('scan')} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-3 text-[14.5px] font-medium text-white shadow-sm hover:bg-cyan-700"><ScanLine size={17} /> Scan</button>}
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5">
         {hasModule(role, 'curtains') && <Tile icon={<Tag size={20} />} color="#6a57e6" title="Curtains" headline={prods.filter((p) => p.status === 'in_use').length} label="installed" status={overdue ? `${overdue} overdue for change` : 'None overdue'} bad={!!overdue} page="qrdash" />}
