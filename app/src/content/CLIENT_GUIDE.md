@@ -212,10 +212,18 @@ Open **Transport → Shipments** to book, follow and close a delivery.
    - **Goods out** and other items.
    Anything already on another shipment is greyed out, so nothing is sent twice. The number of items fills in by itself.
 5. If your customer has a Tex-Trak account, choose it under **Customer account**. They will then see this shipment and can accept it themselves (see below). If the box is not there, ask support to set up your customer.
-6. Add the **carrier**, the **vehicle registration** and the **planned times** if you know them.
-7. Press **Book shipment**. It gets a reference such as `SHP-1001`. Write it on the delivery note.
+6. Under **How will it be tracked?** choose what travels with the shipment:
+   - **A vehicle** from your list. If it has a tracker fitted, Tex-Trak follows it.
+   - **A tracker or phone** travelling with the load, for example a tracker in the cage, or the driver's phone.
+   - **Not tracked.** You press Dispatch and Receive yourself.
+   - **Another vehicle**, typing its registration.
+7. Add the **carrier** and the **planned times** if you know them.
+8. Press **Book shipment**. It gets a reference such as `SHP-1001`. Write it on the delivery note.
 
 You can also start from **Arrange shipment**, which appears after Pack order, Goods out and Take down.
+
+### How Tex-Trak knows it has left and arrived
+It follows the tracker and compares its position with your **From** and **To** sites. When the tracker drives out of the From site, the shipment is dispatched by itself. When it reaches the To site, arrival is noted and you are told to count. Direction therefore comes from the two sites you pick, so pick them from the list. The shipment's **Tracking** box says what will happen by itself and what you must do by hand. Press **Change** to switch the vehicle or tracker before it arrives.
 
 ### Dispatch
 1. Count the items. The count must match the shipment.

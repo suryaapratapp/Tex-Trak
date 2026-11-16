@@ -94,7 +94,6 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="ml-auto flex items-center gap-2">
             {mode === 'demo' && <span className="rounded-full bg-amber-100 px-3 py-1 text-[12.5px] font-bold uppercase tracking-wide text-amber-900" title="Everything you see is an example day. Nothing here is real.">Demo data</span>}
             {isSuper && <div className="hidden rounded-lg bg-stone-100 p-0.5 sm:flex" title="Choose between your real data and the built-in example day">{(['live', 'demo'] as const).map((m) => <button key={m} onClick={() => set({ mode: m })} className={`rounded-md px-3 py-1.5 text-[13px] font-medium ${mode === m ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800'}`}>{m === 'live' ? 'Live data' : 'Demo data'}</button>)}</div>}
-            {hasFeature(role, 'scan') && <button onClick={() => nav('scan')} className="flex items-center gap-1.5 rounded-full bg-cyan-600 px-4 py-2 text-[13.5px] font-bold text-white hover:bg-cyan-700 xl:hidden"><ScanLine size={15} /> Scan</button>}
           </div>
         </header>
         <main ref={mainRef} className={`scroll-thin min-h-0 flex-1 overflow-y-auto ${mode === 'demo' ? 'pb-28' : 'pb-8'}`}>{children}

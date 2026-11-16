@@ -47,7 +47,8 @@ Tip: pack the items and put them together (for example in one box or on one cage
    - Tick each item you are sending, or press **Select all … shown** (above the list) if all of them are going.
    - The **number of items** fills in by itself.
    - Anything already on another shipment is greyed out ("On SHP-…"), so nothing is sent twice.
-6. **Carrier** and **Vehicle registration:** fill these in if you know them. Enter the vehicle's registration exactly as it appears under Vehicles if it has a tracker.
+6. **How will it be tracked?** Pick the vehicle from the list (it shows whether it has a tracker), or pick a **tracker or phone** that travels with the load, or leave **Not tracked** and confirm by hand. Tex-Trak knows the direction from your **From** and **To** sites: it dispatches when the tracker leaves From and notes arrival when it reaches To.
+   **Carrier:** fill it in if you know it.
 7. **Planned dispatch** and **Planned arrival:** add them if you know them.
 8. Press **Book shipment**. It gets a reference such as `SHP-1001`. Write that on the delivery note.
 
