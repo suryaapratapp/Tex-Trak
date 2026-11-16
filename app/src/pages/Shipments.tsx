@@ -14,6 +14,7 @@ import { ShipmentContents, summarise, type Line } from './ShipmentContents'
 import { CustomerReceive } from './CustomerReceive'
 import { TrackPicker, type Tracking } from '../components/TrackPicker'
 import { TrackingCard, trackerOf } from '../components/TrackingCard'
+import { DeliveryMap } from '../components/DeliveryMap'
 
 interface Shipment { id: string; ref: string; org_id: string; kind: string; from_name: string; to_name: string; carrier: string; vehicle_reg: string; description: string; items: number; weight_kg: number | null; planned_dispatch: string | null; planned_arrival: string | null; status: 'booked' | 'in_transit' | 'delivered' | 'exception' | 'cancelled'; dispatched_at: string | null; delivered_at: string | null; arrived_at?: string | null; items_received: number | null; created_at: string; customer_org_id?: string | null; tracker_imei?: string | null; received_by_name?: string | null; received_method?: 'scan' | 'confirm' | null; received_at?: string | null; received_scanned?: number | null }
 interface Ev { id: number; shipment_id: string; type: string; detail: string; by_name: string; created_at: string }
@@ -77,12 +78,17 @@ function Detail({ s, events, org, onChange, customer, clash }: { s: Shipment; ev
       {lines.length > 0 && <div className="mt-5"><h3 className="mb-2 text-[12px] font-bold uppercase tracking-wider text-stone-400">What is in it</h3>
         <ul className="scroll-thin max-h-[220px] divide-y divide-stone-100 overflow-y-auto rounded-xl border border-stone-100">{lines.map((l) => <li key={l.source + l.ref} className="flex items-center justify-between gap-3 px-3 py-2 text-[13.5px]"><span className="min-w-0 truncate"><span className="font-semibold text-stone-900">{l.label}</span><span className="ml-2 text-[12px] text-stone-400">{{ wh_order: 'Packed order', wh_goods_out: 'Goods out', qr: 'Curtain', rfid: 'Laundry item', typed: '' }[l.source]}</span></span>{(l.source === 'wh_order' || l.source === 'wh_goods_out' || l.qty !== 1) && <span className="shrink-0 font-semibold text-stone-700">{l.qty} items</span>}</li>)}</ul></div>}
       {s.received_at && <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4"><h3 className="text-[12px] font-bold uppercase tracking-wider text-emerald-800">Received and signed</h3><div className="mt-1 text-[15px] font-bold text-stone-900">{s.received_by_name} · {dt(s.received_at)}</div><div className="text-[13.5px] text-stone-600">{s.items_received} of {s.items} items · {s.received_method === 'scan' ? `each item scanned${s.received_scanned != null ? ` (${s.received_scanned})` : ''}` : 'checked and confirmed without scanning'}</div>{sig && <img src={sig} alt={`Signature of ${s.received_by_name}`} className="mt-3 h-24 rounded-xl border border-stone-200 bg-white" />}</div>}
-      {customer && (s.status === 'booked' || s.status === 'in_transit') && <CustomerReceive id={s.id} shipRef={s.ref} expected={s.items} lines={lines} onDone={onChange} />}
+      {customer && s.status === 'in_transit' && !s.arrived_at && <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-[14.5px] font-semibold text-sky-900">Your delivery is on its way. You can check it and sign for it as soon as it arrives.</div>}
+      {customer && s.status === 'booked' && <div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-[14.5px] font-semibold text-stone-600">This delivery has not left yet. You will be able to follow it here once it is on its way.</div>}
+      {customer && s.status === 'in_transit' && <DeliveryMap id={s.id} status={s.status + (s.arrived_at ?? '')} />}
+      {customer && s.status === 'in_transit' && s.arrived_at && <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-[14.5px] font-semibold text-emerald-900">It has arrived. Please check what you received and sign below.</div>}
+      {customer && s.status === 'in_transit' && s.arrived_at && <CustomerReceive id={s.id} shipRef={s.ref} expected={s.items} lines={lines} onDone={onChange} />}
+      {!customer && s.status === 'in_transit' && <DeliveryMap id={s.id} status={s.status + (s.arrived_at ?? '')} height={240} />}
       {s.status === 'in_transit' && s.arrived_at && !customer && <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-[14px] font-semibold text-emerald-900">The vehicle arrived at {s.to_name} at {dt(s.arrived_at)}. Press Receive and count what arrived to close this shipment.</div>}
       {err && <div className="mt-4"><Notice kind="error" onClose={() => setErr('')}>{err}</Notice></div>}
       {!customer && <div className="mt-5 flex flex-wrap gap-2">
         {s.status === 'booked' && <><button disabled={busy} onClick={() => step('dispatch', 'Loaded and sealed')} className={`${btnPrimary} flex items-center gap-2`}><Send size={16} /> Dispatch</button><button disabled={busy} onClick={async () => { if (await ask('Cancel this shipment? Its items become free to put on another shipment.', 'Cancel shipment')) void step('cancel', 'Cancelled before dispatch') }} className={btnGhost}>Cancel shipment</button></>}
-        {s.status === 'in_transit' && <><button onClick={() => setMode('receive')} className={`${btnPrimary} flex items-center gap-2`}><Check size={16} /> Receive</button><button onClick={() => setMode('update')} className={btnGhost}>Add update</button><button onClick={() => setMode('delay')} className={btnGhost}>Report delay</button></>}
+        {s.status === 'in_transit' && <>{!s.arrived_at && <button disabled={busy} onClick={() => step('arrived', 'Marked as arrived')} className={btnGhost}>Mark as arrived</button>}<button onClick={() => setMode('receive')} className={`${btnPrimary} flex items-center gap-2`}><Check size={16} /> Receive</button><button onClick={() => setMode('update')} className={btnGhost}>Add update</button><button onClick={() => setMode('delay')} className={btnGhost}>Report delay</button></>}
         {(s.status === 'booked' || s.status === 'in_transit') && <button onClick={() => setMode('exception')} className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-[15px] font-bold text-rose-700 hover:bg-rose-100">Report a problem</button>}
         {s.status === 'exception' && <button disabled={busy} onClick={() => step('resolve', 'Problem resolved')} className={`${btnPrimary} flex items-center gap-2`}><CircleCheck size={16} /> Mark resolved</button>}</div>}
       {!customer && mode && <div className="mt-4 space-y-3 rounded-2xl border border-stone-100 p-4">
@@ -101,20 +107,20 @@ function Workflow() {
   const isCust = role !== 'superadmin' && orgs.find((o) => o.id === role)?.kind === 'customer'
   const sendOrgs = orgs.filter((o) => o.kind !== 'customer'); const org = role !== 'superadmin' ? role : pick || sendOrgs[0]?.id || ''
   useEffect(() => { void useInfra.getState().load() }, []); const vehicles = useInfra((x) => x.vehicles)
-  const seen = useRef<Map<string, string>>(new Map())
+  const seen = useRef<Map<string, string>>(new Map()); const isCustRef = useRef(false); isCustRef.current = isCust
   const load = useCallback(async () => {
     const { data, error } = await supabase.from('shipments').select('id,ref,org_id,kind,from_name,to_name,carrier,vehicle_reg,description,items,weight_kg,planned_dispatch,planned_arrival,status,dispatched_at,delivered_at,arrived_at,items_received,created_at,customer_org_id,tracker_imei,received_by_name,received_method,received_at,received_scanned').order('created_at', { ascending: false }).limit(300)
     if (error) { setLoaded(true); if (!seen.current.size) toast.error(`Could not load shipments. ${error.message}`); return }
     const list = (data ?? []) as Shipment[]
     for (const r of list) { // tell the user when the tracker moved a shipment on
       const key = `${r.status}|${r.arrived_at ?? ''}`; const was = seen.current.get(r.id)
-      if (was !== undefined && was !== key) toast.info(r.status === 'in_transit' && !was.startsWith('in_transit') ? `${r.ref} has left ${r.from_name} and is on the way.` : r.arrived_at && !was.split('|')[1] ? `${r.ref} has arrived at ${r.to_name}. Count what arrived.` : `${r.ref} is now ${STATUS[r.status]?.label.toLowerCase() ?? r.status}.`)
+      if (was !== undefined && was !== key) toast.info(r.status === 'in_transit' && !was.startsWith('in_transit') ? (isCustRef.current ? `Your delivery ${r.ref} is on its way.` : `${r.ref} has left ${r.from_name} and is on the way.`) : r.arrived_at && !was.split('|')[1] ? (isCustRef.current ? `Your delivery ${r.ref} has arrived. You can now check it and sign.` : `${r.ref} has arrived at ${r.to_name}. The customer can now confirm it, or count it yourself.`) : `${r.ref} is now ${STATUS[r.status]?.label.toLowerCase() ?? r.status}.`)
       seen.current.set(r.id, key)
     }
     setRows(list); setLoaded(true)
     const { data: ev } = await supabase.from('shipment_events').select('*').order('created_at', { ascending: false }).limit(1500); setEvents((ev ?? []) as Ev[])
   }, [])
-  useEffect(() => { void load(); const id = setInterval(() => void load(), 20000); return () => clearInterval(id) }, [load])
+  useEffect(() => { void load(); const id = setInterval(() => void load(), 10000); return () => clearInterval(id) }, [load])
   const mine = useMemo(() => rows.filter((r) => role === 'superadmin' || r.org_id === role || r.customer_org_id === role), [rows, role])
   const list = mine.filter((r) => (f === 'all' || (f === 'open' ? r.status === 'booked' || r.status === 'in_transit' : r.status === f)) && (r.ref + r.from_name + r.to_name + r.description).toLowerCase().includes(q.toLowerCase()))
   const cur = mine.find((r) => r.id === sel) ?? null

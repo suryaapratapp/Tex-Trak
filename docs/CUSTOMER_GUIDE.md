@@ -31,9 +31,15 @@ Tap a delivery to see where it is coming from, what is in it, and its history. A
 
 ---
 
-## 3. Accepting a delivery
+## 3. Following your delivery
 
-Open the delivery and look for the blue **Accept this delivery** box. Choose **one** of two ways to check it.
+Once a delivery has left, open it to see a **live map**: where it is now, the route it has taken, and the area around where it is going. The map refreshes by itself every 15 seconds. You cannot sign for it yet.
+
+When it reaches you, Tex-Trak notices by itself, a notification appears, and the page changes to **Accept this delivery**. Until then you can only follow it.
+
+## 4. Accepting a delivery
+
+When your delivery has arrived, open it and look for the blue **Accept this delivery** box. Choose **one** of two ways to check it.
 
 ### Option A: Scan the items
 Use this when each item has a QR label.
@@ -59,7 +65,7 @@ The delivery is marked **Delivered** if the number matches, or **Problem** if it
 
 ---
 
-## 4. If something is wrong
+## 5. If something is wrong
 
 | Problem | What to do |
 |---|---|
