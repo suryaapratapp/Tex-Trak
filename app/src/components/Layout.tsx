@@ -31,7 +31,7 @@ const GROUPS: Group[] = [
   { title: 'Administration', icon: <Settings2 size={I} />, items: [{ id: 'admin', label: 'Super Admin', icon: <Shield size={I} />, adminOnly: true }, { id: 'status', label: 'Device status', icon: <Cpu size={I} />, adminOnly: true }, { id: 'team', label: 'Team', icon: <UsersRound size={I} />, teamOnly: true }, { id: 'help', label: 'Help and training', icon: <BookOpen size={I} />, always: true }, { id: 'account', label: 'My account', icon: <UserCircle size={I} />, always: true }] },
 ]
 const JUMPS: [string, number][] = [['Morning delivery', 335], ['Recycling runs', 612], ['Day operations', 600], ['Evening collection', 1045], ['Decon processing', 1230], ['Next morning', 1760]]
-const visible = (i: NavItem, role: Role) => { const u = useAuth.getState().user; if (i.demoOnly && useStore.getState().mode === 'live') return false; if (i.always) return !!u; if (i.adminOnly) return u?.role === 'superadmin'; if (i.teamOnly) return u?.role === 'org_admin'; return hasFeature(role, i.id) }
+const visible = (i: NavItem, role: Role) => { const u = useAuth.getState().user; if (i.demoOnly && useStore.getState().mode === 'live') return false; if (i.always) return !!u; if (i.adminOnly) return u?.role === 'superadmin'; if (i.teamOnly) return u?.role === 'org_admin' && useAuth.getState().orgs.find((o) => o.id === u.org_id)?.kind !== 'customer'; return hasFeature(role, i.id) }
 export const allowedPages = (role: Role) => GROUPS.flatMap((g) => g.items).filter((i) => visible(i, role)).map((i) => i.id).concat(['item']).concat(hasFeature(role, 'qrlabels') ? ['qrlabels'] : [])
 
 export function Layout({ children }: { children: ReactNode }) {

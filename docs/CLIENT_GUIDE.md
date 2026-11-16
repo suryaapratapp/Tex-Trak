@@ -285,6 +285,9 @@ Open **Team** to manage the people in your company.
 
 5. Press create. **Copy the username and password now. The password is shown once.** Give it to the person privately.
 
+### Your customers
+If shipments are switched on for your company, **Team** also has a **Your customers** section. Press **Add customer**, enter the customer's company, a contact person, a username and a password, then give them the details privately. They sign in to a page that shows only the deliveries you book to them, where they scan or confirm what arrives and sign for it. A customer can never add other people. Use the key to reset their password and the power button to switch them off or on.
+
 ### Looking after accounts
 - **Pencil:** change what a person can do.
 - **Reset password:** set a new password if someone forgets theirs.

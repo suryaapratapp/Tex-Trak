@@ -63,23 +63,30 @@ Deno.serve(async (req) => {
   if (!me) return fail('Please sign in again.', 401)
   const isSuper = me.role === 'superadmin'
 
-  const orgOf = async (id: string) => (await admin.from('orgs').select('*').eq('id', id).maybeSingle()).data as { id: string; features: string[]; active: boolean } | null
+  const orgOf = async (id: string) => (await admin.from('orgs').select('*').eq('id', id).maybeSingle()).data as { id: string; features: string[]; active: boolean; kind: string; owner_org: string | null } | null
+  const myOrg = me.org_id ? await orgOf(me.org_id) : null
+  const iAmCustomer = myOrg?.kind === 'customer' // a customer account can never create or manage other accounts
+  /** A client admin may look after the customer accounts that receive that client's shipments. */
+  const ownsCustomer = (o: { kind: string; owner_org: string | null } | null) => !isSuper && me.role === 'org_admin' && !iAmCustomer && o?.kind === 'customer' && o.owner_org === me.org_id
   /** May `me` manage this target? Super Admin: anyone else's account. Client admin: staff in their own client. */
   const manageable = async (id: string) => {
     const { data: t } = await admin.from('profiles').select('*').eq('id', id).maybeSingle()
     if (!t) return null
     if (isSuper) return t as Profile
-    return me.role === 'org_admin' && t.org_id === me.org_id && t.role === 'staff' ? (t as Profile) : null
+    if (me.role !== 'org_admin' || iAmCustomer) return null
+    if (t.org_id === me.org_id && t.role === 'staff') return t as Profile
+    return ownsCustomer(t.org_id ? await orgOf(t.org_id) : null) ? (t as Profile) : null
   }
 
   if (action === 'create_org') {
-    if (!isSuper) return fail('Only the Super Admin can create clients.', 403)
+    const asCustomer = !isSuper && me.role === 'org_admin' && !iAmCustomer && body.kind === 'customer' && !!myOrg?.features.includes('shipments')
+    if (!isSuper && !asCustomer) return fail('Only the Super Admin can create clients.', 403)
     const name = String(body.name ?? '').trim(); const id = slug(body.id ?? name)
     if (!name || id.length < 2) return fail('Enter the client name.')
     if (await orgOf(id)) return fail('A client with that name already exists.')
     const customer = body.kind === 'customer' // a customer account only receives shipments from one client
     let owner: string | null = null
-    if (customer) { owner = String(body.owner_org ?? ''); if (!owner || !(await orgOf(owner))) return fail('Choose the client this customer receives shipments from.') }
+    if (customer) { owner = isSuper ? String(body.owner_org ?? '') : me.org_id ?? ''; if (!owner || !(await orgOf(owner))) return fail('Choose the client this customer receives shipments from.') }
     const { error } = await admin.from('orgs').insert({ id, name, tagline: String(body.tagline ?? ''), color: /^#[0-9a-f]{6}$/i.test(body.color) ? body.color : '#5a46e0', features: customer ? ['shipments'] : clean(body.features), kind: customer ? 'customer' : 'client', owner_org: owner })
     if (error) return fail(error.message)
     const a = body.admin ?? {}
@@ -88,9 +95,19 @@ Deno.serve(async (req) => {
     return json({ ok: true, id })
   }
 
+  if (action === 'list_customers') {
+    if (!isSuper && (me.role !== 'org_admin' || iAmCustomer)) return fail('You cannot see customers.', 403)
+    const owner = isSuper ? String(body.org_id ?? '') : me.org_id
+    const { data: cs } = await admin.from('orgs').select('id,name,active,off_reason').eq('kind', 'customer').eq('owner_org', owner).order('name')
+    const ids = (cs ?? []).map((c) => c.id)
+    const { data: ps } = ids.length ? await admin.from('profiles').select('id,username,full_name,org_id,active').in('org_id', ids).eq('role', 'org_admin') : { data: [] }
+    return json({ ok: true, customers: (cs ?? []).map((c) => ({ ...c, people: (ps ?? []).filter((p) => p.org_id === c.id) })) })
+  }
+
   if (action === 'update_org') {
-    if (!isSuper) return fail('Only the Super Admin can change a client.', 403)
     const org = await orgOf(String(body.id)); if (!org) return fail('Client not found.', 404)
+    if (!isSuper && !ownsCustomer(org)) return fail('Only the Super Admin can change a client.', 403)
+    if (!isSuper) { body = { id: body.id, name: body.name, active: body.active, off_reason: body.off_reason } }
     const patch: Record<string, unknown> = {}
     if (typeof body.name === 'string' && body.name.trim()) patch.name = body.name.trim()
     if (typeof body.tagline === 'string') patch.tagline = body.tagline
@@ -107,7 +124,7 @@ Deno.serve(async (req) => {
 
   if (action === 'create_user') {
     const orgId = isSuper ? String(body.org_id ?? '') : me.org_id
-    if (!isSuper && me.role !== 'org_admin') return fail('You cannot create accounts.', 403)
+    if (!isSuper && (me.role !== 'org_admin' || iAmCustomer)) return fail('You cannot create accounts.', 403)
     const org = orgId ? await orgOf(orgId) : null; if (!org) return fail('Choose a client.')
     const role: Profile['role'] = isSuper && body.role === 'org_admin' ? 'org_admin' : 'staff'
     const features = role === 'staff' ? clean(body.features).filter((f) => org.features.includes(f)) : []

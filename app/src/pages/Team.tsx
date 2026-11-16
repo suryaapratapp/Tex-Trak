@@ -1,5 +1,5 @@
 import { ask } from '../components/Confirm'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AtSign, Copy, KeyRound, Pencil, Power } from 'lucide-react'
 import { Page } from '../components/ui'
 import { ROLE_LABEL, useAuth, type Profile } from '../lib/auth'
@@ -67,12 +67,51 @@ export function TeamManager({ orgId, superView = false }: { orgId: string; super
     </div>)
 }
 
+interface Cust { id: string; name: string; active: boolean; people: { id: string; username: string; full_name: string; active: boolean }[] }
+/** A client admin's own customers: accounts that can only see and accept the shipments booked to them. */
+function Customers({ orgId }: { orgId: string }) {
+  const { api } = useAuth(); const [list, setList] = useState<Cust[] | null>(null); const [add, setAdd] = useState(false); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState<{ k: 'ok' | 'error'; t: string } | null>(null); const [err, setErr] = useState('')
+  const [f, setF] = useState({ name: '', full_name: '', username: '', password: genPassword() }); const [reset, setReset] = useState<{ id: string; pw: string } | null>(null)
+  const load = useCallback(async () => { const r = await api('list_customers', { org_id: orgId }); if (r.error) { setMsg({ k: 'error', t: r.error }); setList([]) } else setList((r.customers ?? []) as Cust[]) }, [api, orgId])
+  useEffect(() => { void load() }, [load])
+  const create = async () => {
+    const username = f.username.trim().toLowerCase(); setErr('')
+    if (!f.name.trim()) return setErr('Enter the customer’s company name.')
+    if (!f.full_name.trim()) return setErr('Enter the contact person’s full name.')
+    if (!/^[a-z0-9._-]{3,24}$/.test(username)) return setErr('The username needs 3 to 24 characters: lowercase letters, digits, dots, dashes or underscores, with no spaces.')
+    if (f.password.length < 8) return setErr('The password needs at least 8 characters.')
+    setBusy(true); const r = await api('create_org', { kind: 'customer', owner_org: orgId, name: f.name.trim(), admin: { username, password: f.password, full_name: f.full_name.trim() } }); setBusy(false)
+    if (r.error) return setErr(r.error)
+    setMsg({ k: 'ok', t: `${f.name.trim()} can now sign in. Username ${username}, password ${f.password}. Copy it now: it is not shown again.` }); setAdd(false); setF({ name: '', full_name: '', username: '', password: genPassword() }); void load()
+  }
+  const act = async (action: string, body: Record<string, unknown>, ok: string) => { setBusy(true); const r = await api(action, body); setBusy(false); if (r.error) return setMsg({ k: 'error', t: r.error }); setMsg({ k: 'ok', t: ok }); setReset(null); void load() }
+  return (
+    <Section title="Your customers" sub="Give a customer their own sign-in. They only see the shipments you book to them, and they can scan or confirm what arrives and sign for it. They cannot add other people.">
+      <div className="space-y-4">
+        {msg && <Notice kind={msg.k} onClose={() => setMsg(null)}>{msg.t}</Notice>}
+        <div className="flex items-center justify-between"><div className="text-[15px] font-bold text-stone-700">{list ? `${list.length} customer${list.length === 1 ? '' : 's'}` : 'Loading…'}</div><button onClick={() => setAdd(!add)} className={btnPrimary}>{add ? 'Cancel' : 'Add customer'}</button></div>
+        {add && <div className="space-y-4 rounded-2xl bg-stone-50 p-5"><div className="grid gap-4 sm:grid-cols-2"><Field label="Customer company"><input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className={inputCls} /></Field><Field label="Contact person"><input value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} className={inputCls} /></Field>
+          <Field label="Username" hint="3 to 24 lowercase letters, digits, dots, dashes or underscores."><input value={f.username} onChange={(e) => setF({ ...f, username: e.target.value })} autoCapitalize="none" className={inputCls} /></Field>
+          <Field label="Password" hint="Generated for you. Share it with them securely."><div className="flex gap-2"><input value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} className={`${inputCls} mono`} /><button type="button" onClick={() => setF({ ...f, password: genPassword() })} className={btnGhost}>New</button></div></Field></div>
+          {err && <Notice kind="error" onClose={() => setErr('')}>{err}</Notice>}<button onClick={() => void create()} disabled={busy} className={btnPrimary}>{busy ? 'Creating…' : 'Create customer sign-in'}</button></div>}
+        <ul className="divide-y divide-stone-100 rounded-2xl border border-stone-100 bg-white">{(list ?? []).map((c) => { const p = c.people[0]; return (
+          <li key={c.id} className="px-5 py-4"><div className="flex flex-wrap items-center gap-3"><div className="min-w-[12rem] flex-1"><div className="text-[16px] font-bold text-stone-900">{c.name}</div><div className="text-[13.5px] text-stone-500">{p ? `${p.full_name} · @${p.username}` : 'No sign-in'}</div></div>
+            {!c.active && <span className="rounded-full bg-rose-50 px-3 py-1 text-[12.5px] font-bold text-rose-700">Switched off</span>}
+            <div className="flex gap-1">{p && <button title="Reset password" onClick={() => setReset(reset?.id === p.id ? null : { id: p.id, pw: genPassword() })} className="grid h-9 w-9 place-items-center rounded-full text-stone-500 hover:bg-stone-100"><KeyRound size={16} /></button>}
+              <button title={c.active ? 'Switch off' : 'Switch on'} onClick={async () => { if (c.active && !(await ask(`Switch off ${c.name}? They cannot sign in until you switch them back on.`, 'Switch off'))) return; await act('update_org', { id: c.id, active: !c.active, off_reason: c.active ? `Switched off by ${orgId}` : '' }, c.active ? 'Customer switched off.' : 'Customer switched on.') }} className={`grid h-9 w-9 place-items-center rounded-full hover:bg-stone-100 ${c.active ? 'text-stone-500' : 'text-rose-600'}`}><Power size={16} /></button></div></div>
+            {p && reset?.id === p.id && <div className="mt-4 flex flex-wrap items-end gap-2"><div className="min-w-[240px] flex-1"><Field label="New password"><input value={reset.pw} onChange={(e) => setReset({ id: p.id, pw: e.target.value })} className={`${inputCls} mono`} /></Field></div><button disabled={busy || reset.pw.length < 8} onClick={() => void act('reset_password', { id: p.id, password: reset.pw }, `Password changed. New password: ${reset.pw}. Copy it now.`)} className={btnPrimary}>Save password</button></div>}
+          </li>) })}{list && list.length === 0 && <li className="px-5 py-6 text-center text-[14px] text-stone-400">No customers yet.</li>}</ul>
+      </div></Section>)
+}
+
 export default function Team() {
   const { user, orgs } = useAuth(); const org = orgs.find((o) => o.id === user?.org_id)
   if (!org) return <Page title="Team" sub="No client is linked to your account.">{null}</Page>
+  if (org.kind === 'customer') return <Page title="Team" sub="Customer accounts cannot add other people. Ask the company that sends your deliveries.">{null}</Page>
   return (
     <Page title="Team" sub={`People at ${org.name}, and what each of them can do`}>
       <div className="mx-auto max-w-[1000px]"><Section><TeamManager orgId={org.id} /></Section>
+        {org.features.includes('shipments') && <div className="mt-6"><Customers orgId={org.id} /></div>}
         <p className="mt-4 px-2 text-[13.5px] text-stone-400">You can give people any of the {org.features.length} features {org.name} has. To add more features to {org.name}, ask your Tex-Trak administrator.</p></div>
     </Page>)
 }
