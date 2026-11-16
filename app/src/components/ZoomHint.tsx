@@ -10,6 +10,7 @@ import { MousePointerClick } from 'lucide-react'
  */
 export function ZoomHint() {
   const map = useMap(); const [hint, setHint] = useState(false); const [active, setActive] = useState(false)
+  const touch = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches // phones pinch to zoom; the hint is only for a mouse wheel
   useEffect(() => {
     const el = map.getContainer(); let t: ReturnType<typeof setTimeout> | undefined; let active = false
     const flash = (ms: number) => { setHint(true); clearTimeout(t); t = setTimeout(() => setHint(false), ms) }
@@ -20,6 +21,7 @@ export function ZoomHint() {
     el.addEventListener('mouseenter', enter); el.addEventListener('wheel', wheel, { passive: true }); el.addEventListener('mousedown', click); el.addEventListener('mouseleave', leave)
     return () => { clearTimeout(t); el.removeEventListener('mouseenter', enter); el.removeEventListener('wheel', wheel); el.removeEventListener('mousedown', click); el.removeEventListener('mouseleave', leave) }
   }, [map])
+  if (touch) return null
   return createPortal(
     <div aria-live="polite" className={`pointer-events-none absolute inset-x-0 top-3 z-[1000] flex justify-center px-14 transition-opacity duration-300 ${hint ? 'opacity-100' : active ? 'opacity-50' : 'opacity-90'}`}>
       <span className="flex items-center gap-2 rounded-full text-center leading-tight bg-stone-900/85 px-4 py-2 text-[13px] font-semibold text-white shadow-lg backdrop-blur"><MousePointerClick size={15} /> Click the map and scroll to zoom in or out</span>

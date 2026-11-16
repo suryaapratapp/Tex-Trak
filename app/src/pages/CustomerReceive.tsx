@@ -32,7 +32,7 @@ export function CustomerReceive({ id, shipRef, expected, lines, onDone }: { id: 
   }
   return (
     <div className="mt-5 space-y-4 rounded-2xl border-2 border-cyan-200 bg-cyan-50/40 p-4">
-      <div><h3 className="text-[17px] font-extrabold text-stone-900">Accept this delivery</h3><p className="text-[13.5px] text-stone-500">{expected} item{expected === 1 ? '' : 's'} are expected. Check them, then sign.</p></div>
+      <div><h3 className="text-[17px] font-extrabold text-stone-900">Accept this delivery</h3><p className="text-[13.5px] text-stone-500">{expected} item{expected === 1 ? ' is' : 's are'} expected. Check them, then sign.</p></div>
       <div className="grid grid-cols-2 gap-2">
         {([['scan', 'Scan the items', ScanLine, canScan], ['confirm', 'Confirm without scanning', ClipboardCheck, true]] as const).map(([k, l, Icon, on]) => (
           <button key={k} type="button" disabled={!on} onClick={() => setHow(k)} className={`flex flex-col items-center gap-1 rounded-2xl border-2 px-2 py-3 text-center text-[14px] font-bold transition ${how === k ? 'border-cyan-600 bg-white text-cyan-800 shadow-sm' : 'border-stone-200 bg-white/60 text-stone-600'} ${on ? '' : 'opacity-40'}`}><Icon size={22} />{l}</button>))}

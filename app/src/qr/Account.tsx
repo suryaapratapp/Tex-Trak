@@ -9,7 +9,7 @@ import { giveConsent, openLocationSettings, startTracking, useTracking } from '.
 import { FEATURES } from '../sim/features'
 
 export default function Account(): React.ReactElement {
-  const { user, orgs, changePassword } = useAuth(); const tr = useTracking(); const [pin, setP] = useState(''); const [pinMsg, setPinMsg] = useState(''); const [f, setF] = useState({ cur: '', next: '', rep: '' }); const [m, setM] = useState<{ k: 'ok' | 'error'; t: string } | null>(null)
+  const { user, orgs, changePassword } = useAuth(); const isCust = orgs.find((o) => o.id === user?.org_id)?.kind === 'customer'; const tr = useTracking(); const [pin, setP] = useState(''); const [pinMsg, setPinMsg] = useState(''); const [f, setF] = useState({ cur: '', next: '', rep: '' }); const [m, setM] = useState<{ k: 'ok' | 'error'; t: string } | null>(null)
   if (!user) return <></>
   const org = orgs.find((o) => o.id === user.org_id)
   const can = user.role === 'superadmin' ? 'Everything on the platform' : user.role === 'org_admin' ? `All ${org?.features.length ?? 0} of ${org?.name}’s features, and managing the team` : `${user.features.length} features: ${FEATURES.filter((x) => user.features.includes(x.id)).map((x) => x.label).join(', ') || 'none yet'}`
@@ -19,7 +19,7 @@ export default function Account(): React.ReactElement {
     <Page title="My account" sub="Your sign-in details">
       <div className="mx-auto max-w-[800px] space-y-6">
         <Section title="Signed in as"><dl className="divide-y divide-stone-100">{rows.map(([k, v]) => <div key={k} className="flex justify-between gap-6 py-3.5 text-[15px]"><dt className="shrink-0 text-stone-500">{k}</dt><dd className="text-right font-bold text-stone-900">{v}</dd></div>)}</dl></Section>
-        {<Section title={isNative ? 'This phone' : 'This browser'} sub={isNative ? 'Location and quick PIN' : 'Location sharing while Tex-Trak is open'}>
+        {!isCust && <Section title={isNative ? 'This phone' : 'This browser'} sub={isNative ? 'Location and quick PIN' : 'Location sharing while Tex-Trak is open'}>
           <dl className="divide-y divide-stone-100 text-[15px]"><div className="flex justify-between py-3"><dt className="text-stone-500">Name in the tracker list</dt><dd className="font-semibold text-stone-900">{user.username}</dd></div>
             <div className="flex justify-between py-3"><dt className="text-stone-500">Location recording</dt><dd className={`font-semibold ${tr.state === 'on' ? 'text-emerald-600' : 'text-amber-700'}`}>{{ on: 'On', off: 'Off', starting: 'Starting…', denied: 'Blocked in settings', error: 'Problem' }[tr.state]}</dd></div>
             <div className="flex justify-between py-3"><dt className="text-stone-500">Locations waiting to send</dt><dd className="font-semibold text-stone-900">{tr.queued}</dd></div></dl>

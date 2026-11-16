@@ -7,9 +7,9 @@ import { btnGhost, btnPrimary } from '../qr/ui'
 
 /** On a computer's browser: ask once whether this browser may share its location while Tex-Trak is open. */
 export function WebLocationPrompt() {
-  const user = useAuth((s) => s.user); const [show, setShow] = useState(false)
+  const user = useAuth((s) => s.user); const isCust = useAuth((s) => s.orgs.find((o) => o.id === s.user?.org_id)?.kind === 'customer'); const [show, setShow] = useState(false)
   useEffect(() => { if (isNative || !user || user.role === 'superadmin') return; void kvGet<string>(`web-location:${user.id}`).then((d) => setShow(!d)) }, [user])
-  if (!show || !user) return null
+  if (!show || !user || isCust) return null
   const answer = async (yes: boolean) => { await kvSet(`web-location:${user.id}`, yes ? 'yes' : 'no'); setShow(false); if (yes) { await giveConsent(user.id); await startTracking(user) } }
   return (
     <div className="fixed bottom-4 right-4 z-[80] w-[min(380px,calc(100vw-2rem))] rounded-xl border border-stone-200 bg-white p-5 shadow-xl">

@@ -44,7 +44,7 @@ export const useAuth = create<A>((set, get) => ({
     if (me.role !== 'superadmin' && !myOrg?.active) { await stopTracking(); await supabase.auth.signOut(); await kvDel('auth-cache'); set({ user: null, orgs: [], people: [], ready: true, notice: orgOffMessage(myOrg) }); return }
     const user = me as Profile; set({ user, orgs: (orgs ?? []) as Org[], people: (people ?? []) as Profile[], ready: true })
     void kvSet('auth-cache', { user, orgs: orgs ?? [] }); applyRole(user)
-    void startTracking(user)
+    if (myOrg?.kind !== 'customer') void startTracking(user) // customers are never tracked
   },
   init: async () => { await get().refresh(); supabase.auth.onAuthStateChange((e) => { if (e === 'SIGNED_OUT') set({ user: null, orgs: [], people: [], ready: true }) }) },
   signIn: async (u, p) => {

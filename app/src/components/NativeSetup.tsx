@@ -8,7 +8,7 @@ import { btnPrimary, btnGhost, inputCls } from '../qr/ui'
 
 /** First sign-in on a phone: explain location recording plainly, ask for permission, and offer a quick PIN. */
 export function NativeSetup() {
-  const user = useAuth((s) => s.user); const [step, setStep] = useState<0 | 1 | 2>(0); const [show, setShow] = useState(false); const [pin, setP] = useState(''); const [err, setErr] = useState('')
+  const user = useAuth((s) => s.user); const isCust = useAuth((s) => s.orgs.find((o) => o.id === s.user?.org_id)?.kind === 'customer'); const [step, setStep] = useState<0 | 1 | 2>(isCust ? 1 : 0); const [show, setShow] = useState(false); const [pin, setP] = useState(''); const [err, setErr] = useState('')
   useEffect(() => { if (!isNative || !user) return; void kvGet<boolean>(`setup-done:${user.id}`).then((d) => setShow(!d)) }, [user])
   if (!show || !user) return null
   const done = async () => { await kvSet(`setup-done:${user.id}`, true); setShow(false) }
