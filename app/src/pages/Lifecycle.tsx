@@ -8,7 +8,7 @@ import { useSnap } from '../sim/snap'
 import { useStore } from '../store'
 
 const STAGES = [
-  { id: 'A', name: 'Packed at decon', sub: 'Clean cages sealed', tech: ['RFID'] },
+  { id: 'A', name: 'Packed at decon', sub: 'Clean cages packed', tech: ['RFID'] },
   { id: 'B', name: 'Truck → hospital', sub: 'Clean delivery', tech: ['RFID', 'GNSS'] },
   { id: 'C', name: 'Hospital goods-in', sub: 'Dock · linen store', tech: ['RFID'] },
   { id: 'D', name: 'Departments', sub: 'Issued & in use', tech: ['RFID', 'QR'] },

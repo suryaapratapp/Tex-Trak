@@ -62,7 +62,7 @@ If the count does not match, do not dispatch. Fix the list first: cancel the shi
 
 ## Step 5. Dispatch
 
-1. Open the shipment and press **Dispatch**. This confirms it is loaded and sealed.
+1. Open the shipment and press **Dispatch**. This confirms it is loaded and packed.
 2. The status changes to **On the way**.
 
 If the vehicle has a tracker and the From site is picked from the list, the shipment **dispatches by itself** as soon as the vehicle drives out of the site. You can still press Dispatch yourself first.

@@ -18,7 +18,7 @@ function view(c: Consignment, t: number, snap: ReturnType<typeof useSnap>) {
     return { steps, done, status: done >= 5 ? 'delivered' : done >= 4 ? 'out for delivery' : done >= 2 ? 'in transit' : 'booked', eta: 905, progress: Math.min(1, done / 5), delay: 0, exception: false }
   }
   const diverted = c.verdict === 'diverted'; const broken = diverted && t >= 760
-  const steps: Step[] = [{ label: 'Booked & manifest created', t: leg.depart - 120 }, { label: 'Loaded & sealed', t: leg.depart - 10, sub: `${c.cages.join(', ')} · RFID bound` }, { label: `Departed ${SITES[c.from].short}`, t: leg.depart, sub: 'GNSS tracking started' },
+  const steps: Step[] = [{ label: 'Booked & manifest created', t: leg.depart - 120 }, { label: 'Loaded & packed', t: leg.depart - 10, sub: `${c.cages.join(', ')} · RFID bound` }, { label: `Departed ${SITES[c.from].short}`, t: leg.depart, sub: 'GNSS tracking started' },
     { label: 'In transit', t: leg.depart + 1 }, ...(broken ? [{ label: 'EXCEPTION — destination never reached', t: 760, bad: true, sub: 'Entered Port of Tilbury · tracker silent' }] : [{ label: `Arrived ${SITES[c.to].short}`, t: leg.arrive }, { label: c.kind === 'parcel' ? 'Delivered' : 'Received & RFID-reconciled', t: leg.arrive + 28 }])]
   const done = steps.filter((s) => s.t <= t).length
   const v = snap.veh[c.veh]

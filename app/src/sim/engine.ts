@@ -257,20 +257,20 @@ function buildWorld(): World {
 
   // ---- narrative system events
   const sys = (t: number, title: string, detail: string, site: string, extra: Partial<Ev> = {}) => ev({ t, src: 'SYSTEM', kind: 'system', title, detail, site, ...extra })
-  sys(L1.depart - 20, 'Cages sealed & associated to trailer', 'RC-101, RC-102, RC-103 (72 RFID items) ↔ TAT240 …085066 · item ↔ container ↔ truck association created', 'DECON', { veh: 'V1', cons: L1.cons })
+  sys(L1.depart - 20, 'Cages packed & associated to trailer', 'RC-101, RC-102, RC-103 (72 RFID items) ↔ TAT240 …085066 · item ↔ container ↔ truck association created', 'DECON', { veh: 'V1', cons: L1.cons })
   sys(L1.arrive + 28, 'Goods-in reconciled', '72/72 RFID tags matched to dispatch manifest — zero discrepancy', 'HOSP', { cons: L1.cons })
   sys(L3.arrive + 6, 'Cage release authorised', 'Driver Marcus Hale scanned cages RC-201, RC-202 (QR) — release to transport', 'HOSP', { cons: L4.cons })
   sys(L4.depart, 'Dirty cages loaded', `${N - missingItems.length} items declared · TAT240 …085066 bound to RC-201/202 · decon plant notified of ETA ${fmtT(L4.arrive)}`, 'HOSP', { veh: 'V1', cons: L4.cons })
   sys(L4.arrive + 35, 'Plant receiving reconciled', `${N - missingItems.length}/${N - missingItems.length} tags matched to departure manifest · mass balance 100%`, 'DECON', { cons: L4.cons })
   sys(1470, 'Wash batch 1 certified', 'Thermal disinfection 71 °C · 10 min · A0 ≥ 600 · QA RFID verify pass', 'DECON')
   sys(L5.arrive + 28, 'Goods-in reconciled', `${N - missingItems.length}/${N - missingItems.length} tags matched · wash cycles +1 recorded on each tag`, 'HOSP', { cons: L5.cons })
-  sys(L6.depart - 8, 'Recycling cages sealed', 'RCY-C1 · 38 end-of-life textiles · 142 kg declared · seal #A-88213 · destination GreenLoop Dagenham', 'HOSP', { veh: 'V2', cons: L6.cons })
-  sys(L7.depart - 8, 'Recycling cages sealed', 'RCY-C2 · 44 end-of-life textiles · 168 kg declared · seal #A-88307 · destination GreenLoop Dagenham', 'DECON', { veh: 'V3', cons: L7.cons })
+  sys(L6.depart - 8, 'Recycling cages packed', 'RCY-C1 · 38 end-of-life textiles · 142 kg declared · seal #A-88213 · destination GreenLoop Dagenham', 'HOSP', { veh: 'V2', cons: L6.cons })
+  sys(L7.depart - 8, 'Recycling cages packed', 'RCY-C2 · 44 end-of-life textiles · 168 kg declared · seal #A-88307 · destination GreenLoop Dagenham', 'DECON', { veh: 'V3', cons: L7.cons })
   if (aV2) {
     sys(aV2 + 11, 'Weighbridge RFID receipt', '38/38 tags read · 141.6 kg vs 142.0 declared (−0.3%) · seal intact', 'RECY', { cons: L6.cons })
     sys(aV2 + 40, 'Certificate of recycling issued', 'RCY-A · fibre-to-fibre processing · hashed to custody ledger · LCA credit 214 kg CO₂e', 'RECY', { cons: L6.cons })
   }
-  sys(L12.depart - 8, 'Recycling cage sealed', 'RCY-C3 · 26 end-of-life clinic textiles · 88 kg declared · seal #A-88412 · destination GreenLoop Dagenham', 'COMM', { veh: 'V4', cons: L12.cons })
+  sys(L12.depart - 8, 'Recycling cage packed', 'RCY-C3 · 26 end-of-life clinic textiles · 88 kg declared · seal #A-88412 · destination GreenLoop Dagenham', 'COMM', { veh: 'V4', cons: L12.cons })
   if (aV4) {
     sys(aV4 + 10, 'Weighbridge RFID receipt', '26/26 tags read · 87.6 kg vs 88.0 declared (−0.5%) · seal intact', 'RECY', { cons: L12.cons })
     sys(aV4 + 36, 'Certificate of recycling issued', 'RCY-C · fibre-to-fibre processing · hashed to custody ledger · LCA credit 131 kg CO₂e', 'RECY', { cons: L12.cons })
@@ -320,7 +320,7 @@ function buildWorld(): World {
   const gps = (leg: Leg, f: number) => along(leg.pts, leg.cum, leg.meters * f).pos
   chain(L6.cons, [
     { t: L6.depart - 25, type: 'BOUND', title: '38 items condemned & RFID-bound to cage RCY-C1', site: 'HOSP', source: 'RFID+QR', ok: true },
-    { t: L6.depart - 8, type: 'SEALED', title: 'Cage sealed #A-88213 · declared 142 kg', site: 'HOSP', source: 'QR', ok: true },
+    { t: L6.depart - 8, type: 'PACKED', title: 'Cage packed #A-88213 · declared 142 kg', site: 'HOSP', source: 'QR', ok: true },
     { t: L6.depart, type: 'DEPARTED', title: 'Departed Hospital · cage ↔ TAT240 …085074', site: 'HOSP', pos: gps(L6, 0), source: 'GNSS', ok: true },
     { t: L6.depart + (L6.arrive - L6.depart) / 2, type: 'CHECKPOINT', title: 'GNSS checkpoint · on planned route', pos: gps(L6, 0.5), source: 'GNSS', ok: true },
     { t: L6.arrive, type: 'ARRIVED', title: 'Entered GreenLoop geofence', site: 'RECY', pos: gps(L6, 1), source: 'GNSS', ok: true },
@@ -329,7 +329,7 @@ function buildWorld(): World {
   ])
   chain(L12.cons, [
     { t: L12.depart - 25, type: 'BOUND', title: '26 clinic textiles condemned & RFID-bound to cage RCY-C3', site: 'COMM', source: 'RFID+QR', ok: true },
-    { t: L12.depart - 8, type: 'SEALED', title: 'Cage sealed #A-88412 · declared 88 kg', site: 'COMM', source: 'QR', ok: true },
+    { t: L12.depart - 8, type: 'PACKED', title: 'Cage packed #A-88412 · declared 88 kg', site: 'COMM', source: 'QR', ok: true },
     { t: L12.depart, type: 'DEPARTED', title: 'Departed Camden Clinic · cage ↔ TAT240 …085090', site: 'COMM', pos: gps(L12, 0), source: 'GNSS', ok: true },
     { t: L12.depart + (L12.arrive - L12.depart) / 2, type: 'CHECKPOINT', title: 'GNSS checkpoint · on planned route', pos: gps(L12, 0.5), source: 'GNSS', ok: true },
     { t: L12.arrive, type: 'ARRIVED', title: 'Entered GreenLoop geofence', site: 'RECY', pos: gps(L12, 1), source: 'GNSS', ok: true },
@@ -338,7 +338,7 @@ function buildWorld(): World {
   ])
   chain(L7.cons, [
     { t: L7.depart - 25, type: 'BOUND', title: '44 items condemned & RFID-bound to cage RCY-C2', site: 'DECON', source: 'RFID+QR', ok: true },
-    { t: L7.depart - 8, type: 'SEALED', title: 'Cage sealed #A-88307 · declared 168 kg', site: 'DECON', source: 'QR', ok: true },
+    { t: L7.depart - 8, type: 'PACKED', title: 'Cage packed #A-88307 · declared 168 kg', site: 'DECON', source: 'QR', ok: true },
     { t: L7.depart, type: 'DEPARTED', title: 'Departed Decon plant · cage ↔ TAT240 …085082', site: 'DECON', pos: gps(L7, 0), source: 'GNSS', ok: true },
     { t: L7.depart + 22, type: 'CHECKPOINT', title: 'GNSS checkpoint · on planned corridor', pos: gps(L7, 0.18), source: 'GNSS', ok: true },
     { t: alerts.find((a) => a.rule === 'ROUTE_DEVIATION' && a.cons === L7.cons)?.t ?? 0, type: 'ANOMALY', title: 'Route deviation detected', pos: alerts.find((a) => a.rule === 'ROUTE_DEVIATION' && a.cons === L7.cons)?.pos, source: 'RULE', ok: false },

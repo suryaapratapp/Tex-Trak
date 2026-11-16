@@ -227,7 +227,7 @@ It follows the tracker and compares its position with your **From** and **To** s
 
 ### Dispatch
 1. Count the items. The count must match the shipment.
-2. Open the shipment and press **Dispatch** once it is loaded and sealed. The status becomes **On the way**.
+2. Open the shipment and press **Dispatch** once it is loaded and packed. The status becomes **On the way**.
 3. If the vehicle has a tracker, the shipment can be dispatched automatically when the vehicle leaves the From site.
 
 ### While it is on the way

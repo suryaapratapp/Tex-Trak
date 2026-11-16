@@ -117,7 +117,7 @@ Developed by CIRCAI LTD.
 **Shipments → My shipments** (stored in Supabase, scoped to each client):
 
 1. **Book**: type, from, to, contents, item count, carrier, planned times. Gets a reference such as `SHP-1001`.
-2. **Dispatch**: confirm it is loaded and sealed (in the app or by scanning the reference in the Scan station).
+2. **Dispatch**: confirm it is loaded and packed (in the app or by scanning the reference in the Scan station).
 3. **On the way**: add updates or report a delay.
 4. **Receive**: enter how many items arrived. A different number is recorded as a problem; a problem can be marked resolved.
 

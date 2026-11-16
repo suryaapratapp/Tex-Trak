@@ -256,7 +256,7 @@ On a **computer's web browser** the same works while the page is open, if the us
 
 Shipments → My shipments:
 1. **Book:** type, from, to, contents, number of items, carrier, planned times. It gets a reference such as `SHP-1001`.
-2. **Dispatch:** confirm it is loaded and sealed (in the app or by scanning the reference).
+2. **Dispatch:** confirm it is loaded and packed (in the app or by scanning the reference).
 3. **On the way:** add updates or report a delay.
 4. **Receive:** enter how many items arrived. A different number is recorded as a problem; a problem can be marked resolved.
 
