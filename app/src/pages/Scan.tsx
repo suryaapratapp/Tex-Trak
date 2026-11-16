@@ -8,6 +8,7 @@ import { hasModule, type ModuleId } from '../sim/registry'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { go, useStore } from '../store'
+import { feedback } from '../lib/offline'
 
 interface Entry { id: number; created_at: string; kind: string; level: 'ok' | 'warn' | 'error'; text: string }
 interface Ship { id: string; ref: string; status: string; items: number; from_name: string; to_name: string; description: string; org_id: string }
@@ -27,6 +28,7 @@ export default function Scan() {
   const role = useStore((s) => s.role); const t = useStore((s) => s.t); const w = getWorld(); const demo = useStore((s) => s.mode) === 'demo'
   const tasks = TASKS.filter((x) => (x.id !== 'asset' || demo) && (x.id === 'smart' || hasModule(role, x.module) || (x.id === 'load' && hasModule(role, 'recycling'))))
   const [task, setTask] = useState<Task>('smart'); const [manual, setManual] = useState(''); const [found, setFound] = useState<Found>(null); const [msg, setMsg] = useState<{ level: 'ok' | 'warn' | 'error'; title: string; detail: string } | null>(null)
+  useEffect(() => { if (msg && msg.level !== 'warn') feedback(msg.level === 'ok') }, [msg])
   const user = useAuth((x) => x.user); const orgId = role === 'superadmin' ? null : role
   const [list, setList] = useState<Entry[]>([]); const [open, setOpen] = useState<Ship[]>([]); const [count, setCount] = useState('')
   const reload = useCallback(async () => {

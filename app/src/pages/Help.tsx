@@ -2,7 +2,10 @@ import { Fragment, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Printer } from 'lucide-react'
 import { Page } from '../components/ui'
-import md from '../content/TRAINING.md?raw'
+import adminMd from '../content/TRAINING.md?raw'
+import clientMd from '../content/CLIENT_GUIDE.md?raw'
+import { useAuth } from '../lib/auth'
+import { useStore } from '../store'
 
 const inline = (t: string): ReactNode[] => t.split(/(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g).map((x, i) => x.startsWith('**') ? <b key={i} className="font-semibold text-stone-900">{x.slice(2, -2)}</b> : x.startsWith('`') ? <code key={i} className="mono rounded bg-stone-100 px-1.5 py-0.5 text-[0.88em]">{x.slice(1, -1)}</code> : x.startsWith('*') && x.length > 2 ? <i key={i}>{x.slice(1, -1)}</i> : <Fragment key={i}>{x}</Fragment>)
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -32,11 +35,14 @@ function Doc({ src }: { src: string }) {
 }
 
 export default function Help() {
+  // Only the Super Admin (not while previewing a client) sees the full set-up guide; everyone else gets the client guide.
+  const isSuper = useAuth((a) => a.user?.role === 'superadmin') && useStore((x) => x.role) === 'superadmin'
+  const md = isSuper ? adminMd : clientMd; const label = isSuper ? 'Training guide' : 'User guide'
   const toc = md.split('\n').filter((l) => l.startsWith('## ')).map((l) => l.replace('## ', ''))
   return (
-    <Page title="Help and training" sub="How to set up and use Tex-Trak." right={<button onClick={() => window.print()} className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-[14px] font-medium text-stone-700 hover:bg-stone-50"><Printer size={16} /> Print or save as PDF</button>}>
+    <Page title="Help and training" sub={isSuper ? 'How to set up and use Tex-Trak.' : 'How to use Tex-Trak.'} right={<button onClick={() => window.print()} className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-[14px] font-medium text-stone-700 hover:bg-stone-50"><Printer size={16} /> Print or save as PDF</button>}>
       <div className="grid items-start gap-8 lg:grid-cols-[240px_1fr]">
         <nav className="card sticky top-4 hidden p-4 lg:block"><div className="mb-2 px-2 text-[12px] font-semibold uppercase tracking-wider text-stone-400">Contents</div>{toc.map((t) => <a key={t} href={`#${slug(t)}`} onClick={(e) => { e.preventDefault(); document.getElementById(slug(t))?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} className="block rounded-md px-2 py-1.5 text-[13.5px] text-stone-600 hover:bg-stone-50 hover:text-stone-900">{t}</a>)}</nav>
         <article className="card max-w-[820px] p-8"><Doc src={md.replace(/^# .*\n/, '')} /></article>
-      </div>{createPortal(<div className="print-only" style={{ fontFamily: 'Inter, Arial, sans-serif', maxWidth: 760, margin: '0 auto' }}><div style={{ borderBottom: '3px solid #6759e4', paddingBottom: 8, marginBottom: 12, fontSize: 12, letterSpacing: 2, fontWeight: 700, color: '#6759e4' }}>TEX-TRAK · TRAINING GUIDE</div><Doc src={md.replace(/^# .*\n/, '')} /></div>, document.body)}</Page>)
+      </div>{createPortal(<div className="print-only" style={{ fontFamily: 'Inter, Arial, sans-serif', maxWidth: 760, margin: '0 auto' }}><div style={{ borderBottom: '3px solid #6759e4', paddingBottom: 8, marginBottom: 12, fontSize: 12, letterSpacing: 2, fontWeight: 700, color: '#6759e4' }}>TEX-TRAK · {label.toUpperCase()}</div><Doc src={md.replace(/^# .*\n/, '')} /></div>, document.body)}</Page>)
 }

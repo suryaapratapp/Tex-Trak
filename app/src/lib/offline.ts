@@ -23,13 +23,19 @@ export function initNetwork() {
 /** A request failed because there is no connection (as opposed to the server saying no). */
 export const isNetworkError = (e: { message?: string; code?: string; status?: number } | null | undefined) => !!e && !e.code && (e.status === 0 || e.status === undefined) && /fetch|network|failed to|load failed|timeout|offline|abort/i.test(e.message ?? '')
 
-/** Short beep and buzz so a fitter knows a scan landed without looking. */
+/** A short high beep means the scan worked. A longer, lower, harsher two-note buzz (falling) means something is wrong, so it can never be mistaken for a success. */
 let ctx: AudioContext | null = null
 export function feedback(ok: boolean) {
-  try { navigator.vibrate?.(ok ? 40 : [90, 60, 90]) } catch { /* not supported */ }
+  try { navigator.vibrate?.(ok ? 40 : [160, 70, 160, 70, 160]) } catch { /* not supported */ }
   try {
     ctx ??= new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
-    const o = ctx.createOscillator(); const g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value = ok ? 880 : 240; g.gain.value = 0.08
-    o.start(); o.stop(ctx.currentTime + (ok ? 0.09 : 0.22))
+    void ctx.resume?.()
+    const t0 = ctx.currentTime
+    const tone = (type: OscillatorType, f: number, at: number, len: number, vol: number) => {
+      const o = ctx!.createOscillator(); const g = ctx!.createGain(); o.type = type; o.frequency.value = f; o.connect(g); g.connect(ctx!.destination)
+      g.gain.setValueAtTime(vol, t0 + at); g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + len); o.start(t0 + at); o.stop(t0 + at + len + 0.02)
+    }
+    if (ok) tone('sine', 880, 0, 0.09, 0.12)
+    else { tone('sawtooth', 300, 0, 0.2, 0.16); tone('sawtooth', 190, 0.24, 0.34, 0.16) }
   } catch { /* no audio */ }
 }

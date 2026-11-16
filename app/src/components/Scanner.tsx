@@ -17,7 +17,7 @@ export function Scanner({ onScan }: { onScan: (text: string) => void }) {
         <div id="qr-reader" className="[&_video]:rounded-2xl" />
         {!on && <div className="absolute inset-0 grid place-items-center text-center"><div><div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-white/10 text-white"><Camera size={24} /></div><button onClick={() => { setErr(''); setOn(true) }} className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-stone-900">Start camera</button></div></div>}
       </div>
-      {on && <button onClick={() => setOn(false)} className="mt-2 flex items-center gap-2 text-sm font-semibold text-stone-600"><CameraOff size={15} /> Stop camera</button>}
+      {on && <button onClick={() => setOn(false)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-rose-600 px-5 py-3 text-[15px] font-bold text-white shadow-sm hover:bg-rose-700 active:bg-rose-800"><CameraOff size={17} /> Stop camera</button>}
       {err && <p className="mt-2 text-sm text-amber-700">{err}</p>}
     </div>
   )
