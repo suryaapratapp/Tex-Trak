@@ -5,7 +5,7 @@ import { isNetworkError, isNative, kvDel, kvGet, kvSet } from './offline'
 import { startTracking, stopTracking } from '../native/tracking'
 
 export type AccountRole = 'superadmin' | 'org_admin' | 'staff'
-export interface Org { id: string; name: string; tagline: string; color: string; features: string[]; active: boolean; off_reason?: string }
+export interface Org { id: string; name: string; tagline: string; color: string; features: string[]; active: boolean; off_reason?: string; kind?: 'client' | 'customer'; owner_org?: string | null }
 export interface Profile { id: string; username: string; full_name: string; org_id: string | null; role: AccountRole; features: string[]; active: boolean }
 export const ROLE_LABEL: Record<AccountRole, string> = { superadmin: 'Super Admin', org_admin: 'Client admin', staff: 'Staff' }
 export const orgOffMessage = (o: { name?: string; off_reason?: string } | undefined) => `Access for ${o?.name ?? 'your organisation'} has been switched off by Tex-Trak${o?.off_reason?.trim() ? `. Reason: ${o.off_reason.trim()}` : ''}. Please contact your administrator, or surya@circai.co.uk.`

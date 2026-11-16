@@ -44,13 +44,13 @@ export function Layout({ children }: { children: ReactNode }) {
   const open = alertsFor(role).filter((a) => a.t <= t && a.sev !== 'info' && a.sev !== 'low').length
   useEffect(() => { let last = performance.now(); const id = setInterval(() => { const n = performance.now(); tick(n - last); last = n }, 100); return () => clearInterval(id) }, [tick])
   useEffect(() => { const f = () => set({ page: location.hash.slice(1) || 'command' }); addEventListener('hashchange', f); return () => removeEventListener('hashchange', f) }, [set])
-  useEffect(() => { if (!allowedPages(role).includes(page)) go('command') }, [role, page, mode])
+  useEffect(() => { const ok = allowedPages(role); if (!ok.includes(page)) go(ok.includes('command') ? 'command' : ok[0] ?? 'help') }, [role, page, mode])
   const active = page === 'item' ? 'inventory' : page
   const nav = (id: string) => { go(id); setMenu(false) }
 
   const Side = (
     <div className="nav-glass flex h-full flex-col border-r border-stone-200/80 text-stone-600">
-      <button onClick={() => nav('command')} className="flex items-center gap-3 px-6 pb-5 pt-6"><span className="logo-glow"><Logo size={42} /></span><span className="text-left"><span className="block text-[20px] font-semibold leading-none tracking-tight text-stone-900">Tex-Trak</span><span className="mt-1 block text-[11.5px] font-semibold text-stone-400">Track · Trace · Prove</span></span></button>
+      <button onClick={() => nav(hasFeature(role, 'command') ? 'command' : hasFeature(role, 'shipments') ? 'shipments' : 'help')} className="flex items-center gap-3 px-6 pb-5 pt-6"><span className="logo-glow"><Logo size={42} /></span><span className="text-left"><span className="block text-[20px] font-semibold leading-none tracking-tight text-stone-900">Tex-Trak</span><span className="mt-1 block text-[11.5px] font-semibold text-stone-400">Track · Trace · Prove</span></span></button>
       <nav className="scroll-thin min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4 pt-1">
         {GROUPS.map((g) => { const items = g.items.filter((i) => visible(i, role)); if (!items.length) return null
           const has = items.some((i) => i.id === active); const flat = g.title === 'Overview'; const closed = !flat && shut.includes(g.title) && !has; const ac = ACCENT[g.title] ?? '#6a57e6'

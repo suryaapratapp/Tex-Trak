@@ -77,7 +77,10 @@ Deno.serve(async (req) => {
     const name = String(body.name ?? '').trim(); const id = slug(body.id ?? name)
     if (!name || id.length < 2) return fail('Enter the client name.')
     if (await orgOf(id)) return fail('A client with that name already exists.')
-    const { error } = await admin.from('orgs').insert({ id, name, tagline: String(body.tagline ?? ''), color: /^#[0-9a-f]{6}$/i.test(body.color) ? body.color : '#5a46e0', features: clean(body.features) })
+    const customer = body.kind === 'customer' // a customer account only receives shipments from one client
+    let owner: string | null = null
+    if (customer) { owner = String(body.owner_org ?? ''); if (!owner || !(await orgOf(owner))) return fail('Choose the client this customer receives shipments from.') }
+    const { error } = await admin.from('orgs').insert({ id, name, tagline: String(body.tagline ?? ''), color: /^#[0-9a-f]{6}$/i.test(body.color) ? body.color : '#5a46e0', features: customer ? ['shipments'] : clean(body.features), kind: customer ? 'customer' : 'client', owner_org: owner })
     if (error) return fail(error.message)
     const a = body.admin ?? {}
     const r = await createAccount({ username: String(a.username ?? '').toLowerCase(), password: a.password, full_name: a.full_name, org_id: id, role: 'org_admin', features: [] })

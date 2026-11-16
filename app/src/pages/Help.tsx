@@ -4,6 +4,7 @@ import { Printer } from 'lucide-react'
 import { Page } from '../components/ui'
 import adminMd from '../content/TRAINING.md?raw'
 import clientMd from '../content/CLIENT_GUIDE.md?raw'
+import customerMd from '../content/CUSTOMER_GUIDE.md?raw'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../store'
 
@@ -37,10 +38,11 @@ function Doc({ src }: { src: string }) {
 export default function Help() {
   // Only the Super Admin (not while previewing a client) sees the full set-up guide; everyone else gets the client guide.
   const isSuper = useAuth((a) => a.user?.role === 'superadmin') && useStore((x) => x.role) === 'superadmin'
-  const md = isSuper ? adminMd : clientMd; const label = isSuper ? 'Training guide' : 'User guide'
+  const orgs = useAuth((a) => a.orgs); const role = useStore((x) => x.role); const isCust = !isSuper && orgs.find((o) => o.id === role)?.kind === 'customer'
+  const md = isSuper ? adminMd : isCust ? customerMd : clientMd; const label = isSuper ? 'Training guide' : isCust ? 'Delivery guide' : 'User guide'
   const toc = md.split('\n').filter((l) => l.startsWith('## ')).map((l) => l.replace('## ', ''))
   return (
-    <Page title="Help and training" sub={isSuper ? 'How to set up and use Tex-Trak.' : 'How to use Tex-Trak.'} right={<button onClick={() => window.print()} className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-[14px] font-medium text-stone-700 hover:bg-stone-50"><Printer size={16} /> Print or save as PDF</button>}>
+    <Page title="Help and training" sub={isSuper ? 'How to set up and use Tex-Trak.' : isCust ? 'How to accept your deliveries.' : 'How to use Tex-Trak.'} right={<button onClick={() => window.print()} className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-[14px] font-medium text-stone-700 hover:bg-stone-50"><Printer size={16} /> Print or save as PDF</button>}>
       <div className="grid items-start gap-8 lg:grid-cols-[240px_1fr]">
         <nav className="card sticky top-4 hidden p-4 lg:block"><div className="mb-2 px-2 text-[12px] font-semibold uppercase tracking-wider text-stone-400">Contents</div>{toc.map((t) => <a key={t} href={`#${slug(t)}`} onClick={(e) => { e.preventDefault(); document.getElementById(slug(t))?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} className="block rounded-md px-2 py-1.5 text-[13.5px] text-stone-600 hover:bg-stone-50 hover:text-stone-900">{t}</a>)}</nav>
         <article className="card max-w-[820px] p-8"><Doc src={md.replace(/^# .*\n/, '')} /></article>

@@ -211,8 +211,9 @@ Open **Transport → Shipments** to book, follow and close a delivery.
    - **Warehouse orders:** pick packed orders.
    - **Goods out** and other items.
    Anything already on another shipment is greyed out, so nothing is sent twice. The number of items fills in by itself.
-5. Add the **carrier**, the **vehicle registration** and the **planned times** if you know them.
-6. Press **Book shipment**. It gets a reference such as `SHP-1001`. Write it on the delivery note.
+5. If your customer has a Tex-Trak account, choose it under **Customer account**. They will then see this shipment and can accept it themselves (see below). If the box is not there, ask support to set up your customer.
+6. Add the **carrier**, the **vehicle registration** and the **planned times** if you know them.
+7. Press **Book shipment**. It gets a reference such as `SHP-1001`. Write it on the delivery note.
 
 You can also start from **Arrange shipment**, which appears after Pack order, Goods out and Take down.
 
@@ -232,6 +233,9 @@ You can also start from **Arrange shipment**, which appears after Pack order, Go
 3. Press **Receive** and enter the number that arrived.
    - **The same number:** the shipment is **Delivered**.
    - **A different number:** it is recorded as a **problem**. After you resolve it, press **Mark resolved**.
+
+### When the customer accepts it themselves
+A customer with a Tex-Trak account signs in and sees only the shipments booked to them. They either **scan each item** or **confirm they checked the items**, then enter their **name** and **sign**. As soon as they do, the shipment changes to **Delivered** (or **Problem** if the number differs), and you get a notification. Open the shipment to see **Received and signed**: who accepted it, when, how, and their signature.
 
 Every step is kept in the shipment's history. A shipment can be cancelled before it is dispatched, and its items become free again.
 
