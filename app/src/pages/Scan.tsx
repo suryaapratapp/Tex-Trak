@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Boxes, CheckCircle2, Package, Radar, ScanLine, TriangleAlert, XCircle } from 'lucide-react'
 import { Card, CardHead, Page, StatusPill } from '../components/ui'
 import { Scanner } from '../components/Scanner'
@@ -28,6 +28,8 @@ export default function Scan() {
   const role = useStore((s) => s.role); const t = useStore((s) => s.t); const w = getWorld(); const demo = useStore((s) => s.mode) === 'demo'
   const tasks = TASKS.filter((x) => (x.id !== 'asset' || demo) && (x.id === 'smart' || hasModule(role, x.module) || (x.id === 'load' && hasModule(role, 'recycling'))))
   const [task, setTask] = useState<Task>('smart'); const [manual, setManual] = useState(''); const [found, setFound] = useState<Found>(null); const [msg, setMsg] = useState<{ level: 'ok' | 'warn' | 'error'; title: string; detail: string } | null>(null)
+  const result = useRef<HTMLDivElement>(null)
+  useEffect(() => { if (found || msg) result.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) }, [found, msg]) // show the result without scrolling
   useEffect(() => { if (msg && msg.level !== 'warn') feedback(msg.level === 'ok') }, [msg])
   const user = useAuth((x) => x.user); const orgId = role === 'superadmin' ? null : role
   const [list, setList] = useState<Entry[]>([]); const [open, setOpen] = useState<Ship[]>([]); const [count, setCount] = useState('')
@@ -81,7 +83,7 @@ export default function Scan() {
           <div className="space-y-4 p-5"><Scanner onScan={lookup} />
             <form onSubmit={(e) => { e.preventDefault(); if (manual.trim()) { lookup(manual); setManual('') } }} className="flex gap-2"><input value={manual} onChange={(e) => setManual(e.target.value)} placeholder="Type or paste a code" className="min-w-0 flex-1 rounded-full border border-stone-200 px-4 py-2.5 text-sm outline-none focus:border-cyan-500" /><button className={`${btn} bg-stone-900 text-white`}>Go</button></form>
             {chips.length > 0 && <div><div className="mb-2 text-xs font-bold uppercase tracking-wider text-stone-400">Try a demo scan</div><div className="flex flex-wrap gap-2">{chips.map((c) => <button key={c.raw} onClick={() => lookup(c.raw)} className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-bold text-stone-700 hover:bg-stone-50">{c.label}</button>)}</div></div>}</div></Card>
-        <div className="space-y-5">
+        <div ref={result} className="space-y-5">
           {found?.type === 'curtain' && (() => { const c = found.c; return (
             <Card><CardHead title={c.type} sub={<span className="mono">{c.code}</span>} right={<span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-bold text-stone-600">{{ registered: 'In stock', in_use: 'In use', removed: 'Taken down', retired: 'Retired' }[c.status] ?? c.status}</span>} />
               <div className="space-y-3 p-5"><div className="text-[14px] text-stone-600">{c.status === 'in_use' ? `Installed at ${[c.ward, c.bay].filter(Boolean).join(' · ')}${c.due_at ? ` · change due ${new Date(c.due_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}` : c.status === 'registered' ? 'Ready to be installed.' : 'Not in service.'}</div>

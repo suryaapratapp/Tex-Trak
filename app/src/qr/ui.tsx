@@ -17,9 +17,11 @@ export const Section = ({ title, sub, right, children, className = '' }: { title
 
 export function Notice({ kind, children, onClose }: { kind: 'ok' | 'error' | 'info'; children: ReactNode; onClose?: () => void }) {
   const said = typeof children === 'string' ? children : Array.isArray(children) && children.every((c) => typeof c === 'string' || typeof c === 'number') ? children.join('') : ''
+  const box = useRef<HTMLDivElement>(null)
   useEffect(() => { if (said && kind !== 'info') toast[kind](said) }, [said, kind]) // main results also appear top right
+  useEffect(() => { box.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) }, [said, kind]) // never leave the result off screen
   const t = { ok: 'border-emerald-200 bg-emerald-50 text-emerald-900', error: 'border-rose-200 bg-rose-50 text-rose-900', info: 'border-sky-200 bg-sky-50 text-sky-900' }[kind]
-  return <div className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-[14.5px] font-semibold ${t}`}>{kind === 'error' ? <CircleAlert size={19} className="mt-0.5 shrink-0" /> : <CheckCircle2 size={19} className="mt-0.5 shrink-0" />}<span className="flex-1">{children}</span>{onClose && <button onClick={onClose} aria-label="Dismiss"><X size={16} /></button>}</div>
+  return <div ref={box} className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-[14.5px] font-semibold ${t}`}>{kind === 'error' ? <CircleAlert size={19} className="mt-0.5 shrink-0" /> : <CheckCircle2 size={19} className="mt-0.5 shrink-0" />}<span className="flex-1">{children}</span>{onClose && <button onClick={onClose} aria-label="Dismiss"><X size={16} /></button>}</div>
 }
 
 /** Bluetooth / USB scanners and RFID handhelds type the code very fast and press Enter. This catches that even when no box is focused. */
