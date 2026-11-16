@@ -80,6 +80,6 @@ export const DaysChip = ({ p }: { p: Product }) => { const d = daysLeft(p); if (
 
 export function useFlash() {
   const [m, setM] = useState<{ kind: 'ok' | 'error' | 'info'; text: string } | null>(null)
-  useEffect(() => { if (m?.kind === 'ok') { const t = setTimeout(() => setM(null), 5000); return () => clearTimeout(t) } }, [m])
+  useEffect(() => { if (m?.kind === 'ok') { const t = setTimeout(() => setM(null), 2500); return () => clearTimeout(t) } }, [m])
   return { flash: m, ok: (text: string) => { feedback(true); setM({ kind: 'ok', text }) }, err: (text: string) => { feedback(false); setM({ kind: 'error', text }) }, clear: () => setM(null) }
 }

@@ -12,7 +12,7 @@ export const useToasts = create<T>((set, get) => ({
     const key = `${kind}:${t}`; const now = Date.now(); if ((recent.get(key) ?? 0) > now - 3000) return // the same message twice in a row is shown once
     recent.set(key, now); const id = ++seq
     set((s) => ({ items: [...s.items.slice(-3), { id, kind, text: t }] }))
-    setTimeout(() => get().drop(id), kind === 'error' ? 9000 : 5000)
+    setTimeout(() => get().drop(id), kind === 'error' ? 4000 : 2000) // short, so they never block the top of a phone screen
   },
   drop: (id) => set((s) => ({ items: s.items.filter((x) => x.id !== id) })),
 }))
