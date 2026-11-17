@@ -5,6 +5,7 @@ import { Page } from '../components/ui'
 import { fmtQty, REASONS, useIndex, useOp, useWh, whRpc } from './store'
 import { btnPrimary, Field, inputCls, Notice, Section, useFlash, useTakePrefillItem } from './ui'
 import { PickLines, type PLine } from './PickLines'
+import { DestinationField } from './DestinationField'
 
 export default function Issue() {
   const ix = useIndex(); const partners = useWh((s) => s.partners); const pre = useTakePrefillItem(); const { op, renew } = useOp(); const { flash, ok, err, clear } = useFlash()
@@ -19,7 +20,7 @@ export default function Issue() {
       <div className="mx-auto grid max-w-[1200px] gap-6 lg:grid-cols-[1fr_1.1fr]">
         <Section title="Why is it leaving?"><div className="space-y-4">
           <Field label="Reason" required><select value={reason} onChange={(e) => setReason(e.target.value)} className={inputCls}>{REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}</select></Field>
-          <Field label="To whom or where"><input value={to} onChange={(e) => setTo(e.target.value)} list="wh-customers" className={inputCls} placeholder="Customer, department, bin…" /><datalist id="wh-customers">{partners.map((p) => <option key={p.id} value={p.name} />)}</datalist></Field>
+          <DestinationField label="To whom or where" value={to} onChange={setTo} hint="Optional. Pick a customer or one of your sites, or type anything." placeholder="Customer, site, department, bin…" />
           <Field label="Notes"><input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls} placeholder="Optional" /></Field>
           {flash && <Notice kind={flash.kind} onClose={clear}>{flash.text}</Notice>}
           {sent && <ArrangeShipment start={{ tab: 'wh_goods_out', match: 'newest' }} text="Goods out recorded. Sending it somewhere? Arrange a shipment." />}</div></Section>

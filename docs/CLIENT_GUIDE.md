@@ -203,22 +203,17 @@ If a reader shows no activity, tell support with the name of the reader.
 Open **Transport → Shipments** to book, follow and close a delivery.
 
 ### Book a shipment
-1. Press **New shipment**.
-2. Choose the **Type**, for example *Delivery*.
-3. Choose **From** and **To** from the list of your sites. If the place you need is not in the list, ask support to add it.
-4. Under **What is in it**, choose where the contents come from:
-   - **Curtains:** tick the curtains (state *In stock*), or press *Select all … shown*.
-   - **Warehouse orders:** pick packed orders.
-   - **Goods out** and other items.
-   Anything already on another shipment is greyed out, so nothing is sent twice. The number of items fills in by itself.
-5. If your customer has a Tex-Trak account, choose it under **Customer account**. They will then see this shipment and can accept it themselves (see below). If the box is not there, ask support to set up your customer.
-6. Under **How will it be tracked?** choose what travels with the shipment:
-   - **A vehicle** from your list. If it has a tracker fitted, Tex-Trak follows it.
-   - **A tracker or phone** travelling with the load, for example a tracker in the cage, or the driver's phone.
-   - **Not tracked.** You press Dispatch and Receive yourself.
-   - **Another vehicle**, typing its registration.
-7. Add the **carrier** and the **planned times** if you know them.
-8. Press **Book shipment**. It gets a reference such as `SHP-1001`. Write it on the delivery note.
+Press **New shipment**. The form works from the top down, and fills in as much as it can by itself.
+1. **What is going?** Choose **Packed orders**, **Goods out**, **Curtains** or **Laundry items**, and tick what is going (or press *Select all … shown*). Anything already on another shipment is greyed out, so nothing is sent twice. The number of items fills in by itself.
+2. **From and to.** The destination is **filled in automatically** from the packed order's customer or the *To whom or where* you entered in Goods out, matched to your customers and sites. **From** remembers where you sent from last time. Pick from the list of your **customers** and **marked sites**, or type any place. Under each box Tex-Trak tells you whether the place is a marked site (so it is followed automatically) or a customer with a Tex-Trak account (who can then follow and sign for the delivery). If your packed orders go to different places, it asks which one this shipment is for.
+3. **How will it be tracked?** Choose one of four, each with its own list:
+   - **Vehicle:** one of your vehicles. It shows whether it has a tracker and when it was last heard.
+   - **GNSS tracker:** a stand-alone tracker placed in the load or on the cage.
+   - **Mobile phone:** the driver's phone, once they have signed in to the Tex-Trak app.
+   - **Not tracked:** you press Dispatch and *Mark as arrived* yourself.
+   Tex-Trak warns you if a tracker is already on another open shipment, and remembers your last choice.
+4. **More details** (optional): type, carrier, planned times, weight and description.
+5. Press **Book shipment**. The bar at the bottom always says what will happen by itself. The shipment gets a reference such as `SHP-1001`. Write it on the delivery note.
 
 You can also start from **Arrange shipment**, which appears after Pack order, Goods out and Take down.
 

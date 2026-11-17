@@ -5,7 +5,7 @@ import { inputCls } from '../qr/ui'
 import type { ShipStart } from '../lib/shipDraft'
 
 export type Source = 'wh_order' | 'wh_goods_out' | 'qr' | 'rfid' | 'typed'
-export interface Line { source: Source; ref: string; label: string; qty: number; sub?: string }
+export interface Line { source: Source; ref: string; label: string; qty: number; sub?: string; to?: string }
 interface Cand extends Line { group?: string }
 
 const TABS: { id: Exclude<Source, 'typed'>; label: string; icon: React.ReactNode; hint: string }[] = [
@@ -36,7 +36,7 @@ async function loadSource(org: string, src: Exclude<Source, 'typed'>, status: st
     const nm = new Map((its ?? []).map((i) => [i.id as string, i.name as string]))
     return { rows: (ords ?? []).map((o) => {
       const mine = (ls ?? []).filter((l) => l.order_id === o.id); const q = mine.reduce((a, l) => a + Number(l.qty) - Number(l.unpacked_qty), 0)
-      return { source: 'wh_order' as const, ref: o.id as string, label: `${o.number} · ${o.customer}`, qty: q, sub: mine.filter((l) => Number(l.qty) - Number(l.unpacked_qty) > 0).map((l) => `${num(Number(l.qty) - Number(l.unpacked_qty))} × ${nm.get(l.item_id as string) ?? 'item'}`).join(', ') }
+      return { source: 'wh_order' as const, ref: o.id as string, label: `${o.number} · ${o.customer}`, to: (o.customer as string) || undefined, qty: q, sub: mine.filter((l) => Number(l.qty) - Number(l.unpacked_qty) > 0).map((l) => `${num(Number(l.qty) - Number(l.unpacked_qty))} × ${nm.get(l.item_id as string) ?? 'item'}`).join(', ') }
     }).filter((r) => r.qty > 0) }
   }
   if (src === 'wh_goods_out') {
@@ -46,7 +46,7 @@ async function loadSource(org: string, src: Exclude<Source, 'typed'>, status: st
     const { data: its } = await supabase.from('wh_items').select('id,name').eq('org_id', org).limit(5000); const nm = new Map((its ?? []).map((i) => [i.id as string, i.name as string]))
     const g = new Map<string, { qty: number; names: Map<string, number>; note: string; at: string }>()
     for (const m of mv ?? []) { const k = (m.ref as string) || 'GO'; const e = g.get(k) ?? { qty: 0, names: new Map(), note: (m.notes as string) ?? '', at: m.created_at as string }; e.qty += Number(m.qty); const n = nm.get(m.item_id as string) ?? 'item'; e.names.set(n, (e.names.get(n) ?? 0) + Number(m.qty)); g.set(k, e) }
-    return { rows: [...g.entries()].map(([ref, e]) => ({ source: 'wh_goods_out' as const, ref, label: `${ref}${e.note ? ' · ' + e.note.split('.')[0].replace(/^To: /, 'to ') : ''}`, qty: e.qty, sub: [...e.names.entries()].map(([n, q]) => `${num(q)} × ${n}`).join(', ') })) }
+    return { rows: [...g.entries()].map(([ref, e]) => ({ source: 'wh_goods_out' as const, ref, label: `${ref}${e.note ? ' · ' + e.note.split('.')[0].replace(/^To: /, 'to ') : ''}`, to: e.note.match(/^To: ([^.]+)/)?.[1]?.trim() || undefined, qty: e.qty, sub: [...e.names.entries()].map(([n, q]) => `${num(q)} × ${n}`).join(', ') })) }
   }
   if (src === 'qr') {
     let q = supabase.from('qr_products').select('code,type,size,colour,status').eq('org_id', org).order('code').limit(2000); if (status !== 'all') q = q.eq('status', status)
@@ -66,7 +66,7 @@ export function ShipmentContents({ org, lines, setLines, start }: { org: string;
   useEffect(() => {
     let off = false; setBusy(true); setNote('')
     void loadSource(org, tab, status).then((r) => { if (off) return; setRows(r.rows); setNote(r.note ?? ''); setBusy(false)
-      if (auto && start?.match) { setAuto(false); const m = start.match; const hit = m === 'newest' ? r.rows.slice(0, 1) : m === 'all' ? r.rows : r.rows.filter((x) => x.label.startsWith(m)); if (hit.length) setLines(hit.map((x) => ({ source: x.source, ref: x.ref, label: x.label, qty: x.qty, sub: x.sub }))) } })
+      if (auto && start?.match) { setAuto(false); const m = start.match; const hit = m === 'newest' ? r.rows.slice(0, 1) : m === 'all' ? r.rows : r.rows.filter((x) => x.label.startsWith(m)); if (hit.length) setLines(hit.map((x) => ({ source: x.source, ref: x.ref, label: x.label, qty: x.qty, sub: x.sub, to: x.to }))) } })
     return () => { off = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [org, tab, status])
@@ -74,9 +74,9 @@ export function ShipmentContents({ org, lines, setLines, start }: { org: string;
   const picked = useMemo(() => new Set(lines.map(key)), [lines])
   const shown = useMemo(() => rows.filter((r) => `${r.label} ${r.sub ?? ''}`.toLowerCase().includes(q.toLowerCase())), [rows, q])
   const free = shown.filter((r) => !used.has(key(r)))
-  const toggle = (r: Cand) => setLines(picked.has(key(r)) ? lines.filter((l) => key(l) !== key(r)) : [...lines, { source: r.source, ref: r.ref, label: r.label, qty: r.qty, sub: r.sub }])
+  const toggle = (r: Cand) => setLines(picked.has(key(r)) ? lines.filter((l) => key(l) !== key(r)) : [...lines, { source: r.source, ref: r.ref, label: r.label, qty: r.qty, sub: r.sub, to: r.to }])
   const allPicked = free.length > 0 && free.every((r) => picked.has(key(r)))
-  const selectAll = () => setLines(allPicked ? lines.filter((l) => !free.some((r) => key(r) === key(l))) : [...lines, ...free.filter((r) => !picked.has(key(r))).map((r) => ({ source: r.source, ref: r.ref, label: r.label, qty: r.qty, sub: r.sub }))])
+  const selectAll = () => setLines(allPicked ? lines.filter((l) => !free.some((r) => key(r) === key(l))) : [...lines, ...free.filter((r) => !picked.has(key(r))).map((r) => ({ source: r.source, ref: r.ref, label: r.label, qty: r.qty, sub: r.sub, to: r.to }))])
   const total = lines.reduce((a, l) => a + l.qty, 0); const cur = TABS.find((t) => t.id === tab)!
   const statuses = tab === 'qr' ? QR_STATUS : tab === 'rfid' ? RFID_STATUS : null
   return (

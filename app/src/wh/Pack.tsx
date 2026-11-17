@@ -5,6 +5,7 @@ import { Page } from '../components/ui'
 import { go } from '../store'
 import { fmtQty, useIndex, useOp, useWh, whRpc } from './store'
 import { btnPrimary, Field, inputCls, Notice, Section, useFlash, useTakePrefillItem } from './ui'
+import { DestinationField } from './DestinationField'
 import { PickLines, type PLine } from './PickLines'
 
 export default function Pack() {
@@ -19,7 +20,7 @@ export default function Pack() {
     <Page title="Pack order" sub="Pick items for a customer order. Stock leaves the shelf now and is kept against the order until you dispatch or unpack it.">
       <div className="mx-auto grid max-w-[1200px] gap-6 lg:grid-cols-[1fr_1.1fr]">
         <Section title="Order details"><div className="space-y-4">
-          <Field label="Customer or destination" required><input value={customer} onChange={(e) => setCustomer(e.target.value)} list="wh-customers2" className={inputCls} /><datalist id="wh-customers2">{partners.filter((p) => p.kind !== 'supplier').map((p) => <option key={p.id} value={p.name} />)}</datalist></Field>
+          <DestinationField label="Customer or destination" required value={customer} onChange={setCustomer} hint="Pick a customer or one of your sites, or type it." />
           <Field label="Customer reference" hint="Their PO or order number"><input value={ref} onChange={(e) => setRef(e.target.value)} className={inputCls} /></Field>
           <Field label="Notes"><input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls} placeholder="Optional" /></Field>
           {flash && <Notice kind={flash.kind} onClose={clear}>{flash.text}</Notice>}

@@ -38,19 +38,11 @@ Tip: pack the items and put them together (for example in one box or on one cage
 ## Step 3. Book the shipment
 
 1. Open **Transport** → **Shipments**, then press **New shipment**.
-2. **Type:** choose **Delivery**.
-3. **From:** pick your site from the list.
-4. **To:** pick the customer's site from the list.
-   - Picking from the list lets the system follow the delivery. If the customer is not in the list, ask your administrator to add them. You can type an address, but then nothing is recorded automatically.
-5. **What is in it:** press the **Curtains** tab.
-   - Set the state filter to **In stock**.
-   - Tick each item you are sending, or press **Select all … shown** (above the list) if all of them are going.
-   - The **number of items** fills in by itself.
-   - Anything already on another shipment is greyed out ("On SHP-…"), so nothing is sent twice.
-6. **How will it be tracked?** Pick the vehicle from the list (it shows whether it has a tracker), or pick a **tracker or phone** that travels with the load, or leave **Not tracked** and confirm by hand. Tex-Trak knows the direction from your **From** and **To** sites: it dispatches when the tracker leaves From and notes arrival when it reaches To.
-   **Carrier:** fill it in if you know it.
-7. **Planned dispatch** and **Planned arrival:** add them if you know them.
-8. Press **Book shipment**. It gets a reference such as `SHP-1001`. Write that on the delivery note.
+2. **What is going?** Press the **Curtains** tab, set the state to **In stock**, and tick each item you are sending (or press **Select all … shown**). Anything already on another shipment is greyed out ("On SHP-…"). The number of items fills in by itself.
+3. **From and to.** **From** is remembered from last time. **To:** pick the customer from the list (customers with a Tex-Trak account and your marked sites are listed first). Under the box, Tex-Trak tells you whether it will follow the delivery automatically. Packed orders and Goods out fill the destination in for you.
+4. **How will it be tracked?** Choose **Vehicle**, **GNSS tracker**, **Mobile phone** or **Not tracked**. Each has its own list, with when it was last heard.
+5. **More details** (optional): carrier, planned times, weight.
+6. Press **Book shipment**. It gets a reference such as `SHP-1001`. Write that on the delivery note.
 
 ## Step 4. Load and check
 
