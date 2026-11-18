@@ -9,4 +9,4 @@ export async function notifyShipment(id: string, opts: { send?: boolean; email?:
     return (await r.json()) as NotifyResult
   } catch { return { error: 'No connection. Try again when you are online.' } }
 }
-export const linkFor = (token: string) => `${location.origin}/track/${token}`
+export const linkFor = (token: string) => `${location.origin}/?track=${token}`

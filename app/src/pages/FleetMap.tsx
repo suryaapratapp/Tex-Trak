@@ -65,5 +65,5 @@ function FleetMapDemo() {
 export default function FleetMap() {
   const mode = useStore((s) => s.mode)
   if (mode === 'demo') return <FleetMapDemo />
-  return <Page title="Live map" sub="Phones and trackers, as they move."><LiveDevices /></Page>
+  return <Page title="Live map" sub="Trackers, vehicles, phones, laptops and people, each on its own."><LiveDevices /></Page>
 }

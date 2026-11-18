@@ -253,6 +253,8 @@ Every step is kept in the shipment's history. A shipment can be cancelled before
 ## 9. Live map and Alerts
 
 ### Live map
+The map shows **one kind of thing at a time**, so they are never mixed up. Use the tabs at the top: **GNSS trackers** (opens first), **Vehicles**, **Mobile phones**, **Laptops and browsers** and **People**. Each kind has its own colour, shape and picture, and its own list on the right.
+
 Shows your vehicles and people with their name, last seen time and battery, and your sites as coloured markers and zones.
 - **Click the map, then scroll** to zoom. Until you click, scrolling moves the page, so the page never gets stuck.
 - **Route history:** click a vehicle or person to see a day's route, with distance, time moving and top speed. Choose the day with the date box, the arrows, or *Today / Yesterday / 2 days ago*. *Download day (CSV)* saves the points.
