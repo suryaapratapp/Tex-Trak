@@ -237,6 +237,9 @@ It follows the tracker and compares its position with your **From** and **To** s
    - **The same number:** the shipment is **Delivered**.
    - **A different number:** it is recorded as a **problem**. After you resolve it, press **Mark resolved**.
 
+### Emailing the customer a link (no sign-in)
+When you book a shipment to a customer, Tex-Trak **emails them a link** (to the email saved for that customer in **Team → Your customers**). They open it on their phone with **no sign-in**, follow the delivery live, and when it arrives the page asks them to confirm it: *All items arrived*, their name, their signature and one button. You can also **Email link**, **Copy link** or **Open in mail app** from the shipment at any time. If no email is saved yet, enter it on the shipment.
+
 ### What the customer can do, and when
 Before it arrives, a customer can only **follow it on a live map**. As soon as the tracker reaches your **To** site, the customer can **check it and sign**. If the shipment is not tracked, press **Mark as arrived** when it reaches them; that opens it up for the customer in the same way.
 

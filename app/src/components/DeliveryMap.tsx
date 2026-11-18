@@ -16,10 +16,10 @@ function Fit({ pts }: { pts: [number, number][] }) {
 const ago = (iso: string) => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); return m < 2 ? 'just now' : m < 90 ? `${m} minutes ago` : `${Math.round(m / 60)} hours ago` }
 
 /** Live position of one delivery on a map, refreshed every 15 seconds, with the From and To areas drawn. */
-export function DeliveryMap({ id, status, height = 280 }: { id: string; status: string; height?: number }) {
+export function DeliveryMap({ id, status, height = 280, token }: { id: string; status: string; height?: number; token?: string }) {
   const [d, setD] = useState<Live | null>(null); const [err, setErr] = useState('')
   useEffect(() => {
-    let off = false; const run = async () => { const { data, error } = await supabase.rpc('shipment_live', { p_id: id }); if (off) return; if (error) setErr(error.message); else { setD(data as Live); setErr('') } }
+    let off = false; const run = async () => { const { data, error } = token ? await supabase.rpc('public_shipment_live', { p_token: token }) : await supabase.rpc('shipment_live', { p_id: id }); if (off) return; if (error) setErr(error.message); else { setD(data as Live); setErr('') } }
     void run(); const t = setInterval(() => void run(), 15000); return () => { off = true; clearInterval(t) }
   }, [id, status])
   if (err) return <p className="mt-4 rounded-xl bg-stone-50 p-3 text-[14px] text-stone-500">Live tracking is not available right now.</p>

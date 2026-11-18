@@ -4,6 +4,8 @@ import { Card } from '../components/ui'
 import { TrackPicker, type Tracking } from '../components/TrackPicker'
 import { supabase } from '../lib/supabase'
 import { useInfra } from '../lib/infra'
+import { notifyShipment } from '../lib/shipLink'
+import { toast } from '../lib/toast'
 import { btnGhost, btnPrimary, Field, inputCls, Notice } from '../qr/ui'
 import type { ShipStart } from '../lib/shipDraft'
 import { ShipmentContents, summarise, type Line } from './ShipmentContents'
@@ -81,7 +83,9 @@ export function NewShipment({ org, onDone, onCancel, start }: { org: string; onD
     if (error) { setBusy(false); return setErr(error.message) }
     const id = (data as { id: string }).id
     if (trk.imei) await supabase.from('shipments').update({ tracker_imei: trk.imei }).eq('id', id)
-    setBusy(false); save(`ship-from:${org}`, f.from.trim()); save(`ship-track:${org}`, trk); onDone(id)
+    save(`ship-from:${org}`, f.from.trim()); save(`ship-track:${org}`, trk)
+    if (custId) { const r = await notifyShipment(id, { send: true }); if (r.sent) toast.ok(`Link emailed to ${r.email}.`); else toast.info(r.reason === 'no_email' ? 'Booked. Add the customer\u2019s email on the shipment to send them the link.' : r.reason === 'not_configured' ? 'Booked. Copy the customer link from the shipment to send it.' : `Booked. ${r.error ?? ''}`) }
+    setBusy(false); onDone(id)
   }
   const num = (n: number) => n.toLocaleString('en-GB')
   const step = (n: number, t: string, sub?: string) => <div className="mb-2.5 flex items-start gap-3"><span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-cyan-600 text-[13px] font-extrabold text-white">{n}</span><div><h3 className="text-[16px] font-extrabold leading-tight text-stone-900">{t}</h3>{sub && <p className="text-[13px] text-stone-500">{sub}</p>}</div></div>

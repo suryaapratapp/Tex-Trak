@@ -6,6 +6,18 @@ Support: **surya@circai.co.uk**
 
 ---
 
+## The easy way: the link in your email
+
+When a delivery is booked for you, you are emailed a link. **Open it on your phone. There is nothing to sign in to.** The page shows:
+
+- **Before it arrives:** a live map of where your delivery is.
+- **When it arrives:** the page changes by itself, with a notification, to **Confirm your delivery** at the top of the screen. Choose *All items arrived* (or enter a different number), type your name, sign with your finger and press the big **Accept delivery** button. That is all.
+- **If you want to scan:** choose *Scan the items* and scan each label instead.
+
+Keep the email. The same link works until the delivery is confirmed, and afterwards it shows your confirmation. Anyone with the link can confirm, so please do not forward it.
+
+The rest of this guide is for customers who also have a Tex-Trak sign-in.
+
 ## 1. Signing in
 
 1. Open the Tex-Trak address you were given.
