@@ -4,7 +4,6 @@ import { Card } from '../components/ui'
 import { TrackPicker, type Tracking } from '../components/TrackPicker'
 import { supabase } from '../lib/supabase'
 import { useInfra } from '../lib/infra'
-import { notifyShipment } from '../lib/shipLink'
 import { toast } from '../lib/toast'
 import { btnGhost, btnPrimary, Field, inputCls, Notice } from '../qr/ui'
 import type { ShipStart } from '../lib/shipDraft'
@@ -84,7 +83,7 @@ export function NewShipment({ org, onDone, onCancel, start }: { org: string; onD
     const id = (data as { id: string }).id
     if (trk.imei) await supabase.from('shipments').update({ tracker_imei: trk.imei }).eq('id', id)
     save(`ship-from:${org}`, f.from.trim()); save(`ship-track:${org}`, trk)
-    if (custId) { const r = await notifyShipment(id, { send: true }); if (r.sent) toast.ok(`Link emailed to ${r.email}.`); else toast.info(r.reason === 'no_email' ? 'Booked. Add the customer\u2019s email on the shipment to send them the link.' : r.reason === 'not_configured' ? 'Booked. Copy the customer link from the shipment to send it.' : `Booked. ${r.error ?? ''}`) }
+    if (custId) toast.info('Booked. Copy the customer link from the shipment.')
     setBusy(false); onDone(id)
   }
   const num = (n: number) => n.toLocaleString('en-GB')

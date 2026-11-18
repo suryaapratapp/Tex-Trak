@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { ask, askReason } from '../components/Confirm'
 import { CheckCircle2, Eye, Pencil, Plus, X } from 'lucide-react'
 import { Card } from '../components/ui'
-import { supabase } from '../lib/supabase'
 import { useAuth, type Org } from '../lib/auth'
 import { FEATURES, MODULES, featuresOf, type ModuleId } from '../sim/features'
 import { totals, NETWORK } from '../sim/registry'
@@ -50,7 +49,7 @@ function OrgCard({ o }: { o: Org }) {
 
 export function ClientsPanel() {
   const { orgs, api } = useAuth(); const [add, setAdd] = useState(false); const [msg, setMsg] = useState<{ k: 'ok' | 'error'; t: string } | null>(null); const [busy, setBusy] = useState(false); const [formErr, setFormErr] = useState('')
-  const [f, setF] = useState({ name: '', tagline: '', username: '', full_name: '', password: genPassword(), features: featuresOf('core'), kind: 'client' as 'client' | 'customer', owner: '', email: '' })
+  const [f, setF] = useState({ name: '', tagline: '', username: '', full_name: '', password: genPassword(), features: featuresOf('core'), kind: 'client' as 'client' | 'customer', owner: '' })
   const create = async () => {
     const username = f.username.trim().toLowerCase(); setFormErr('')
     if (!f.name.trim()) return setFormErr('Enter the client’s name.')
@@ -61,8 +60,7 @@ export function ClientsPanel() {
     if (f.password.length < 8) return setFormErr('The password needs at least 8 characters.')
     setBusy(true); setMsg(null); const r = await api('create_org', { name: f.name.trim(), tagline: f.tagline, features: f.features, kind: f.kind, owner_org: f.kind === 'customer' ? f.owner : undefined, admin: { username, password: f.password, full_name: f.full_name.trim() } }); setBusy(false)
     if (r.error) return setFormErr(r.error)
-    if (f.kind === 'customer' && f.email.trim() && r.id) await supabase.rpc('customer_set_email', { p_customer: r.id as string, p_email: f.email.trim() })
-    setMsg({ k: 'ok', t: `${f.name} created. Their admin signs in as ${username} with password ${f.password}. Copy it now: it is not shown again.` }); setAdd(false); setF({ name: '', tagline: '', username: '', full_name: '', password: genPassword(), features: featuresOf('core'), kind: 'client', owner: '', email: '' })
+    setMsg({ k: 'ok', t: `${f.name} created. Their admin signs in as ${username} with password ${f.password}. Copy it now: it is not shown again.` }); setAdd(false); setF({ name: '', tagline: '', username: '', full_name: '', password: genPassword(), features: featuresOf('core'), kind: 'client', owner: '' })
   }
   return (
     <div className="space-y-5">
@@ -70,7 +68,6 @@ export function ClientsPanel() {
       {msg && <Notice kind={msg.k} onClose={() => setMsg(null)}>{msg.t}</Notice>}
       {add && <Card className="space-y-5 p-6"><h3 className="text-[17px] font-extrabold text-stone-900">{f.kind === 'customer' ? 'New customer account' : 'New client'}</h3>
         <div className="flex rounded-2xl bg-stone-100 p-1">{([['client', 'Client'], ['customer', 'Customer (receives shipments)']] as const).map(([k, l]) => <button key={k} type="button" onClick={() => setF({ ...f, kind: k })} className={`flex-1 rounded-xl px-3 py-2 text-[14px] font-bold ${f.kind === k ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500'}`}>{l}</button>)}</div>
-        {f.kind === 'customer' && <Field label="Email for delivery links" hint="Optional. Delivery links open with no sign-in."><input value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} type="email" inputMode="email" className={inputCls} /></Field>}
         {f.kind === 'customer' && <Field label="Receives shipments from" required hint="A customer can only see shipments that this client books to them. They can scan or confirm what arrives and sign for it."><select value={f.owner} onChange={(e) => setF({ ...f, owner: e.target.value })} className={inputCls}><option value="">Choose a client</option>{orgs.filter((o) => o.kind !== 'customer').map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select></Field>}
         <div className="grid gap-4 sm:grid-cols-2"><Field label="Client name" required><input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className={inputCls} /></Field><Field label="Description"><input value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} className={inputCls} /></Field></div>
         {f.kind === 'client' && <div><div className="mb-2 text-[13.5px] font-bold text-stone-600">What can this client use?</div><FeaturePicker allowed={ALL} value={f.features} onChange={(v) => setF({ ...f, features: v })} /></div>}
