@@ -132,7 +132,7 @@ export default function LiveDevices() {
       </div>
 
       <div className="space-y-6"><Card><CardHead title={CAT[cat].label} sub={`${rows.length} ${rows.length === 1 ? 'is' : 'are'} here · ${placed.length} with a position. Click one to see its route.`} />
-        <ul className="divide-y divide-stone-100">{!loaded && <li className="p-6 text-center text-stone-400">Loading…</li>}{loaded && rows.length === 0 && <li className="p-8 text-center text-[14px] text-stone-500">{CAT[cat].empty}</li>}
+        <ul className="divide-y divide-stone-100">{!loaded && <li className="space-y-3 p-5" aria-busy="true"><div className="skeleton h-5 w-2/3" /><div className="skeleton h-4 w-full" /><div className="skeleton h-4 w-1/2" /></li>}{loaded && rows.length === 0 && <li className="p-8 text-center text-[14px] text-stone-500">{CAT[cat].empty}</li>}
           {rows.map((r) => { const K = CAT[r.cat]; const n = r.note; return (
             <li key={r.key}><button disabled={!r.d} onClick={() => r.d && pick(r.d.imei)} className={`flex w-full items-start gap-3 px-5 py-3.5 text-left ${sel && sel === r.d?.imei ? 'bg-cyan-50' : 'hover:bg-stone-50'} disabled:opacity-60`}>
               <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center text-white" style={{ background: K.color, borderRadius: K.radius === '50%' ? '50%' : '10px' }}><K.Icon size={17} /></span>

@@ -182,3 +182,48 @@ aside[class*="from-cyan-700"] > div[class*="blur-3xl"] { animation: drift 14s ea
   .toast-host { left: .5rem; right: .5rem; }
   footer { padding-bottom: .5rem !important; }
 }
+
+/* =====================================================================
+   Design v3: softer, rounder, calmer, built for thumbs. Applies to every page.
+   ===================================================================== */
+:root { --r-card: 20px; --r-ctl: 14px; --safe-t: env(safe-area-inset-top, 0px); }
+html { -webkit-tap-highlight-color: transparent; text-size-adjust: 100%; }
+.rounded-3xl { border-radius: 22px !important; } .rounded-2xl { border-radius: 14px !important; } .rounded-xl { border-radius: 11px !important; } .rounded-lg { border-radius: 9px !important; }
+button.rounded-full:not([class*="h-9"]):not([class*="h-10"]):not([class*="h-8"]):not([role="switch"]):not(.keep-round) { border-radius: 12px !important; }
+input:not([type=checkbox]):not([type=range]), select, textarea { border-radius: 12px !important; }
+.card, .card .rounded-2xl { border-radius: var(--r-card) !important; }
+.card { border: 1px solid rgb(226 229 245 / .9); }
+
+/* an aurora behind everything that drifts very slowly */
+body::before { content: ""; position: fixed; inset: -20% -10% auto -10%; height: 70vh; z-index: -1; pointer-events: none; background: radial-gradient(40% 60% at 20% 30%, rgb(127 113 238 / .20), transparent 70%), radial-gradient(35% 55% at 80% 20%, rgb(56 189 248 / .16), transparent 70%), radial-gradient(30% 50% at 55% 70%, rgb(167 139 250 / .12), transparent 70%); animation: aurora 26s ease-in-out infinite alternate; }
+@keyframes aurora { from { transform: translate3d(-2%, 0, 0) scale(1); } to { transform: translate3d(3%, 4%, 0) scale(1.08); } }
+
+/* primary actions get a gentle neon edge; every button gives touch feedback */
+button, a.bg-cyan-600 { transition: transform .15s var(--ease), box-shadow .2s var(--ease), background-color .2s, filter .2s; }
+button:active:not(:disabled) { transform: scale(.975); }
+button.bg-cyan-600, a.bg-cyan-600 { box-shadow: 0 0 0 1px rgb(255 255 255 / .22) inset, 0 8px 22px -8px rgb(var(--glow) / .75), 0 0 26px -10px rgb(var(--glow) / .6); }
+
+/* status pills and chips read as little glass beads */
+[class*="rounded-full"][class*="px-3"][class*="py-1"], [class*="rounded-full"][class*="px-2.5"] { backdrop-filter: blur(6px); }
+
+/* hover lifts only where there is a mouse */
+@media (hover: none) { .card:hover { transform: none !important; box-shadow: inherit; border-color: inherit; } .card tbody tr:hover { background: transparent; } }
+
+/* skeleton loading */
+.skeleton { position: relative; overflow: hidden; background: rgb(226 229 245 / .6); border-radius: 12px; }
+.skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgb(255 255 255 / .75), transparent); animation: shimmer 1.3s infinite; }
+@keyframes shimmer { to { transform: translateX(100%); } }
+
+/* sticky glass header with the notch respected */
+.top-glass { position: sticky; top: 0; padding-top: calc(var(--safe-t) + .5rem); border-bottom-color: rgb(226 229 245 / .8); background: rgb(255 255 255 / .74); backdrop-filter: blur(18px) saturate(1.4); }
+
+@media (max-width: 640px) {
+  /* 16px text stops iPhones zooming into fields; 48px controls are easy to hit */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea { font-size: 16px !important; min-height: 48px; }
+  .card { border-radius: 18px !important; }
+  /* wide tables slide sideways inside their card, with a soft edge that hints there is more */
+  .card .overflow-x-auto { -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); mask-image: linear-gradient(90deg, #000 92%, transparent); }
+  h1 { word-break: break-word; }
+  main { scroll-padding-bottom: 96px; }
+}
+@media (prefers-reduced-motion: reduce) { body::before { animation: none; } .skeleton::after { animation: none; } }

@@ -34,7 +34,7 @@ export const Bar = ({ v, color = '#1c1917', h = 6 }: { v: number; color?: string
 export const Page = ({ title, sub, right, demo, children }: { title: string; sub?: string; right?: ReactNode; demo?: boolean; children: ReactNode }) => (
   <div className="mx-auto w-full max-w-[1500px] p-3 sm:p-8">
     <div className="mb-7 flex flex-wrap items-end justify-between gap-2 sm:gap-3">
-      <div><h1 className="text-[30px] font-extrabold tracking-tight text-slate-900">{title}{demo && <span title="This page shows a built-in example day. Live data from readers and scans is not connected yet." className="ml-3 inline-block translate-y-[-4px] rounded-full bg-amber-50 px-3 py-1 align-middle text-[12px] font-medium text-amber-800 ring-1 ring-amber-200">Demo data</span>}</h1>{sub && <p className="page-sub mt-1 max-w-3xl text-[15.5px] leading-snug text-slate-500 sm:mt-1.5">{sub}</p>}</div>{right && <div className="page-actions flex flex-wrap gap-2">{right}</div>}
+      <div><h1 className="hidden text-[30px] font-extrabold tracking-tight text-slate-900 sm:block">{title}{demo && <span title="This page shows a built-in example day. Live data from readers and scans is not connected yet." className="ml-3 inline-block translate-y-[-4px] rounded-full bg-amber-50 px-3 py-1 align-middle text-[12px] font-medium text-amber-800 ring-1 ring-amber-200">Demo data</span>}</h1>{sub && <p className="page-sub mt-1 max-w-3xl text-[15.5px] leading-snug text-slate-500 sm:mt-1.5">{sub}</p>}</div>{right && <div className="page-actions flex flex-wrap gap-2">{right}</div>}
     </div>{children}
   </div>
 )

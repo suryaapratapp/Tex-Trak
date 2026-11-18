@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound, BookOpen, ArrowLeftRight, ClipboardCheck, ChevronDown, History, MapPinned, Package, PackageMinus, PackageOpen, PackagePlus, ScanBarcode, Sparkles, Warehouse, Wrench } from 'lucide-react'
+import { Ellipsis, Activity, AlertTriangle, BarChart3, Boxes, Brain, Building2, Cpu, Eye, FileText, Home, Layers, Leaf, MapPin, Map, Menu, Pause, Play, Radar, Recycle, Repeat2, ScanLine, Settings2, Shield, Tag, Truck, UserCircle, Users, Workflow, ArrowDownToLine, QrCode, LogOut, UsersRound, BookOpen, ArrowLeftRight, ClipboardCheck, ChevronDown, History, MapPinned, Package, PackageMinus, PackageOpen, PackagePlus, ScanBarcode, Sparkles, Warehouse, Wrench } from 'lucide-react'
 import { DownloadApp } from './DownloadApp'
 import { go, jump, SPEEDS, useStore } from '../store'
 import { fmtClock, T0, T1 } from '../sim/engine'
@@ -34,6 +34,23 @@ const JUMPS: [string, number][] = [['Morning delivery', 335], ['Recycling runs',
 const visible = (i: NavItem, role: Role) => { const u = useAuth.getState().user; if (i.demoOnly && useStore.getState().mode === 'live') return false; if (i.always) return !!u; if (i.adminOnly) return u?.role === 'superadmin'; if (i.teamOnly) return u?.role === 'org_admin' && useAuth.getState().orgs.find((o) => o.id === u.org_id)?.kind !== 'customer'; return hasFeature(role, i.id) }
 export const allowedPages = (role: Role) => GROUPS.flatMap((g) => g.items).filter((i) => visible(i, role)).map((i) => i.id).concat(['item']).concat(hasFeature(role, 'qrlabels') ? ['qrlabels'] : [])
 
+const NAV_PRIORITY = ['command', 'scan', 'shipments', 'map', 'qrinstall', 'whscan', 'whreceive', 'qrdash', 'whdash', 'alerts', 'planner', 'inventory', 'help', 'account']
+/** The phone's thumb bar: the four things this person uses most, and More for the rest. Only what their account may open. */
+function BottomNav({ role, active, onGo, onMore }: { role: Role; active: string; onGo: (id: string) => void; onMore: () => void }) {
+  const ok = allowedPages(role); const all = GROUPS.flatMap((g) => g.items.map((i) => ({ ...i, accent: ACCENT[g.title] ?? '#6a57e6' })))
+  const picks = NAV_PRIORITY.filter((id) => ok.includes(id)).slice(0, 4).map((id) => all.find((i) => i.id === id)!).filter(Boolean)
+  return (
+    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 xl:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="mx-2 mb-2 flex items-stretch rounded-[22px] border border-white/70 bg-white/85 p-1.5 shadow-[0_10px_40px_-8px_rgba(60,50,160,.45)] backdrop-blur-xl">
+        {picks.map((i) => { const on = active === i.id; return (
+          <button key={i.id} onClick={() => onGo(i.id)} aria-current={on ? 'page' : undefined} className="relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl px-1 py-2 text-[11px] font-bold transition" style={{ color: on ? i.accent : '#7a839b', background: on ? `${i.accent}14` : undefined }}>
+            {on && <i className="absolute -top-1 h-1 w-8 rounded-full" style={{ background: i.accent, boxShadow: `0 0 14px ${i.accent}` }} />}
+            <span className="grid h-6 w-6 place-items-center [&>svg]:h-[22px] [&>svg]:w-[22px]">{i.icon}</span><span className="max-w-full truncate">{i.label.replace('Scan station', 'Scan').replace('Shipments', 'Ship').split(' ')[0]}</span></button>) })}
+        <button onClick={onMore} className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl px-1 py-2 text-[11px] font-bold text-stone-500"><span className="grid h-6 w-6 place-items-center"><Ellipsis size={22} /></span>More</button>
+      </div>
+    </nav>)
+}
+
 export function Layout({ children }: { children: ReactNode }) {
   const { t, playing, speed, page, role, mode, set, setRole, tick } = useStore()
   const { user, orgs, signOut } = useAuth(); const isSuper = user?.role === 'superadmin'; const org = orgs.find((o) => o.id === role)
@@ -46,6 +63,7 @@ export function Layout({ children }: { children: ReactNode }) {
   useEffect(() => { const f = () => set({ page: location.hash.slice(1) || 'command' }); addEventListener('hashchange', f); return () => removeEventListener('hashchange', f) }, [set])
   useEffect(() => { const ok = allowedPages(role); if (!ok.includes(page)) go(ok.includes('command') ? 'command' : ok[0] ?? 'help') }, [role, page, mode])
   const active = page === 'item' ? 'inventory' : page
+  const pageTitle = GROUPS.flatMap((g) => g.items).find((i) => i.id === active)?.label ?? 'Tex-Trak'
   const nav = (id: string) => { go(id); setMenu(false) }
 
   const Side = (
@@ -90,16 +108,18 @@ export function Layout({ children }: { children: ReactNode }) {
         <SyncBar />
         <header className="top-glass relative z-10 flex items-center gap-3 border-b border-stone-200/70 px-3 py-2 sm:px-4 sm:py-3.5 xl:px-8">
           <button onClick={() => setMenu(true)} className="grid h-10 w-10 place-items-center rounded-full border border-stone-200 xl:hidden" aria-label="Menu"><Menu size={18} /></button>
-          <div className="flex min-w-0 items-center gap-2 text-[14px] font-semibold"><span className="live-dot shrink-0" style={{ background: role === 'superadmin' ? '#131a2e' : org?.color ?? '#5a46e0' }} /><span className="truncate text-stone-800">{role === 'superadmin' ? 'All clients' : org?.name}</span>{role !== 'superadmin' && org?.tagline && <span className="hidden truncate text-stone-500 sm:inline">· {org.tagline}</span>}</div>
+          <div className="min-w-0 sm:hidden"><div className="truncate text-[17px] font-extrabold leading-tight text-stone-900">{pageTitle}</div><div className="truncate text-[11.5px] font-semibold text-stone-400">{role === 'superadmin' ? 'All clients' : org?.name}</div></div>
+          <div className="hidden min-w-0 items-center gap-2 text-[14px] font-semibold sm:flex"><span className="live-dot shrink-0" style={{ background: role === 'superadmin' ? '#131a2e' : org?.color ?? '#5a46e0' }} /><span className="truncate text-stone-800">{role === 'superadmin' ? 'All clients' : org?.name}</span>{role !== 'superadmin' && org?.tagline && <span className="hidden truncate text-stone-500 sm:inline">· {org.tagline}</span>}</div>
           <div className="ml-auto flex items-center gap-2">
             {mode === 'demo' && <span className="rounded-full bg-amber-100 px-3 py-1 text-[12.5px] font-bold uppercase tracking-wide text-amber-900" title="Everything you see is an example day. Nothing here is real.">Demo data</span>}
             {isSuper && <div className="hidden rounded-lg bg-stone-100 p-0.5 sm:flex" title="Choose between your real data and the built-in example day">{(['live', 'demo'] as const).map((m) => <button key={m} onClick={() => set({ mode: m })} className={`rounded-md px-3 py-1.5 text-[13px] font-medium ${mode === m ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800'}`}>{m === 'live' ? 'Live data' : 'Demo data'}</button>)}</div>}
           </div>
         </header>
-        <main ref={mainRef} className={`scroll-thin min-h-0 flex-1 overflow-y-auto ${mode === 'demo' ? 'pb-28' : 'pb-8'}`}>{children}
+        <main ref={mainRef} className={`scroll-thin min-h-0 flex-1 overflow-y-auto ${mode === 'demo' ? 'pb-44 xl:pb-28' : 'pb-28 xl:pb-8'}`}>{children}
           <footer className="mx-auto max-w-[1500px] px-4 pb-4 pt-1 text-center text-[13px] font-semibold text-stone-400 sm:px-8 sm:pb-6 sm:pt-2">Tex-Trak · Developed by CIRCAI LTD</footer></main>
+        <BottomNav role={role} active={active} onGo={nav} onMore={() => setMenu(true)} />
         <GuidedTour />
-        {mode === 'demo' && <div className="fixed bottom-3 left-3 right-3 z-40 mx-auto flex max-w-[860px] items-center gap-3 rounded-full border border-stone-200 bg-white/95 px-3 py-2 shadow-[0_18px_50px_-18px_rgba(19,26,46,.45)] backdrop-blur xl:left-[288px] sm:gap-4 sm:px-4">
+        {mode === 'demo' && <div className="fixed bottom-24 left-3 right-3 z-40 xl:bottom-3 mx-auto flex max-w-[860px] items-center gap-3 rounded-full border border-stone-200 bg-white/95 px-3 py-2 shadow-[0_18px_50px_-18px_rgba(19,26,46,.45)] backdrop-blur xl:left-[288px] sm:gap-4 sm:px-4">
           <button onClick={() => set({ playing: !playing })} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-stone-900 text-white transition hover:bg-stone-700" title={playing ? 'Pause' : 'Play'}>{playing ? <Pause size={15} /> : <Play size={15} />}</button>
           <div className="shrink-0"><div className="mono text-[17px] font-medium leading-none text-stone-900">{fmtClock(t).slice(0, 5)}</div><div className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-stone-400">{t >= 1440 ? 'Day 2' : 'Day 1'}</div></div>
           <input type="range" min={T0} max={T1} step={0.5} value={t} onChange={(e) => set({ t: +e.target.value })} className="h-1.5 min-w-0 flex-1 cursor-pointer accent-cyan-600" aria-label="Time" />

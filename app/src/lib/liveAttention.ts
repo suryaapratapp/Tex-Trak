@@ -1,13 +1,13 @@
 // Things that need a person's attention, worked out from real data only (never the demo world).
 import { supabase } from './supabase'
-import { ago, ageMin, trackerHealth, readerHealth } from './status'
+import { ago, describeDevice, readerHealth } from './status'
 
 export interface Attn { id: string; tone: 'bad' | 'warn' | 'info'; title: string; body: string; page?: string; at?: string }
 
 export async function loadAttention(isSuper: boolean): Promise<Attn[]> {
   const out: Attn[] = []
   const since = new Date(Date.now() - 24 * 3600e3).toISOString()
-  const [trk, lat, rdr, al, missing, unk, exc] = await Promise.all([
+  const [trk, lat, rdr, al, missing, unk, exc, rhy, arr] = await Promise.all([
     supabase.from('trackers').select('imei,name,kind,active,last_seen').eq('active', true).eq('kind', 'tracker'),
     supabase.rpc('device_latest'),
     isSuper ? supabase.from('readers').select('id,code,label,last_seen') : Promise.resolve({ data: [] as { id: string; code: string; label: string; last_seen: string | null }[] }),
@@ -15,14 +15,17 @@ export async function loadAttention(isSuper: boolean): Promise<Attn[]> {
     supabase.from('items').select('id', { count: 'exact', head: true }).eq('status', 'missing'),
     supabase.from('item_events').select('id', { count: 'exact', head: true }).eq('type', 'unknown_read').gte('created_at', since),
     supabase.from('shipments').select('id,ref,to_name', { count: 'exact' }).eq('status', 'exception').limit(5),
+    supabase.rpc('device_rhythm'),
+    supabase.from('shipments').select('id,ref,to_name,customer_org_id', { count: 'exact' }).eq('status', 'in_transit').not('arrived_at', 'is', null).limit(5),
   ])
+  const rhythm = Object.fromEntries(((rhy.data ?? []) as { imei: string; interval_min: string }[]).map((x) => [x.imei, Number(x.interval_min)]))
   const latest = Object.fromEntries(((lat.data ?? []) as { imei: string; fix_ts: string | null; seen_at: string | null }[]).map((x) => [x.imei, x]))
   for (const t of (trk.data ?? []) as { imei: string; name: string; kind: 'tracker'; last_seen: string | null }[]) {
-    const h = trackerHealth('tracker', t.last_seen); const l = latest[t.imei]; const nm = t.name || `Tracker ${t.imei.slice(-6)}`
-    if (h === 'offline') out.push({ id: `trk-off-${t.imei}`, tone: 'bad', title: `${nm} is offline`, body: `Last heard ${ago(t.last_seen)}. Check its battery, SIM and signal.`, page: isSuper ? 'status' : 'map', at: t.last_seen ?? undefined })
-    else if (h === 'never') out.push({ id: `trk-never-${t.imei}`, tone: 'warn', title: `${nm} has never reported`, body: 'It is registered but nothing has arrived yet. Check the server address in its configuration.', page: isSuper ? 'status' : 'map' })
-    else if (l && (!l.fix_ts || ageMin(l.fix_ts) > 60)) out.push({ id: `trk-gps-${t.imei}`, tone: 'warn', title: `${nm} has no GPS fix`, body: l.fix_ts ? `Last position ${ago(l.fix_ts)}. Is it under cover?` : 'It reports, but has not found satellites yet. Take it outside with open sky.', page: 'map' })
+    const l = latest[t.imei]; const nm = t.name || `Tracker ${t.imei.slice(-6)}`; const n = describeDevice({ kind: 'tracker', lastSeen: t.last_seen, intervalMin: rhythm[t.imei], fixTs: l?.fix_ts, hasPosition: !!l })
+    if (n.level === 'ok') continue
+    out.push({ id: `trk-${n.level}-${t.imei}`, tone: n.level === 'bad' ? (t.last_seen ? 'bad' : 'warn') : 'warn', title: n.label === 'Offline' ? `${nm} is offline` : n.label === 'Never heard from' ? `${nm} has never reported` : `${nm}: no GPS position`, body: n.level === 'bad' ? `${n.connection}. ${n.advice}` : n.advice, page: isSuper ? 'status' : 'map', at: t.last_seen ?? undefined })
   }
+  if ((arr.count ?? 0) > 0) out.push({ id: 'ship-arrived', tone: 'warn', title: `${arr.count} deliver${arr.count === 1 ? 'y has' : 'ies have'} arrived`, body: ((arr.data ?? []) as { ref: string; to_name: string }[]).map((s) => `${s.ref} at ${s.to_name}`).join(', ') + '. Waiting for the receiver to confirm.', page: 'shipments' })
   for (const r of (rdr.data ?? []) as { id: string; code: string; label: string; last_seen: string | null }[]) {
     if (readerHealth(r.last_seen) === 'offline' && r.last_seen) out.push({ id: `rdr-${r.id}`, tone: 'warn', title: `Reader ${r.code} has been silent for over a day`, body: `Last read ${ago(r.last_seen)}${r.label ? ` (${r.label})` : ''}. Check its power and network.`, page: 'status' })
   }
