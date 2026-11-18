@@ -113,3 +113,13 @@ Menu names vary slightly between firmware versions. Look for the equivalent.
 - Keep the `INGEST_TOKEN` private. To replace it, set the new value in Supabase and Fly and run `fly deploy`.
 - Check `fly status` now and then; the gateway is set to stay running.
 - The first live test with a real device is the only way to confirm the whole chain. Tell me what `fly logs` shows if anything differs and I will adjust the gateway.
+
+
+## Reports only every 2 hours, and no new position
+
+If Tex-Trak shows a TAT240 reporting every 2 hours, repeating the same place, with *Connected, no GPS*:
+
+1. **It is probably asleep because it is still.** The TAT240 is a battery tracker. When it is not moving it sleeps and wakes on a timer to send a status report, and it only records often once its motion sensor sees movement. A tracker lying on a desk will report every 2 hours however the interval is set.
+2. **No GPS fix.** A report with 0 satellites means it could not see the sky (indoors, in a drawer, in a metal cabinet). It then repeats its last known place. Take it outside with a clear view of the sky, or fit it where it can see through a window or windscreen.
+3. **To get frequent updates, check these settings in the Teltonika Configurator** and save them to the device: the sleep mode (use a mode that stays awake while moving), the data acquisition period when moving, the send period, and the wake-up/send timer when still. The record interval in this guide (360 seconds) applies while it is awake and moving.
+4. After changing settings, move the tracker outside and wait a few minutes. The device card in Tex-Trak should change to *Working* with a *Live position*, and its rhythm should shorten.

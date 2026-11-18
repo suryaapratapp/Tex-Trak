@@ -1,6 +1,6 @@
 import { supabase, SUPABASE_URL } from './supabase'
 
-export interface NotifyResult { ok?: boolean; sent?: boolean; link?: string; email?: string; customer?: string | null; reason?: string; error?: string }
+export interface NotifyResult { ok?: boolean; sent?: boolean; link?: string; email?: string; customer?: string | null; receiver?: string; sender?: string; senderPerson?: string; subject?: string; text?: string; html?: string; reason?: string; error?: string }
 /** Asks the server for the customer's link, and optionally emails it. */
 export async function notifyShipment(id: string, opts: { send?: boolean; email?: string } = {}): Promise<NotifyResult> {
   const { data: s } = await supabase.auth.getSession(); if (!s.session) return { error: 'Please sign in again.' }

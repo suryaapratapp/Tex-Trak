@@ -22,3 +22,26 @@ export function ago(iso: string | null | undefined) {
   return `${Math.round(m / 1440)} d ago`
 }
 export const volts = (mv: number | null | undefined) => (mv == null ? '–' : `${(mv / 1000).toFixed(2)} V`)
+
+/** "every 2 hours", "every 6 minutes" */
+export const rhythmText = (min: number | null | undefined) => {
+  if (!min || !Number.isFinite(min)) return ''
+  if (min < 1.5) return 'about every minute'; if (min < 90) return `every ${Math.round(min)} minutes`
+  const h = min / 60; return h < 1.6 ? 'every hour' : h < 36 ? `every ${Math.round(h)} hours` : `every ${Math.round(h / 24)} days`
+}
+
+export type Level = 'ok' | 'warn' | 'bad'
+export interface DeviceNote { level: Level; label: string; position: string; connection: string; rhythm: string; advice: string }
+/** Says in plain words what a device is doing. "Connected" and "has a position" are different things, and a tracker that sleeps reports rarely. */
+export function describeDevice(d: { kind: 'tracker' | 'phone'; lastSeen: string | null; intervalMin?: number | null; fixTs?: string | null; hasPosition?: boolean }): DeviceNote {
+  const phone = d.kind === 'phone'; const age = ageMin(d.lastSeen); const iv = d.intervalMin && d.intervalMin > 0 ? d.intervalMin : null
+  const limit = phone ? Math.max(10, (iv ?? 1) * 2 + 2) : Math.max(15, (iv ?? 6) * 1.5 + 5)
+  const rhythm = iv ? `Reports ${rhythmText(iv)}${!phone && iv >= 60 ? ' while it is still' : ''}` : ''
+  const fixAge = ageMin(d.fixTs); const fixLimit = phone ? 30 : Math.max(30, (iv ?? 6) * 2 + 10)
+  const pos = d.fixTs ? (fixAge <= fixLimit ? `Live position, ${ago(d.fixTs)}` : `No GPS fix since ${new Date(d.fixTs).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`) : (d.hasPosition ? 'Last known place only' : 'Never had a GPS position')
+  if (!Number.isFinite(age)) return { level: 'bad', label: 'Never heard from', position: pos, connection: 'Never connected', rhythm, advice: phone ? 'Nobody has signed in on this phone yet.' : 'Check the IMEI is right, the tracker is charged and switched on, has a SIM with data, and its server settings point at Tex-Trak.' }
+  const conn = `Heard ${ago(d.lastSeen)}`
+  if (age > limit) return { level: 'bad', label: 'Offline', position: pos, connection: `Not heard for ${ago(d.lastSeen).replace(' ago', '')}`, rhythm, advice: phone ? 'The app is closed, the phone has no signal, or location is switched off. Open Tex-Trak on the phone.' : `It normally reports ${iv ? rhythmText(iv) : 'every few minutes'} and has gone quiet. Check it is charged, switched on and has signal.` }
+  if (!d.fixTs || fixAge > fixLimit) return { level: 'warn', label: 'Connected, no GPS', position: pos, connection: conn, rhythm, advice: phone ? 'The phone is connected but has not sent a position. Check location is allowed and set to always on for Tex-Trak.' : `It is connected, but it cannot see satellites, so it keeps repeating its last known place${iv && iv >= 60 ? ' and only reports ' + rhythmText(iv) + ' while it is still' : ''}. Take it outside with open sky, or move it so it sees the sky; it sends more often once it moves. The map shows its last known place.` }
+  return { level: 'ok', label: 'Working', position: pos, connection: conn, rhythm, advice: '' }
+}

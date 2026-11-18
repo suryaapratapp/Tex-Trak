@@ -226,6 +226,10 @@ Set the top bar to **Live data** and open **Live map**. Vehicles and phones appe
 ### Is it working? Device status
 Super Admin → **Device status** lists every tracker, phone and RFID reader with *Online*, *Quiet*, *Offline* or *Never seen*, when it was last heard, GPS state, battery and signal. A vehicle tracker is online if it reported in the last 15 minutes (it reports every 6). A phone is online if it reported in the last 10. A reader is online if it read something in the last 15 minutes, *Quiet* if not for a while (normal for a quiet doorway) and *Offline* after a day. **Alerts** raises these automatically.
 
+**Reading the device cards.** Each device says three separate things: **Connection** (when it last reported), **Position** (when it last had a real GPS fix) and its **Rhythm** (how often it really reports, worked out from its own recent reports). A device is *Working* when it is connected and has a live position, *Connected, no GPS* when it is alive but cannot see satellites (it then repeats its last known place), and *Offline* when it has not reported for longer than its own rhythm allows. A tracker that reports every 2 hours is therefore still *online* 3 hours after its last report.
+
+**A tracker that reports only every 2 hours with no new position.** This is a tracker that is **sleeping because it is still**: the TAT240 wakes on a timer to send a status report, and only records often once it moves. If it also says *no GPS fix*, it is indoors or under cover and has nothing new to report. Take it outside with open sky, or drive it. To get frequent updates, check its sleep and data-sending settings in the Teltonika Configurator (see the TAT240 setup guide).
+
 ### One-time gateway set-up (administrator)
 The gateway receives raw TCP from trackers. It runs on Fly.io. Run once:
 ```

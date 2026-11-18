@@ -7,7 +7,7 @@ import { Card, CardHead } from '../components/ui'
 import { ClickToActivate } from '../components/FleetMapView'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { ago, ageMin, trackerHealth, volts } from '../lib/status'
+import { ago, ageMin, describeDevice, volts, type DeviceNote } from '../lib/status'
 import { useStore } from '../store'
 import { useInfra } from '../lib/infra'
 import { KIND_COLOR, KIND_GLYPH, KIND_LABEL } from '../sim/registry'
@@ -54,13 +54,14 @@ export default function LiveDevices() {
   const role = useStore((s) => s.role); const orgs = useAuth((s) => s.orgs); const focus = useStore((s) => s.focusDevice)
   const infra = useInfra(); useEffect(() => { void infra.load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const sites = useMemo(() => infra.sites.filter((x) => role === 'superadmin' || x.org_id === role || x.org_id === null), [infra.sites, role])
-  const [cat, setCat] = useState<Cat>('tracker'); const [devs, setDevs] = useState<Dev[]>([]); const [latest, setLatest] = useState<Record<string, Latest>>({}); const [sel, setSel] = useState<string | null>(focus); const [loaded, setLoaded] = useState(false)
+  const [rhythm, setRhythm] = useState<Record<string, number>>({}); const [cat, setCat] = useState<Cat>('tracker'); const [devs, setDevs] = useState<Dev[]>([]); const [latest, setLatest] = useState<Record<string, Latest>>({}); const [sel, setSel] = useState<string | null>(focus); const [loaded, setLoaded] = useState(false)
   const today = dayKey(new Date()); const [day, setDay] = useState(today); const [data, setData] = useState<Day | null>(null); const [dayBusy, setDayBusy] = useState(false); const [dayErr, setDayErr] = useState('')
   useEffect(() => { if (focus) useStore.getState().set({ focusDevice: null }) }, [focus])
   const oldest = dayKey(new Date(Date.now() - (HISTORY_DAYS - 1) * 86400e3))
 
   const load = useCallback(async () => {
-    const [d, l] = await Promise.all([supabase.from('trackers').select('imei,name,kind,model,org_id,active,battery_pct,last_seen').order('name'), supabase.rpc('device_latest')])
+    const [d, l, rh] = await Promise.all([supabase.from('trackers').select('imei,name,kind,model,org_id,active,battery_pct,last_seen').order('name'), supabase.rpc('device_latest'), supabase.rpc('device_rhythm')])
+    setRhythm(Object.fromEntries(((rh.data ?? []) as { imei: string; interval_min: string }[]).map((x) => [x.imei, Number(x.interval_min)])))
     setDevs(((d.data ?? []) as Dev[]).filter((x) => x.active && (role === 'superadmin' || x.org_id === role)))
     setLatest(Object.fromEntries(((l.data ?? []) as Latest[]).map((x) => [x.imei, x]))); setLoaded(true)
   }, [role])
@@ -78,16 +79,16 @@ export default function LiveDevices() {
   const people = useAuth((a) => a.people)
   const fitted = useMemo(() => new Map(vehicles.filter((v) => v.tracker_imei).map((v) => [v.tracker_imei as string, v])), [vehicles])
   const catOf = useCallback((d: Dev): Cat => (d.kind === 'phone' ? (/web browser/i.test(d.model ?? '') ? 'laptop' : 'phone') : fitted.has(d.imei) ? 'vehicle' : 'tracker'), [fitted])
-  interface Row { key: string; d?: Dev; label: string; sub: string; l?: Latest; hasPos: boolean; c: string; age: number; cat: Cat }
+  interface Row { key: string; d?: Dev; label: string; sub: string; l?: Latest; hasPos: boolean; c: string; age: number; cat: Cat; note?: DeviceNote }
   const allRows = useMemo(() => {
-    const mk = (key: string, d: Dev | undefined, label: string, sub: string, c: Cat, i: number): Row => { const l = d ? latest[d.imei] : undefined; return { key, d, label, sub, l, hasPos: !!l && l.lat != null && l.lng != null, c: COLORS[i % COLORS.length], age: ageMin(l?.fix_ts), cat: c } }
+    const mk = (key: string, d: Dev | undefined, label: string, sub: string, c: Cat, i: number): Row => { const l = d ? latest[d.imei] : undefined; const hasPos = !!l && l.lat != null && l.lng != null; return { key, d, label, sub, l, hasPos, c: COLORS[i % COLORS.length], age: ageMin(l?.fix_ts), cat: c, note: d ? describeDevice({ kind: d.kind, lastSeen: d.last_seen, intervalMin: rhythm[d.imei], fixTs: l?.fix_ts, hasPosition: hasPos }) : undefined } }
     const out: Record<Cat, Row[]> = { tracker: [], vehicle: [], phone: [], laptop: [], person: [] }
     devs.forEach((d, i) => { const c = catOf(d); if (c === 'tracker') out.tracker.push(mk(d.imei, d, d.name || d.imei, d.model || 'GNSS tracker', c, i)); if (c === 'phone' || c === 'laptop') out[c].push(mk(d.imei, d, d.name || d.imei, d.model || (c === 'phone' ? 'Mobile phone' : 'Browser'), c, i)) })
     vehicles.forEach((v, i) => { const d = v.tracker_imei ? devs.find((x) => x.imei === v.tracker_imei) : undefined; out.vehicle.push(mk(v.id, d, v.reg, [v.driver, v.role].filter(Boolean).join(' · ') || (v.tracker_imei ? 'Vehicle tracker' : 'No tracker fitted'), 'vehicle', i)) })
     const by = new Map<string, Dev[]>(); devs.filter((d) => d.kind === 'phone').forEach((d) => by.set((d.name || d.imei).toLowerCase(), [...(by.get((d.name || d.imei).toLowerCase()) ?? []), d]))
     let n = 0; for (const [nm, ds] of by) { const best = [...ds].sort((a, b) => (latest[b.imei]?.fix_ts ?? b.last_seen ?? '').localeCompare(latest[a.imei]?.fix_ts ?? a.last_seen ?? ''))[0]; const who = people.find((p) => p.username.toLowerCase() === nm); out.person.push(mk(`p:${nm}`, best, who?.full_name ?? ds[0].name, ds.length > 1 ? `${ds.length} devices · latest ${catOf(best) === 'laptop' ? 'browser' : 'phone'}` : catOf(best) === 'laptop' ? 'On a browser' : 'On a phone', 'person', n++)) }
     return out
-  }, [devs, latest, vehicles, people, catOf])
+  }, [devs, latest, rhythm, vehicles, people, catOf])
   const rows = allRows[cat]
   useEffect(() => { if (focus) { const d = devs.find((x) => x.imei === focus); if (d) setCat(catOf(d)) } }, [focus, devs.length]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (sel && !rows.some((r) => r.d?.imei === sel)) setSel(null) }, [cat]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -115,7 +116,7 @@ export default function LiveDevices() {
             {sel && trail.length > 1 && <Polyline positions={trail} pathOptions={{ color: cur?.c ?? '#6759e4', weight: 5, opacity: 0.85 }} />}
             {sel && trail.length > 0 && <Marker position={trail[0]} icon={startIcon} zIndexOffset={900}><Tooltip direction="top">Start · {hm(data!.first_ts)}</Tooltip></Marker>}
             {sel && trail.length > 1 && <Marker position={trail[trail.length - 1]} icon={endIcon} zIndexOffset={900}><Tooltip direction="top">End · {hm(data!.last_ts)}</Tooltip></Marker>}
-            {(sel ? placed.filter((r) => r.d?.imei === sel && day === today) : placed).map((r) => <Marker key={r.key} position={[r.l!.lat!, r.l!.lng!]} icon={icon(r.label, colour(r.age), r.cat, sel === r.d?.imei)} eventHandlers={{ click: () => r.d && pick(r.d.imei) }} zIndexOffset={sel === r.d?.imei ? 1000 : 0}><Tooltip direction="top" offset={[0, -18]}>{CAT[r.cat].one}: {r.label} · {ago(r.l!.fix_ts)}</Tooltip></Marker>)}
+            {(sel ? placed.filter((r) => r.d?.imei === sel && day === today) : placed).map((r) => <Marker key={r.key} position={[r.l!.lat!, r.l!.lng!]} icon={icon(r.label, r.note ? (r.note.level === 'ok' ? '#16a34a' : r.note.level === 'warn' ? '#e0a030' : '#94a3b8') : colour(r.age), r.cat, sel === r.d?.imei)} eventHandlers={{ click: () => r.d && pick(r.d.imei) }} zIndexOffset={sel === r.d?.imei ? 1000 : 0}><Tooltip direction="top" offset={[0, -18]}>{CAT[r.cat].one}: {r.label} · {r.note && r.note.level !== 'ok' ? `last known place, ${ago(r.l!.fix_ts)}` : ago(r.l!.fix_ts)}</Tooltip></Marker>)}
           </MapContainer></Card>
 
         {cur && <Card><div className="flex flex-wrap items-center gap-3 border-b border-stone-100 px-5 py-3.5">
@@ -132,12 +133,13 @@ export default function LiveDevices() {
 
       <div className="space-y-6"><Card><CardHead title={CAT[cat].label} sub={`${rows.length} ${rows.length === 1 ? 'is' : 'are'} here · ${placed.length} with a position. Click one to see its route.`} />
         <ul className="divide-y divide-stone-100">{!loaded && <li className="p-6 text-center text-stone-400">Loading…</li>}{loaded && rows.length === 0 && <li className="p-8 text-center text-[14px] text-stone-500">{CAT[cat].empty}</li>}
-          {rows.map((r) => { const h = r.d ? trackerHealth(r.d.kind, r.d.last_seen) : 'never'; const K = CAT[r.cat]; return (
-            <li key={r.key}><button disabled={!r.d} onClick={() => r.d && pick(r.d.imei)} className={`flex w-full items-center gap-3 px-5 py-3.5 text-left ${sel && sel === r.d?.imei ? 'bg-cyan-50' : 'hover:bg-stone-50'} disabled:opacity-60`}>
-              <span className="grid h-9 w-9 shrink-0 place-items-center text-white" style={{ background: K.color, borderRadius: K.radius === '50%' ? '50%' : '10px' }}><K.Icon size={17} /></span>
-              <span className="min-w-0 flex-1"><span className="block truncate text-[14.5px] font-medium text-stone-900">{r.label}{role === 'superadmin' && r.d?.org_id ? <span className="font-normal text-stone-400"> · {orgs.find((o) => o.id === r.d?.org_id)?.name}</span> : null}</span>
-                <span className="block truncate text-[12.5px] text-stone-500">{r.hasPos ? `${r.sub} · position ${ago(r.l!.fix_ts)}${r.l!.speed_kmh ? ` · ${Math.round(r.l!.speed_kmh)} km/h` : ''}` : r.d?.last_seen ? `${r.sub} · heard ${ago(r.d.last_seen)}, waiting for a GPS fix` : r.d ? `${r.sub} · never heard from` : r.sub}</span></span>
-              <span className="flex flex-col items-end text-[12px] text-stone-400"><i className="mb-1 h-2.5 w-2.5 rounded-full" style={{ background: h === 'online' ? '#16a34a' : h === 'offline' ? '#e5586b' : '#94a3b8' }} />{r.d ? (r.d.kind === 'phone' ? (r.d.battery_pct != null ? `${r.d.battery_pct}%` : '') : volts(r.l?.battery_mv)) : ''}</span></button></li>) })}</ul></Card>
+          {rows.map((r) => { const K = CAT[r.cat]; const n = r.note; return (
+            <li key={r.key}><button disabled={!r.d} onClick={() => r.d && pick(r.d.imei)} className={`flex w-full items-start gap-3 px-5 py-3.5 text-left ${sel && sel === r.d?.imei ? 'bg-cyan-50' : 'hover:bg-stone-50'} disabled:opacity-60`}>
+              <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center text-white" style={{ background: K.color, borderRadius: K.radius === '50%' ? '50%' : '10px' }}><K.Icon size={17} /></span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-[14.5px] font-semibold text-stone-900">{r.label}{role === 'superadmin' && r.d?.org_id ? <span className="font-normal text-stone-400"> · {orgs.find((o) => o.id === r.d?.org_id)?.name}</span> : null}</span>
+                <span className="block truncate text-[12.5px] text-stone-500">{r.sub}</span>
+                {n ? <span className={`mt-0.5 block text-[12.5px] font-semibold ${n.level === 'ok' ? 'text-emerald-700' : n.level === 'warn' ? 'text-amber-700' : 'text-rose-700'}`}>{n.label}: {n.level === 'bad' ? n.connection : n.position}{n.rhythm && n.level !== 'ok' ? ` · ${n.rhythm.toLowerCase()}` : ''}</span> : <span className="mt-0.5 block text-[12.5px] text-stone-400">No tracker fitted, so no position</span>}</span>
+              <span className="flex flex-col items-end text-[12px] text-stone-400"><i className="mb-1 mt-1 h-2.5 w-2.5 rounded-full" style={{ background: !n ? '#94a3b8' : n.level === 'ok' ? '#16a34a' : n.level === 'warn' ? '#e0a030' : '#e5586b' }} />{r.d ? (r.d.kind === 'phone' ? (r.d.battery_pct != null ? `${r.d.battery_pct}%` : '') : volts(r.l?.battery_mv)) : ''}</span></button></li>) })}</ul></Card>
         <Card><CardHead title="Sites" sub={sites.length ? `${sites.length} on the map. A vehicle or phone entering a site's zone is how arrivals are recorded.` : 'No sites on the map yet.'} />
           <ul className="divide-y divide-stone-100">{sites.length === 0 && <li className="p-6 text-center text-[14px] text-stone-500">{role === 'superadmin' ? 'Add sites under Super Admin, then Sites.' : 'Your administrator has not added any sites for you yet.'}</li>}
             {sites.map((x) => <li key={x.id}><button onClick={() => setSel(null)} className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-stone-50"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[15px] text-white" style={{ background: KIND_COLOR[x.kind] ?? '#6759e4' }}>{KIND_GLYPH[x.kind] ?? '●'}</span>
