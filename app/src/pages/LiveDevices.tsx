@@ -11,13 +11,14 @@ import { ago, ageMin, describeDevice, volts, type DeviceNote } from '../lib/stat
 import { useStore } from '../store'
 import { useInfra } from '../lib/infra'
 import { KIND_COLOR, KIND_GLYPH, KIND_LABEL } from '../sim/registry'
+import { ukAddDays, ukDayKey, ukStartOf } from '../lib/tz'
 
 interface Dev { imei: string; name: string; kind: 'tracker' | 'phone'; model: string; org_id: string | null; active: boolean; battery_pct: number | null; last_seen: string | null }
 interface Latest { imei: string; seen_at: string | null; fix_valid: boolean | null; satellites: number | null; battery_mv: number | null; gsm_signal: number | null; lat: number | null; lng: number | null; fix_ts: string | null; speed_kmh: number | null }
 type Day = { count: number; distance_m: number; moving_s: number; first_ts: string | null; last_ts: string | null; max_speed_kmh: number; points: [string, number, number, number][] }
 const colour = (age: number) => (age < 10 ? '#16a34a' : age < 60 ? '#e0a030' : '#94a3b8')
-const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-const startOf = (key: string) => { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d) }
+const dayKey = (d: Date) => ukDayKey(d)
+const startOf = (key: string) => ukStartOf(key)
 const hm = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '–')
 const dur = (s: number) => (s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min` : `${Math.round(s / 60)} min`)
 const HISTORY_DAYS = 30
@@ -69,7 +70,7 @@ export default function LiveDevices() {
 
   const loadDay = useCallback(async () => {
     if (!sel) { setData(null); return }
-    setDayBusy(true); const from = startOf(day); const to = new Date(from.getFullYear(), from.getMonth(), from.getDate() + 1)
+    setDayBusy(true); const from = startOf(day); const to = startOf(ukAddDays(day, 1))
     const { data: r, error } = await supabase.rpc('tracker_day', { p_imei: sel, p_from: from.toISOString(), p_to: to.toISOString() })
     setDayBusy(false); if (error) { setDayErr(error.message); setData(null) } else { setDayErr(''); setData(r as Day) }
   }, [sel, day])
@@ -95,7 +96,7 @@ export default function LiveDevices() {
   const placed = rows.filter((r) => r.hasPos); const all = [...placed.map((r) => [r.l!.lat!, r.l!.lng!] as [number, number]), ...sites.map((x) => [x.lat, x.lng] as [number, number])]
   const cur = rows.find((r) => r.d?.imei === sel); const trail = (data?.points ?? []).map((p) => [p[1], p[2]] as [number, number])
   const selPos: [number, number] | null = trail.length ? trail[trail.length - 1] : cur?.hasPos ? [cur.l!.lat!, cur.l!.lng!] : null
-  const shift = (n: number) => { const x = startOf(day); x.setDate(x.getDate() + n); const k = dayKey(x); if (k >= oldest && k <= today) setDay(k) }
+  const shift = (n: number) => { const k = ukAddDays(day, n); if (k >= oldest && k <= today) setDay(k) }
   const exportCsv = () => { if (!data) return; const name = (cur?.label || sel || 'device').replace(/[^\w-]+/g, '_'); const csv = 'time,latitude,longitude,speed_kmh\n' + data.points.map((p) => `${p[0]},${p[1]},${p[2]},${Math.round(p[3])}`).join('\n')
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `${name}-${day}.csv`; a.click(); URL.revokeObjectURL(a.href) }
   const pick = (imei: string) => { setSel(sel === imei ? null : imei); setDay(today) }
@@ -123,7 +124,7 @@ export default function LiveDevices() {
           <div className="flex items-center gap-1"><button onClick={() => shift(-1)} disabled={day <= oldest} aria-label="Previous day" className="grid h-10 w-10 place-items-center rounded-full border border-stone-200 text-stone-600 hover:bg-stone-50 disabled:opacity-30"><ChevronLeft size={18} /></button>
             <input type="date" value={day} min={oldest} max={today} onChange={(e) => e.target.value && e.target.value >= oldest && e.target.value <= today && setDay(e.target.value)} className="h-10 rounded-full border border-stone-200 bg-white px-4 text-[14px] font-semibold text-stone-800 outline-none focus:border-cyan-500" />
             <button onClick={() => shift(1)} disabled={day >= today} aria-label="Next day" className="grid h-10 w-10 place-items-center rounded-full border border-stone-200 text-stone-600 hover:bg-stone-50 disabled:opacity-30"><ChevronRight size={18} /></button></div>
-          <div className="flex gap-1">{[['Today', 0], ['Yesterday', 1], ['2 days ago', 2]].map(([l, n]) => { const x = new Date(); x.setDate(x.getDate() - (n as number)); const k = dayKey(x); return <button key={l as string} onClick={() => setDay(k)} className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${day === k ? 'bg-cyan-600 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>{l}</button> })}</div>
+          <div className="flex gap-1">{[['Today', 0], ['Yesterday', 1], ['2 days ago', 2]].map(([l, n]) => { const k = ukAddDays(today, -(n as number)); return <button key={l as string} onClick={() => setDay(k)} className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${day === k ? 'bg-cyan-600 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>{l}</button> })}</div>
           <button onClick={exportCsv} disabled={!data?.count} className="ml-auto flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-[13px] font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-40"><Download size={15} /> Download day (CSV)</button></div>
           {dayErr ? <div className="p-5 text-[14px] font-semibold text-rose-700">Could not load this day: {dayErr}</div> : dayBusy && !data ? <div className="p-6 text-center text-stone-400">Loading route…</div> : !data || data.count === 0 ?
             <div className="p-6 text-center text-[14.5px] text-stone-500">No movement recorded on this day.{(cur.cat === 'tracker' || cur.cat === 'vehicle') && !cur.hasPos ? ' This tracker has not had a GPS fix yet. Take it outside with open sky.' : ''}</div> :

@@ -8,6 +8,7 @@ import { toast } from '../lib/toast'
 import { btnGhost, btnPrimary, Field, inputCls, Notice } from '../qr/ui'
 import type { ShipStart } from '../lib/shipDraft'
 import { ShipmentContents, summarise, type Line } from './ShipmentContents'
+import { ukLocalToIso } from '../lib/tz'
 
 export const KINDS: Record<string, string> = { delivery: 'Delivery', collection: 'Collection', recycling: 'Recycling load', equipment: 'Equipment', other: 'Other' }
 const norm = (s: string) => s.toLowerCase().replace(/\b(limited|ltd|plc|llc|inc|co|the)\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim()
@@ -78,7 +79,7 @@ export function NewShipment({ org, onDone, onCancel, start }: { org: string; onD
 
   const submit = async () => {
     setBusy(true); setErr('')
-    const { data, error } = await supabase.rpc('shipment_book', { p_org: org, p_kind: f.kind, p_from: f.from.trim(), p_to: f.to.trim(), p_carrier: f.carrier.trim(), p_vehicle: trk.vehicle.trim().toUpperCase(), p_desc: f.desc.trim() || summarise(lines), p_items: count || 1, p_lines: lines.length ? lines.map((l) => ({ source: l.source, ref: l.ref, label: l.label, qty: l.qty })) : null, p_weight: f.weight ? +f.weight : null, p_planned_dispatch: f.pd ? new Date(f.pd).toISOString() : null, p_planned_arrival: f.pa ? new Date(f.pa).toISOString() : null, p_customer: custId || null })
+    const { data, error } = await supabase.rpc('shipment_book', { p_org: org, p_kind: f.kind, p_from: f.from.trim(), p_to: f.to.trim(), p_carrier: f.carrier.trim(), p_vehicle: trk.vehicle.trim().toUpperCase(), p_desc: f.desc.trim() || summarise(lines), p_items: count || 1, p_lines: lines.length ? lines.map((l) => ({ source: l.source, ref: l.ref, label: l.label, qty: l.qty })) : null, p_weight: f.weight ? +f.weight : null, p_planned_dispatch: f.pd ? ukLocalToIso(f.pd) : null, p_planned_arrival: f.pa ? ukLocalToIso(f.pa) : null, p_customer: custId || null })
     if (error) { setBusy(false); return setErr(error.message) }
     const id = (data as { id: string }).id
     if (trk.imei) await supabase.from('shipments').update({ tracker_imei: trk.imei }).eq('id', id)

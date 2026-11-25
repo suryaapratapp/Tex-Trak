@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { useStore } from '../store'
 import { App as CapApp } from '@capacitor/app'
 import { isNative, isNetworkError, kvGet, kvSet, useNet } from '../lib/offline'
+import { ukDayKey, ukDaysTo } from '../lib/tz'
 
 export type Status = 'available' | 'quarantine' | 'repair' | 'scrap'
 export const STATUS_LABEL: Record<Status, string> = { available: 'Available', quarantine: 'Quarantine', repair: 'To repair', scrap: 'Beyond repair' }
@@ -66,7 +67,7 @@ function overlay(base: Stock[], ops: WOp[], org: string): Stock[] {
     const k = skey({ itemId, locId, lot, status }); const cur = m.get(k)
     if (cur) cur.qty += d; else if (d > 0) m.set(k, { itemId, locId, lot, status, expiry, qty: d, updatedAt: new Date().toISOString() })
   }
-  const today = new Date().toISOString().slice(0, 10)
+  const today = ukDayKey()
   const pick = (itemId: string, qty: number, locId?: string | null, lot?: string | null) => {
     const rows = [...m.values()].filter((s) => s.itemId === itemId && s.status === 'available' && s.qty > 0 && (!locId || s.locId === locId) && (!lot || s.lot === lot) && (!s.expiry || s.expiry >= today))
       .sort((a, b) => (a.expiry ? 0 : 1) - (b.expiry ? 0 : 1) || (a.expiry ?? '').localeCompare(b.expiry ?? '') || a.updatedAt.localeCompare(b.updatedAt))
@@ -218,7 +219,7 @@ export function resolveCode(ix: Index, raw: string): Resolved {
 export interface Pick { locId: string; lot: string; expiry: string | null; take: number }
 /** Same rule as the database: first-expiry-first-out, then oldest stock; expired and held stock is never picked. */
 export function planPick(ix: Index, itemId: string, qty: number, locId?: string, lot?: string): { picks: Pick[]; short: number } {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = ukDayKey()
   const rows = (ix.stockByItem.get(itemId) ?? []).filter((s) => s.status === 'available' && (!locId || s.locId === locId) && (!lot || s.lot === lot) && (!s.expiry || s.expiry >= today))
     .sort((a, b) => (a.expiry ? 0 : 1) - (b.expiry ? 0 : 1) || (a.expiry ?? '').localeCompare(b.expiry ?? '') || a.updatedAt.localeCompare(b.updatedAt))
   let need = qty; const picks: Pick[] = []
@@ -229,9 +230,9 @@ export const onHand = (ix: Index, itemId: string, status: Status = 'available') 
 
 export const fmtQty = (n: number | string) => Number(n).toLocaleString('en-GB', { maximumFractionDigits: 3 })
 export const fmtMoney = (n: number) => n.toLocaleString('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: n >= 1000 ? 0 : 2 })
-export const fmtDate = (d: string | null | undefined) => (d ? new Date(d.length <= 10 ? d + 'T00:00:00' : d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '–')
+export const fmtDate = (d: string | null | undefined) => (d ? new Date(d.length <= 10 ? d + 'T00:00:00Z' : d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', ...(d.length <= 10 ? { timeZone: 'UTC' } : {}) }) : '–')
 export const fmtWhen = (iso: string) => new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-export const daysTo = (d: string) => Math.ceil((new Date(d + 'T00:00:00').getTime() - new Date(new Date().toDateString()).getTime()) / 86400000)
+export const daysTo = (d: string) => ukDaysTo(d.slice(0, 10))
 export const locName = (ix: Index, id: string | null | undefined) => (id ? ix.locById.get(id)?.code ?? '?' : '–')
 export function csvDownload(name: string, rows: (string | number | null | undefined)[][]) {
   const esc = (v: string | number | null | undefined) => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }

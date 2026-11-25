@@ -3,13 +3,14 @@ import { Card, CardHead, Chip, Kpi } from '../components/ui'
 import { useLiveData, useLiveLoad } from '../lib/liveData'
 import { go, useStore } from '../store'
 import { btnPrimary } from '../qr/ui'
+import { ukAddDays, ukDayKey, ukStartOf } from '../lib/tz'
 
 const when = (s: string | null) => (s ? new Date(s).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'no time set')
 export default function PlannerLive() {
   useLiveLoad(); const { ships, items, loaded } = useLiveData(); const role = useStore((s) => s.role)
   const mine = ships.filter((s) => role === 'superadmin' || s.org_id === role); const its = items.filter((i) => role === 'superadmin' || i.org_id === role)
   const now = Date.now(); const open = mine.filter((s) => s.status === 'booked' || s.status === 'in_transit'); const overdue = open.filter((s) => s.planned_arrival && new Date(s.planned_arrival).getTime() < now)
-  const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999); const today = open.filter((s) => s.planned_arrival && new Date(s.planned_arrival).getTime() <= todayEnd.getTime())
+  const todayEnd = new Date(ukStartOf(ukAddDays(ukDayKey(), 1)).getTime() - 1); const today = open.filter((s) => s.planned_arrival && new Date(s.planned_arrival).getTime() <= todayEnd.getTime())
   const n = (st: string) => its.filter((i) => i.status === st).length
   return (
     <>

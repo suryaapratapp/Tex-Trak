@@ -9,6 +9,7 @@ import { allowedPages } from '../components/Layout'
 import { go, useStore } from '../store'
 import { loadAttention, type Attn } from '../lib/liveAttention'
 import { readerHealth, trackerHealth } from '../lib/status'
+import { ukHour } from '../lib/tz'
 
 const DOT = { info: '#a3abc2', warn: '#e0a030', bad: '#e5586b', good: '#3fb68b' }
 function Tile({ icon, color, title, headline, label, status, bad, page }: { icon: React.ReactNode; color: string; title: string; headline: string | number; label: string; status: string; bad?: boolean; page: string }) {
@@ -35,7 +36,7 @@ export default function HomeLive() {
     setN({ ship, inUse, missing, items, trkOn: t.filter((x) => trackerHealth(x.kind, x.last_seen) === 'online').length, trk: t.length, rdOn: r.filter((x) => readerHealth(x.last_seen) === 'online').length, rd: r.length }); setAttn(a); setLoaded(true)
   }, [role, isSuper])
   useEffect(() => { void load(); const id = setInterval(() => void load(), 30000); return () => clearInterval(id) }, [load])
-  const hour = new Date().getHours(); const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  const hour = ukHour(); const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const bad = attn.filter((a) => a.tone === 'bad').length
   const ok = allowedPages(role)
   const quick = ([['shipments', 'Shipments', <Package key="a" size={17} />], ['scan', 'Scan', <ScanLine key="b" size={17} />], ['map', 'Live map', <MapIcon key="c" size={17} />], ['qrinstall', 'Install curtain', <Tag key="d" size={17} />], ['whreceive', 'Goods in', <PackagePlus key="e" size={17} />]] as [string, string, React.ReactNode][]).filter(([id]) => ok.includes(id)).slice(0, 3).map(([id, label, icon]) => ({ id, label, icon }))

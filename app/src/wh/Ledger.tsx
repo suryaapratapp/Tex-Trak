@@ -4,6 +4,7 @@ import { Page } from '../components/ui'
 import { supabase } from '../lib/supabase'
 import { csvDownload, fmtQty, fmtWhen, KIND_LABEL, locName, useIndex, useWh, useWhOrg } from './store'
 import { btnGhost, Empty, inputCls, Pill, Section, TD, TH } from './ui'
+import { ukAddDays, ukStartOf } from '../lib/tz'
 
 interface M { id: number; created_at: string; kind: string; item_id: string; qty: number; lot: string; from_loc: string | null; to_loc: string | null; from_status: string | null; to_status: string | null; ref: string | null; reason: string | null; notes: string | null; by_name: string }
 const PAGE = 100
@@ -17,7 +18,7 @@ export default function Ledger() {
   const build = useCallback(() => {
     let q = supabase.from('wh_moves').select('*').eq('org_id', org).order('created_at', { ascending: false }).order('id', { ascending: false })
     if (kind) q = q.eq('kind', kind); if (text.trim()) q = itemIds.length ? q.in('item_id', itemIds) : q.eq('item_id', '00000000-0000-0000-0000-000000000000')
-    if (loc) q = q.or(`from_loc.eq.${loc},to_loc.eq.${loc}`); if (from) q = q.gte('created_at', from + 'T00:00:00'); if (to) q = q.lte('created_at', to + 'T23:59:59'); if (ref.trim()) q = q.ilike('ref', `%${ref.trim()}%`)
+    if (loc) q = q.or(`from_loc.eq.${loc},to_loc.eq.${loc}`); if (from) q = q.gte('created_at', ukStartOf(from).toISOString()); if (to) q = q.lt('created_at', ukStartOf(ukAddDays(to, 1)).toISOString()); if (ref.trim()) q = q.ilike('ref', `%${ref.trim()}%`)
     return q
   }, [org, kind, text, itemIds, loc, from, to, ref])
   const load = useCallback(async (append = false, offset = 0) => { const { data, error } = await build().range(offset, offset + PAGE - 1); if (error) return setErr(error.message); setErr(''); setMore((data ?? []).length === PAGE); setRows((r) => (append && r ? [...r, ...((data ?? []) as M[])] : ((data ?? []) as M[]))) }, [build])
