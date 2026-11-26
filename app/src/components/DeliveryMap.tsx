@@ -29,8 +29,8 @@ export function DeliveryMap({ id, status, height = 280, token }: { id: string; s
   const pts: [number, number][] = [...trail, ...manual.map((m) => m.pos), ...(last ? [[last.lat, last.lng] as [number, number]] : []), ...(d.from ? [[d.from.lat, d.from.lng] as [number, number]] : []), ...(d.to ? [[d.to.lat, d.to.lng] as [number, number]] : [])]
   return (
     <div className="mt-4">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-stone-400"><Radar size={14} /> {d.done ? 'Route followed' : 'Live tracking'}</h3>
-        <span className="text-[13px] font-semibold text-stone-500">{d.done ? 'Delivered' : d.arrived_at ? 'Arrived' : last ? `Updated ${ago(last.ts)}${last.speed ? ` · ${Math.round(last.speed)} km/h` : ''}` : 'Waiting for its first position'}</span></div>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-stone-600"><Radar size={14} /> {d.done ? 'Route followed' : 'Live tracking'}</h3>
+        <span className="text-[13px] font-semibold text-stone-700">{d.done ? 'Delivered' : d.arrived_at ? 'Arrived' : last ? `Updated ${ago(last.ts)}${last.speed ? ` · ${Math.round(last.speed)} km/h` : ''}` : 'Waiting for its first position'}</span></div>
       <div className="overflow-hidden rounded-2xl border border-stone-200" style={{ height }}>
         <MapContainer center={pts[0] ?? [51.5, -0.1]} zoom={12} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
           <TileLayer attribution="&copy; OpenStreetMap" url={import.meta.env.VITE_TILE_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} />

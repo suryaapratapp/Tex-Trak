@@ -15,9 +15,9 @@ export function SignaturePad({ onChange, height = 150 }: { onChange: (png: strin
     <div>
       <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-stone-300 bg-white">
         <canvas ref={cv} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label="Signature box" className="block w-full touch-none" style={{ height }} />
-        {!inked && <span className="pointer-events-none absolute inset-0 grid place-items-center text-[15px] font-semibold text-stone-300">Sign here</span>}
+        {!inked && <span className="pointer-events-none absolute inset-0 grid place-items-center text-[18px] font-semibold text-stone-400">Sign here</span>}
         <span className="pointer-events-none absolute inset-x-6 bottom-9 border-b border-stone-200" />
       </div>
-      <button type="button" onClick={clear} className="mt-2 flex items-center gap-1.5 text-[13.5px] font-bold text-stone-500 hover:text-stone-800"><Eraser size={15} /> Clear signature</button>
+      <button type="button" onClick={clear} className="mt-1 flex min-h-[44px] items-center gap-2 text-[16px] font-bold text-stone-700 hover:text-stone-900"><Eraser size={18} /> Clear signature</button>
     </div>)
 }
