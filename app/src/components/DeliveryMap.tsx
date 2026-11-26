@@ -10,7 +10,7 @@ interface Live { tracked: boolean; live?: boolean; done?: boolean; reason?: stri
 
 function Fit({ pts }: { pts: [number, number][] }) {
   const map = useMap()
-  useEffect(() => { if (pts.length) { map.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 16 }); setTimeout(() => map.invalidateSize(), 80) } }, [JSON.stringify(pts)]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (pts.length) { map.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [40, 60], paddingBottomRight: [40, 28], maxZoom: 16 }); setTimeout(() => map.invalidateSize(), 80) } }, [JSON.stringify(pts)]) // eslint-disable-line react-hooks/exhaustive-deps
   return null
 }
 const ago = (iso: string) => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); return m < 2 ? 'just now' : m < 90 ? `${m} minutes ago` : `${Math.round(m / 60)} hours ago` }
@@ -43,6 +43,7 @@ export function DeliveryMap({ id, status, height = 280, token }: { id: string; s
           {last && <CircleMarker center={[last.lat, last.lng]} radius={10} pathOptions={{ color: '#fff', weight: 3, fillColor: '#6759e4', fillOpacity: 1 }}><Tooltip direction="top" offset={[0, -10]}>{d.done ? 'Last position' : (d.name ?? 'Delivery')}</Tooltip></CircleMarker>}
         </MapContainer></div>
       {manual.length > 0 && <p className="mt-2 flex items-center gap-2 text-[12.5px] font-semibold text-amber-700"><i className="inline-block h-0 w-6 border-t-[3px] border-dashed border-amber-600" />Orange dashed route: {manual.length} point{manual.length === 1 ? '' : 's'} entered manually, not reported by the tracker.</p>}
+      {(d.from || d.to) && <dl className="mt-2 space-y-1 text-[12.5px] text-stone-500">{([['From', d.from], ['To', d.to]] as const).map(([k, p]) => <div key={k} className="flex flex-wrap gap-x-1.5"><dt className="font-bold text-stone-600">{k}:</dt><dd>{p ? <>{p.name} <span className="mono">({p.lat.toFixed(6)}, {p.lng.toFixed(6)})</span></> : 'not a marked site, so it is not drawn'}</dd></div>)}</dl>}
       {!d.from && !d.to && <p className="mt-2 text-[12.5px] text-stone-400">The From and To places are not marked sites, so they are not drawn.</p>}
     </div>)
 }
