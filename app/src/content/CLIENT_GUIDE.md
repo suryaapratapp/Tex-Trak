@@ -226,6 +226,9 @@ It follows the tracker and compares its position with your **From** and **To** s
 3. If the vehicle has a tracker, the shipment can be dispatched automatically when the vehicle leaves the From site.
 
 ### While it is on the way
+For a tracked delivery, **History** records by itself where it was when it first got about **25%**, **50%** and **75%** of the way: the position, the time the tracker reported it (UK time) and how far was left. The percentage is how much of the straight-line distance from your From site to your To site has been covered, so it is not road miles. Only the tracker's own positions count, not points entered by hand. If the tracker was silent while it passed more than one mark, only the furthest one reached is recorded. Very short trips (under 1 km) get no marks.
+
+You can also:
 - **Add update:** a short note.
 - **Report delay:** say why it is late.
 - **Report a problem:** for example damage or a wrong address.
