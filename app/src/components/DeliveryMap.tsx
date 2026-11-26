@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import { ZoomHint } from './ZoomHint'
 
 interface Site { name: string; lat: number; lng: number; radius: number }
-interface Live { tracked: boolean; live?: boolean; reason?: string; status: string; arrived_at?: string | null; name?: string; last?: { lat: number; lng: number; ts: string; speed: number | null } | null; trail?: [number, number, string][]; manual?: [number, number, string, string][]; from?: Site | null; to?: Site | null }
+interface Live { tracked: boolean; live?: boolean; done?: boolean; reason?: string; status: string; arrived_at?: string | null; name?: string; last?: { lat: number; lng: number; ts: string; speed: number | null } | null; trail?: [number, number, string][]; manual?: [number, number, string, string][]; from?: Site | null; to?: Site | null }
 
 function Fit({ pts }: { pts: [number, number][] }) {
   const map = useMap()
@@ -29,8 +29,8 @@ export function DeliveryMap({ id, status, height = 280, token }: { id: string; s
   const pts: [number, number][] = [...trail, ...manual.map((m) => m.pos), ...(last ? [[last.lat, last.lng] as [number, number]] : []), ...(d.from ? [[d.from.lat, d.from.lng] as [number, number]] : []), ...(d.to ? [[d.to.lat, d.to.lng] as [number, number]] : [])]
   return (
     <div className="mt-4">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-stone-400"><Radar size={14} /> Live tracking</h3>
-        <span className="text-[13px] font-semibold text-stone-500">{d.arrived_at ? 'Arrived' : last ? `Updated ${ago(last.ts)}${last.speed ? ` · ${Math.round(last.speed)} km/h` : ''}` : 'Waiting for its first position'}</span></div>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-stone-400"><Radar size={14} /> {d.done ? 'Route followed' : 'Live tracking'}</h3>
+        <span className="text-[13px] font-semibold text-stone-500">{d.done ? 'Delivered' : d.arrived_at ? 'Arrived' : last ? `Updated ${ago(last.ts)}${last.speed ? ` · ${Math.round(last.speed)} km/h` : ''}` : 'Waiting for its first position'}</span></div>
       <div className="overflow-hidden rounded-2xl border border-stone-200" style={{ height }}>
         <MapContainer center={pts[0] ?? [51.5, -0.1]} zoom={12} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
           <TileLayer attribution="&copy; OpenStreetMap" url={import.meta.env.VITE_TILE_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} />
@@ -40,7 +40,7 @@ export function DeliveryMap({ id, status, height = 280, token }: { id: string; s
           {trail.length > 1 && <Polyline positions={trail} pathOptions={{ color: '#6759e4', weight: 4, opacity: 0.7 }} />}
           {manual.length > 1 && <Polyline positions={manual.map((m) => m.pos)} pathOptions={{ color: '#d97706', weight: 3, opacity: 0.9, dashArray: '8 8' }} />}
           {manual.map((m, i) => <CircleMarker key={i} center={m.pos} radius={7} pathOptions={{ color: '#fff', weight: 2, fillColor: '#d97706', fillOpacity: 1 }}><Tooltip direction="top" offset={[0, -8]}>Entered manually · {new Date(m.ts).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}{m.by ? ` · by ${m.by}` : ''}</Tooltip></CircleMarker>)}
-          {last && <CircleMarker center={[last.lat, last.lng]} radius={10} pathOptions={{ color: '#fff', weight: 3, fillColor: '#6759e4', fillOpacity: 1 }}><Tooltip direction="top" offset={[0, -10]}>{d.name ?? 'Delivery'}</Tooltip></CircleMarker>}
+          {last && <CircleMarker center={[last.lat, last.lng]} radius={10} pathOptions={{ color: '#fff', weight: 3, fillColor: '#6759e4', fillOpacity: 1 }}><Tooltip direction="top" offset={[0, -10]}>{d.done ? 'Last position' : (d.name ?? 'Delivery')}</Tooltip></CircleMarker>}
         </MapContainer></div>
       {manual.length > 0 && <p className="mt-2 flex items-center gap-2 text-[12.5px] font-semibold text-amber-700"><i className="inline-block h-0 w-6 border-t-[3px] border-dashed border-amber-600" />Orange dashed route: {manual.length} point{manual.length === 1 ? '' : 's'} entered manually, not reported by the tracker.</p>}
       {!d.from && !d.to && <p className="mt-2 text-[12.5px] text-stone-400">The From and To places are not marked sites, so they are not drawn.</p>}
