@@ -67,6 +67,8 @@ Use this when you have checked the items yourself.
 2. Check **How many items did you receive?** It starts with the number that was sent. Change it if fewer arrived.
 3. Tick the confirmation: *I have scanned and checked the items. The quantity and the items received are correct.*
 
+**Optional barcode check.** With this option you can also press **Scan barcode** and scan one item's barcode (or type it). Tex-Trak tells you whether it matches something on this delivery. A matching barcode is saved with your signature. You can skip this and still accept.
+
 ### Then, for both options
 1. Type the **name of the person receiving**.
 2. **Sign** in the box with your finger or a mouse. Press *Clear signature* to start again.

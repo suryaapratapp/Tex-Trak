@@ -6,10 +6,10 @@ import { SignaturePad } from '../components/SignaturePad'
 import { btnPrimary, inputCls, Notice, ScanField } from '../qr/ui'
 import type { Line } from './ShipmentContents'
 
-export interface Receipt { method: 'scan' | 'confirm'; items: number; name: string; signature: string; note: string; scanned: number | null }
+export interface Receipt { method: 'scan' | 'confirm'; items: number; name: string; signature: string; note: string; scanned: number | null; barcode: string | null }
 
 /** The customer's side: confirm what arrived, by checking it or scanning it. Name and signature, then one big Accept button that stays on screen. */
-export function CustomerReceive({ shipRef, expected, lines, submit, onDone }: { shipRef: string; expected: number; lines: Line[]; submit: (r: Receipt) => Promise<string | null>; onDone: () => void }) {
+export function CustomerReceive({ shipRef, expected, lines, checkCode, submit, onDone }: { shipRef: string; expected: number; lines: Line[]; checkCode: (code: string) => Promise<{ item: string | null; error: string | null }>; submit: (r: Receipt) => Promise<string | null>; onDone: () => void }) {
   const scannable = lines.filter((l) => l.source === 'qr' || l.source === 'rfid')
   const canScan = scannable.length > 0 && scannable.reduce((n, l) => n + l.qty, 0) === expected
   const [how, setHow] = useState<'scan' | 'confirm'>('confirm'); const [all, setAll] = useState(true); const [count, setCount] = useState(String(expected)); const [got, setGot] = useState<Set<string>>(new Set())
@@ -21,11 +21,19 @@ export function CustomerReceive({ shipRef, expected, lines, submit, onDone }: { 
     if (got.has(c)) { feedback(false); return toast.info(`${codes.get(c)} was already scanned.`) }
     feedback(true); setGot((g) => new Set(g).add(c))
   }
+  const [proofOpen, setProofOpen] = useState(false); const [proof, setProof] = useState<{ code: string; item: string } | null>(null); const [proofMsg, setProofMsg] = useState('')
+  const checkProof = async (raw: string) => {
+    const code = raw.trim(); if (!code) return; setProofMsg('Checking…')
+    const r = await checkCode(code)
+    if (r.error) { feedback(false); return setProofMsg('The barcode could not be checked. You can try again, or sign without it.') }
+    if (!r.item) { feedback(false); return setProofMsg(`${code} does not match an item on this delivery. Check you have the right parcel, then try again. You can also sign without it.`) }
+    feedback(true); setProofMsg(''); setProof({ code, item: r.item })
+  }
   const received = how === 'scan' ? got.size : all ? expected : Math.max(0, Math.round(Number(count) || 0))
   const ready = name.trim().length >= 2 && !!sig && (how === 'scan' ? got.size > 0 : all || count !== '')
   const missing = scannable.length - got.size
   const go = async () => {
-    setBusy(true); setErr(''); const e = await submit({ method: how, items: received, name: name.trim(), signature: sig!, note: note.trim(), scanned: how === 'scan' ? got.size : null }); setBusy(false)
+    setBusy(true); setErr(''); const e = await submit({ method: how, items: received, name: name.trim(), signature: sig!, note: note.trim(), scanned: how === 'scan' ? got.size : null, barcode: how === 'confirm' ? proof?.code ?? null : null }); setBusy(false)
     if (e) return setErr(e); toast.ok(received === expected ? `${shipRef} confirmed. Thank you.` : `${shipRef} recorded with ${received} of ${expected} items.`); onDone()
   }
   const unit = `${expected} item${expected === 1 ? '' : 's'}`
@@ -39,6 +47,13 @@ export function CustomerReceive({ shipRef, expected, lines, submit, onDone }: { 
           <button type="button" onClick={() => setAll(true)} className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left ${all ? 'border-emerald-500 bg-emerald-50' : 'border-stone-200 bg-white'}`}><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${all ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-stone-300'}`}>{all && <CheckCircle2 size={16} />}</span><span className="text-[16px] font-extrabold text-stone-900">{expected === 1 ? 'The item arrived' : `All ${expected} items arrived`}</span></button>
           <button type="button" onClick={() => setAll(false)} className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left ${!all ? 'border-amber-500 bg-amber-50' : 'border-stone-200 bg-white'}`}><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${!all ? 'border-amber-500 bg-amber-500 text-white' : 'border-stone-300'}`}>{!all && <CheckCircle2 size={16} />}</span><span className="text-[16px] font-extrabold text-stone-900">A different number arrived</span></button>
           {!all && <div className="flex items-center gap-3 px-1"><label htmlFor="cr-n" className="text-[14.5px] font-bold text-stone-700">How many arrived?</label><input id="cr-n" autoFocus value={count} onChange={(e) => setCount(e.target.value.replace(/\D/g, ''))} inputMode="numeric" className={`${inputCls} !w-24 text-center text-[18px] font-bold`} /><span className="text-[13px] text-stone-400">of {expected}</span></div>}
+        </div>}
+
+        {how === 'confirm' && <div className="rounded-2xl border border-cyan-200 bg-cyan-50/60 p-3.5">
+          {proof ? <div className="flex items-start gap-2.5"><CheckCircle2 size={20} className="mt-0.5 shrink-0 text-emerald-600" /><div className="min-w-0 flex-1"><div className="text-[14.5px] font-extrabold text-stone-900">Barcode matches this delivery</div><div className="text-[13.5px] text-stone-600">{proof.item} <span className="mono break-all">({proof.code})</span></div></div><button type="button" onClick={() => { setProof(null); setProofOpen(true) }} className="shrink-0 text-[13px] font-bold text-cyan-700">Change</button></div>
+            : <><div className="text-[14.5px] font-extrabold text-stone-900">Scan an item barcode <span className="font-semibold text-stone-500">(optional)</span></div><p className="text-[13px] text-stone-500">It helps confirm you received the right order.</p>
+              {proofOpen ? <div className="mt-2.5"><ScanField label="Item barcode" onScan={(c) => void checkProof(c)} placeholder="Scan or type the barcode" />{proofMsg && <p role="status" className="mt-2 text-[13px] font-semibold text-amber-700">{proofMsg}</p>}</div>
+                : <button type="button" onClick={() => setProofOpen(true)} className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-300 bg-white py-2.5 text-[14px] font-bold text-cyan-800"><ScanLine size={17} />Scan barcode</button>}</>}
         </div>}
 
         {how === 'scan' && <div className="space-y-3">
