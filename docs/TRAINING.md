@@ -259,9 +259,9 @@ On a **computer's web browser** the same works while the page is open, if the us
 ## 9. Shipments
 
 Shipments → My shipments:
-1. **Book:** type, from, to, contents, number of items, carrier, planned times. It gets a reference such as `SHP-1001`.
+1. **Book:** tick the items going (at least one), choose the From and To sites from the lists, then optionally type, carrier and planned times. It gets a reference such as `SHP-1001`.
 2. **Dispatch:** confirm it is loaded and packed (in the app or by scanning the reference).
-3. **On the way:** add updates or report a delay.
+3. **On the way:** add updates or report a delay. For a tracked delivery, History also records the tracker's position by itself at about 25%, 50% and 75% of the way (straight-line distance from From to To). If the tracker was silent past a mark, only the furthest one reached is recorded.
 4. **Receive:** enter how many items arrived. A different number is recorded as a problem; a problem can be marked resolved.
 
 Every step is kept in the shipment's history. **Laundry arrivals** shows what is arriving, and what is on the shelves.

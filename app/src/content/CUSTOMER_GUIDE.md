@@ -48,6 +48,8 @@ Further down, **Your other deliveries** lists the rest. Tap one to open it. **Ba
 
 While it is on the way you see a **live map** that refreshes every 15 seconds. You cannot sign yet. When Tex-Trak knows it has arrived, the screen changes by itself to **Your delivery has arrived**. On finished deliveries and ones waiting for your signature, press **Show the map**. **Show what has happened** gives the history.
 
+For a bigger view, press **Open full map** under the map. It fills the phone screen (on a computer it opens in a large window). **Whole route** shows the whole journey, and **Where it is now** moves to the latest position (on a finished or arrived delivery it is called **Last position**). Press **Close** to go back.
+
 ---
 
 ## 4. Accepting a delivery: 3 steps

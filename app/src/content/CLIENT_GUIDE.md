@@ -255,6 +255,8 @@ Every step is kept in the shipment's history. A shipment can be cancelled before
 
 ## 9. Live map and Alerts
 
+Under the map of a delivery, **Open full map** shows it in a large window (the whole screen on a phone), with **Whole route** and **Where it is now** or **Last position** buttons. Press **Close**, press Esc or click outside the window to go back.
+
 ### Live map
 The map shows **one kind of thing at a time**, so they are never mixed up. Use the tabs at the top: **GNSS trackers** (opens first), **Vehicles**, **Mobile phones**, **Laptops and browsers** and **People**. Each kind has its own colour, shape and picture, and its own list on the right.
 
