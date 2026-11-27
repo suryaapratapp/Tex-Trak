@@ -241,13 +241,13 @@ You can also:
    - **A different number:** it is recorded as a **problem**. After you resolve it, press **Mark resolved**.
 
 ### Sending the customer a link (no sign-in)
-Open the shipment and find **Customer link**. Press **Copy link** to paste it into a message, or **Copy formatted email** to paste a ready-made, designed email into any mail app (it names you and the customer, and lists the addresses, items and expected time). **Preview email** shows how it will look. The customer opens the link on their phone with **no sign-in**, follows the delivery live, and when it arrives the page asks them to confirm: *All items arrived*, their name, their signature and one button.
+Open the shipment and find **Customer link**. Press **Copy link** to paste it into a message, or **Copy formatted email** to paste a ready-made, designed email into any mail app (it names you and the customer, and lists the addresses, items and expected time). **Preview email** shows how it will look. The customer opens the link on their phone with **no sign-in**, follows the delivery live, and when it arrives the page asks them to confirm: *All items arrived*, **the barcode of any one product on the delivery**, their name, their signature and one button.
 
 ### What the customer can do, and when
 Before it arrives, a customer can only **follow it on a live map**. As soon as the tracker reaches your **To** site, the customer can **check it and sign**. If the shipment is not tracked, press **Mark as arrived** when it reaches them; that opens it up for the customer in the same way.
 
 ### When the customer accepts it themselves
-Once it has arrived, a customer with a Tex-Trak account signs in and sees only the shipments booked to them. They either **scan each item** or **confirm they checked the items**, then enter their **name** and **sign**. As soon as they do, the shipment changes to **Delivered** (or **Problem** if the number differs), and you get a notification. Open the shipment to see **Received and signed**: who accepted it, when, how, and their signature.
+Once it has arrived, a customer with a Tex-Trak account signs in and sees only the shipments booked to them. They either **scan each item** or **confirm they checked the items and scan one product barcode**, then enter their **name** and **sign**. **The barcode is required** (by camera, or by typing the number under it): make sure each product carries a label with its barcode, SKU or a code added to the item in Warehouse, or the customer cannot accept it. It is not asked for when the shipment has no product records, or when the customer records that nothing arrived. As soon as they do, the shipment changes to **Delivered** (or **Problem** if the number differs), and you get a notification. Open the shipment to see **Received and signed**: who accepted it, when, how, and their signature.
 
 Every step is kept in the shipment's history. A shipment can be cancelled before it is dispatched, and its items become free again.
 

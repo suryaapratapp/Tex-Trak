@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, CheckCircle2, ChevronDown, ChevronRight, Clock3, PackageCheck, TriangleAlert, Truck } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { toast } from '../lib/toast'
 import { DeliveryMap } from '../components/DeliveryMap'
 import { CustomerReceive } from './CustomerReceive'
 import type { Line } from './ShipmentContents'
@@ -50,7 +49,7 @@ function Delivery({ s, events, onDone }: { s: Shipment; events: Ev[]; onDone: ()
           {st === 'arrived' && <div className="mt-1">Arrived {when(s.arrived_at)}</div>}{st === 'coming' && s.planned_arrival && <div className="mt-1">Expected {when(s.planned_arrival)}</div>}</div>
       </div>
 
-      {st === 'arrived' && <CustomerReceive shipRef={s.ref} expected={s.items} lines={lines} onDone={onDone} checkCode={async (code) => { const { data, error } = await supabase.rpc('shipment_receipt_barcode', { p_id: s.id, p_code: code }); return { item: (data as string | null) ?? null, error: error?.message ?? null } }} submit={async (r) => { const { error } = await supabase.rpc('shipment_customer_receive', { p_id: s.id, p_method: r.method, p_items: r.items, p_name: r.name, p_signature: r.signature, p_note: r.note, p_scanned: r.scanned }); if (!error && r.barcode) { const { error: e2 } = await supabase.rpc('shipment_receipt_barcode', { p_id: s.id, p_code: r.barcode, p_record: true }); if (e2) toast.error('The delivery is confirmed, but the barcode could not be saved.') } return error ? error.message : null }} />}
+      {st === 'arrived' && <CustomerReceive shipRef={s.ref} expected={s.items} lines={lines} onDone={onDone} checkCode={async (code) => { const { data, error } = await supabase.rpc('shipment_receipt_barcode', { p_id: s.id, p_code: code }); return { item: (data as string | null) ?? null, error: error?.message ?? null } }} submit={async (r) => { const { error } = await supabase.rpc('shipment_customer_receive', { p_id: s.id, p_method: r.method, p_items: r.items, p_name: r.name, p_signature: r.signature, p_note: r.note, p_scanned: r.scanned, p_barcode: r.barcode }); return error ? error.message : null }} />}
 
       {s.received_at && <div className="rounded-3xl border border-stone-200 bg-white p-4 text-[17px] text-stone-900"><h3 className="text-[18px] font-extrabold">Received and signed</h3>
         <div className="mt-1"><b>{s.received_by_name}</b>, {when(s.received_at)}</div><div>{s.items_received} of {items(s.items)} received</div>

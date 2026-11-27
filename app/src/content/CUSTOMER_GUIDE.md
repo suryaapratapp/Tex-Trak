@@ -11,7 +11,7 @@ Support: **surya@circai.co.uk**
 When a delivery is booked for you, the sender sends you a link by email or message. **Open it on your phone. There is nothing to sign in to.** The page shows:
 
 - **Before it arrives:** a live map of where your delivery is.
-- **When it arrives:** the page changes by itself to **Your delivery has arrived**. Check the list, type your name, sign with your finger and press the big **Accept delivery** button. That is all.
+- **When it arrives:** the page changes by itself to **Your delivery has arrived**. Check the list, **scan the barcode on any one product**, type your name, sign with your finger and press the big **Accept delivery** button. That is all.
 - **If you want to scan:** choose *Scan the items* and scan each label instead.
 
 Keep the message. The same link works until the delivery is confirmed, and afterwards it shows your confirmation. Anyone with the link can confirm, so please do not forward it.
@@ -34,7 +34,7 @@ The delivery that needs you is **already open at the top**. One that has arrived
 
 | Message | What it means | What you do |
 |---|---|---|
-| **Your delivery has arrived** | It is waiting for your signature. | Follow the 3 steps below. |
+| **Your delivery has arrived** | It is waiting for your signature. | Follow the steps below. |
 | **Your delivery is on its way** | It has been dispatched. | Nothing yet. You can watch the map. |
 | **Your delivery has not left yet** | The sender has prepared it. | Nothing yet. |
 | **Delivered. Thank you** | You accepted it and the number matched. | Nothing more. |
@@ -52,17 +52,19 @@ For a bigger view, press **Open full map** under the map. It fills the phone scr
 
 ---
 
-## 4. Accepting a delivery: 3 steps
+## 4. Accepting a delivery
 
 **Step 1. Check what arrived.** The list shows what should be there. If everything is there, leave **All items arrived** selected. If not, press **A different number arrived** and type how many you have.
 
-*Optional:* press **Scan barcode** to scan one item's barcode (or type it). A matching barcode is saved with your signature. You can skip this.
+**Step 2. Scan one product barcode.** Take **any one** product from the delivery. Press **Scan with camera**, allow the camera if your phone asks, and point it at the barcode on the label. If the camera does not work, type the number printed under the barcode and press **Check**. You see **Barcode matches** when it is right. **You cannot accept the delivery without this.**
 
-*If your items have QR labels,* you may instead choose **Scan the items** and scan each label. Anything not scanned is reported as missing.
+*If your items have QR labels,* you may instead choose **Scan the items** and scan each label. Anything not scanned is reported as missing. This also counts as the barcode step.
 
-**Step 2. Type your name.**
+**Step 3. Type your name.**
 
-**Step 3. Sign in the box** with your finger. Press **Clear signature** to start again. You can also **Add a note**, for example *one box damaged*.
+**Step 4. Sign in the box** with your finger. Press **Clear signature** to start again. You can also **Add a note**, for example *one box damaged*.
+
+A few deliveries have no product barcodes on record: the screen then skips step 2, so there are only 3 steps. No barcode is asked for if you record that nothing arrived.
 
 Then press **Accept delivery**. You will see **Delivered. Thank you**, or, if the number was different, **A problem has been recorded**. Your name, signature and the time are saved.
 
@@ -74,8 +76,8 @@ Then press **Accept delivery**. You will see **Delivered. Thank you**, or, if th
 |---|---|
 | A delivery is missing from the list | It has not been booked to your account. Ask the sender. |
 | Fewer items arrived | Press **A different number arrived**, type the number, add a note, sign and accept. The sender is told straight away. |
-| The camera does not start | Allow camera access in your phone or browser settings, or type the code. |
-| A code is rejected | It is not part of this delivery. Check you scanned the right label. |
+| The camera does not start | Allow camera access in your phone or browser settings, or type the number under the barcode. |
+| A code is rejected | It is not part of this delivery. Check you scanned the right label. If it is the right product and is still rejected, contact the sender before signing. |
 | The signature box will not accept a signature | Press *Clear signature* and sign again, drawing a line in the box. |
 | Cannot sign in | Check the username and password. Contact the sender or support if your account has been switched off. |
 
